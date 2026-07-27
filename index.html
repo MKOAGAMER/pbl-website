@@ -1,0 +1,2881 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" /> <title>PBL MANAGER: 2026 SEASON</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  
+<style>
+    /* --- THEME --- */
+    :root { --nba-blue: #1D428A; --nba-red: #ff9500; --nba-green: #28a745; --nba-sky: #17a2b8; --gold: #FFD700; --dark: #121212; --gray-bg: #F5F7FA; --card-bg: #FFFFFF; --text-main: #212529; --border: #dee2e6; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Roboto', sans-serif; background-color: var(--gray-bg); color: var(--text-main); margin: 0; padding-bottom: 60px; -webkit-font-smoothing: antialiased; }
+
+    /* HEADER */
+    header { background: var(--dark); height: 70px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-bottom: 4px solid var(--nba-red); }
+    .header-controls { display:flex; align-items:center; gap:10px; margin-left:12px; }
+    .theme-toggle { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    
+    /* Logo Group Styles */
+    .logo-group { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .logo-img { height: 40px; background: #fff; border-radius: 4px; padding: 2px; }
+    h1 { font-family: 'Oswald', sans-serif; color: #fff; margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-style: italic; }
+    
+    .nav { display: flex; gap: 0; height: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: 10px; }
+    .nav::-webkit-scrollbar { display: none; } 
+    .nav button { background: transparent; border: none; color: #aaa; font-family: 'Oswald', sans-serif; padding: 0 15px; cursor: pointer; height: 100%; font-size: 0.9rem; text-transform: uppercase; border-bottom: 4px solid transparent; transition: 0.3s; white-space: nowrap; }
+    .nav button.active { color: #fff; border-bottom-color: var(--nba-blue); background: linear-gradient(to bottom, transparent, rgba(29, 66, 138, 0.2)); }
+
+    /* LAYOUT & RESPONSIVE */
+    .container { max-width: 1100px; margin: 20px auto; padding: 0 10px; }
+    .view { display: none; animation: fadeIn 0.2s ease-out; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .card { background: var(--card-bg); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    h3 { margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--nba-blue); font-family: 'Oswald', sans-serif; color: var(--nba-blue); font-size: 1.4rem; text-transform: uppercase; }
+
+    /* ELEMENTS */
+    input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 16px; }
+    label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn { width: 100%; padding: 12px; background: var(--dark); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'Oswald', sans-serif; font-size: 1rem; text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+    
+    /* GRID SYSTEMS */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-team { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; } 
+    
+    @media (max-width: 768px) {
+        .grid-2 { grid-template-columns: 1fr; } 
+        header { padding: 0 10px; }
+        .logo-img { height: 35px; }
+        h1 { font-size: 1.2rem; }
+        .nav button { padding: 0 10px; font-size: 0.8rem; }
+        .card { padding: 15px; }
+    }
+
+    .search-box { position: relative; margin-bottom: 20px; }
+    .search-box input { padding-left: 40px; border-radius: 50px; }
+    .search-box:before { content: '🔍'; position: absolute; left: 15px; top: 12px; opacity: 0.4; }
+
+    /* LOADING */
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    .spinner { width: 50px; height: 50px; border: 5px solid #ddd; border-top-color: var(--nba-blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ADMIN TABS */
+    .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+    .admin-tab-btn { flex: 1; min-width: 100px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; font-family: 'Oswald'; text-transform: uppercase; border-radius: 4px; font-size: 0.9rem; transition:0.2s; text-align: center; white-space: nowrap; }
+    .admin-tab-btn.active { background: var(--nba-blue); color: #fff; border-color: var(--nba-blue); }
+    .admin-panel { display: none; animation: fadeIn 0.2s; }
+    .admin-panel.active { display: block; }
+    
+    .data-control-box { max-height: 250px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 15px; padding: 0; background: #fff; border-radius: 4px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+
+    /* STATS */
+    .stats-sub-nav { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: 1px solid #ddd; overflow-x: auto; }
+    .stats-sub-btn { background: none; border: none; padding: 10px 20px; font-family: 'Oswald'; font-size: 1rem; cursor: pointer; color: #888; border-bottom: 4px solid transparent; white-space: nowrap; }
+    .stats-sub-btn.active { color: var(--nba-blue); border-bottom-color: var(--nba-blue); }
+    .stats-grid-display { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    
+    .stat-card { background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+    .stat-card-header { padding: 12px 15px; background: #fff; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .stat-title { font-family: 'Oswald'; color: var(--nba-blue); font-size: 1rem; text-transform: uppercase; margin: 0; }
+    .stat-link { font-size: 0.75rem; color: #666; text-decoration: none; cursor: pointer; font-weight: bold; }
+    .leader-list { list-style: none; padding: 0; margin: 0; }
+    
+    .leader-item { display: flex; align-items: center; padding: 8px 15px; border-bottom: 1px solid #eee; font-size: 0.9rem; transition: 0.2s; }
+    .leader-item:last-child { border-bottom: none; }
+    .rank-num { width: 25px; font-weight: bold; color: #888; font-family: 'Oswald'; }
+    .ld-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 2px solid #f0f0f0; }
+    .ld-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .ld-name { font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ld-team { font-size: 0.7rem; color: #999; text-transform: uppercase; }
+    .ld-val { font-family: 'Oswald'; font-size: 1rem; font-weight: bold; color: #000; }
+
+    /* TRANSACTIONS */
+    .trans-list { list-style: none; padding: 0; }
+    .trans-card { background: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; overflow: hidden; border-left: 6px solid #ccc; transition: transform 0.2s; flex-wrap: wrap; }
+    .trans-card.type-move { border-left-color: var(--nba-green); }
+    .trans-card.type-waive { border-left-color: var(--nba-red); }
+    .trans-card.type-trade { border-left-color: var(--nba-sky); }
+    .tc-player-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #f0f0f0; flex-shrink: 0; }
+    .tc-content { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 150px; }
+    .tc-header { font-family: 'Oswald', sans-serif; font-size: 1rem; line-height: 1.2; margin-bottom: 4px; }
+    .tc-sub { font-size: 0.8rem; color: #666; display: flex; align-items: center; gap: 5px; }
+    .tc-visual { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 5px 10px; border-radius: 20px; border: 1px solid #eee; margin-top: 5px; }
+    .tc-team-logo { width: 25px; height: 25px; object-fit: contain; }
+    .trade-chip { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+
+    /* GAME & TABLES */
+    .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #eee; padding: 10px; border-radius: 8px; }
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; border-radius: 4px; border: 1px solid #eee; }
+
+    .game-table { width: 100%; min-width: 500px; border-collapse: collapse; background: #fff; margin-bottom: 0; }
+    .game-table th { background: #f4f4f4; padding: 10px; text-align: center; font-family: 'Oswald', sans-serif; color: #555; border-bottom: 2px solid #ddd; font-size: 0.85rem; text-transform: uppercase; white-space: nowrap; }
+    .game-table td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    .game-table tr:hover { background-color: #f9f9f9; }
+    
+    .gt-team { display: flex; align-items: center; gap: 8px; font-family: 'Oswald'; font-weight: 500; font-size: 0.95rem; color: #333; white-space: nowrap; }
+    .gt-team.right { justify-content: flex-end; text-align: right; }
+
+    /* Dark theme overrides when data-theme="dark" set on <html> */
+    [data-theme="dark"] {
+        --gray-bg: #0f1113;
+        --card-bg: #111213;
+        --text-main: #e6e6e6;
+        --border: #2b2b2b;
+        --dark: #0b0b0b;
+        --nba-blue: #2b6fb3;
+    }
+    .gt-logo { width: 30px; height: 30px; object-fit: contain; }
+    .gt-score { font-family: 'Oswald'; font-size: 1.2rem; font-weight: bold; text-align: center; background: #f0f0f0; padding: 4px 10px; border-radius: 4px; width: fit-content; min-width: 80px; margin: 0 auto; color: #333; border: 1px solid #ddd; white-space: nowrap; }
+
+    /* FIX: Scorekeeper Responsive Inputs */
+    #matchModal .modal-content { max-width: 900px; width: 98%; max-height: 95vh; overflow-y: auto; background: #fff; border-radius: 8px; }
+    .scorekeeper-grid { display: grid; grid-template-columns: 1fr ; gap: 20px; }
+    @media(max-width: 900px) { .scorekeeper-grid { grid-template-columns: 1fr; gap: 30px; } }
+
+    .sk-team-header { background: #121212; color: #fff; padding: 8px; text-align: center; font-family: 'Oswald'; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; left: 0; }
+    .sk-table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 0.8rem; }
+    .sk-table th { background: #eee; padding: 5px; border: 1px solid #ddd; text-align: center; font-size: 0.75rem; white-space: nowrap; }
+    .sk-table td { border: 1px solid #ddd; padding: 2px; }
+    
+    /* FIX: Bigger Inputs for Mobile */
+    .sk-input { width: 100%; min-width: 50px; height: 35px; border: none; text-align: center; padding: 0; background: #fff; font-family: 'Oswald'; font-size: 1.1rem; color:#000; border-radius:0; }
+    .sk-input:focus { background: #eef; outline: 1px solid var(--nba-blue); }
+    
+    .sk-table th:first-child, .sk-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 2; border-right: 2px solid #ccc; max-width: 100px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sk-table th:first-child { z-index: 3; background: #e0e0e0; }
+    .sk-pts-col { background-color: #fff0f0; font-weight: bold; color: var(--nba-red); }
+
+    .live-score-board { background: #000; color: #FFD700; text-align: center; padding: 10px; font-family: 'Oswald'; font-size: 2rem; letter-spacing: 2px; position: sticky; top: 0; z-index: 10; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+
+    /* Finals & Awards */
+    .finals-vs { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 30px 0; background: #111; color: #fff; flex-wrap: wrap; }
+    .finals-tm { text-align: center; }
+    .finals-tm img { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(255,215,0,0.5)); }
+    .finals-tm h2 { font-family: 'Oswald'; margin-top: 10px; font-size: 1.5rem; }
+    .vs-text { font-size: 2rem; font-weight: bold; color: var(--nba-red); font-family: 'Oswald'; font-style: italic; }
+    
+    #awardsContent { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px 10px; }
+    @media (max-width: 1024px) { #awardsContent { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { #awardsContent { grid-template-columns: 1fr; } }
+
+    .award-section { margin-bottom: 0; border: 1px solid #eee; padding: 20px 10px; border-radius: 12px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .award-section:hover { transform: translateY(-3px); }
+    .award-title { font-family: 'Oswald'; color: var(--nba-blue); font-size: 1.4rem; border-bottom: 4px solid #FFD700; padding-bottom: 5px; margin-bottom: 15px; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
+    .award-winner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .aw-img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid #FFD700; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+    .aw-info h4 { margin: 0; font-size: 1.6rem; font-family: 'Oswald'; line-height: 1.2; word-break: break-word; }
+
+    /* Standings */
+    .st-table { width: 100%; min-width: 300px; border-collapse: collapse; background: #fff; font-size: 0.9rem; }
+    .st-table th { background: #f8f9fa; color: #666; font-weight: bold; text-align: center; padding: 10px 5px; font-size: 0.75rem; text-transform: uppercase; border-bottom: 2px solid #ddd; }
+    .st-table th.th-left { text-align: left; padding-left: 10px; }
+    .st-table td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; color: #333; }
+    .st-table td.td-left { text-align: left; padding-left: 10px; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .st-table tr:hover { background-color: #f0f4ff; }
+    .st-rank { font-family: 'Oswald'; font-weight: bold; color: #444; width: 25px; display: inline-block; text-align: center; }
+    .st-logo { width: 20px; height: 20px; object-fit: contain; }
+    .playoff-line td { border-bottom: 2px dashed var(--nba-blue); }
+    .conf-header { background: #121212; color: #fff; padding: 8px 15px; font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; border-left: 5px solid; }
+    .conf-east { border-left-color: var(--nba-blue); }
+    .conf-west { border-left-color: var(--nba-red); }
+
+    /* MODALS */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 10px; }
+    .modal-content { background: #fff; border-radius: 8px; position: relative; animation: slideUp 0.3s; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; width: 95%; max-width: 600px; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .close-btn { position: absolute; top: 10px; right: 15px; font-size: 2rem; cursor: pointer; color: #fff; z-index: 2020; text-shadow: 0 2px 5px rgba(0,0,0,0.5); line-height: 1; transition: 0.2s; background: rgba(0,0,0,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .close-btn:hover { background: var(--nba-red); }
+    .clickable { cursor: pointer; transition: 0.2s; }
+    .clickable:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--nba-blue); }
+
+    /* LEADERBOARD & PROFILE */
+    #leaderboardModal .modal-content { padding: 15px; }
+    .lb-table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+    .lb-table th { text-align: left; background: #f4f4f4; padding: 10px; font-family: 'Oswald'; font-size: 0.9rem; color: #666; position: sticky; top: 0; }
+    .lb-table td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+    
+    #profileModal .modal-content { width: 95%; max-width: 1000px; background: #121212; color: white; padding: 0; }
+    .hero-section { background: linear-gradient(135deg, #1a2a6c 0%, #2a0845 100%); position: relative; display: flex; align-items: center; padding: 30px 20px; min-height: 300px; }
+    .hero-layout { display: flex; width: 100%; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+    .hero-left { display: flex; align-items: center; gap: 20px; flex: 1; min-width: 280px; }
+    .hero-img-container { width: 180px; flex-shrink: 0; margin: 0 auto; }
+    .hero-img { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 15px rgba(0,0,0,0.5)); border-radius: 50%; border: 4px solid rgba(255,255,255,0.1); }
+    .hero-info { font-family: 'Oswald', sans-serif; text-align: center; width: 100%; }
+    .hero-team-name { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; color: #fca311; margin-bottom: 5px; font-weight: 500; }
+    .hero-player-name { font-size: 2.5rem; font-weight: 700; text-transform: uppercase; line-height: 1; margin: 0; font-style: italic; }
+    .hero-right-group { display: flex; align-items: center; gap: 20px; flex: 1; justify-content: center; }
+    .hero-stats-3-box { display: flex; background: rgba(50, 20, 80, 0.6); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px 0; backdrop-filter: blur(5px); width: 100%; max-width: 400px; }
+    .stat-3-item { flex: 1; text-align: center; padding: 0 10px; }
+    .stat-3-lbl { font-size: 0.7rem; font-weight: 700; color: #ccc; margin-bottom: 5px; }
+    .stat-3-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 500; line-height: 1; }
+    
+    .full-stats-container { background: #000; border-top: 4px solid var(--nba-blue); padding: 0; }
+    .stats-grid-16 { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; background: #2a2a2a; border: 1px solid #2a2a2a; }
+    .stat-box-detail { background: #121212; padding: 15px 5px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .stat-box-detail:nth-child(even) { background: #161616; }
+    .stat-lbl { font-size: 0.65rem; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-val { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 500; color: #fff; }
+
+    @media(max-width: 768px) {
+        .hero-left { flex-direction: column; text-align: center; }
+        .hero-info { margin-top: 10px; }
+        .stats-grid-16 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* TEAM PROFILE */
+    #teamModal .modal-content { width: 95%; max-width: 900px; background: #f5f5f5; color: #333; padding: 0; overflow: hidden; }
+    .team-hero { background: #121212; color: white; padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; border-bottom: 4px solid var(--nba-red); }
+    .team-hero-logo { width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+    .team-hero-name { font-family: 'Oswald', sans-serif; font-size: 2.5rem; text-transform: uppercase; font-weight: 700; margin: 0; line-height: 1; letter-spacing: 1px; }
+    .team-hero-conf { font-size: 0.9rem; text-transform: uppercase; color: #888; margin-top: 5px; letter-spacing: 2px; }
+    .team-stats-strip { display: flex; background: #000; color: white; justify-content: center; flex-wrap: wrap; }
+    .team-stat-box { flex: 1; text-align: center; padding: 15px 5px; border-right: 1px solid #333; min-width: 80px; }
+    .team-stat-box:last-child { border-right: none; }
+    .ts-label { font-size: 0.7rem; font-weight: 700; color: #aaa; margin-bottom: 5px; }
+    .ts-value { font-family: 'Oswald', sans-serif; font-size: 1.8rem; font-weight: 500; line-height: 1; }
+    .team-content-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+    
+    /* >>> UPDATED: SMART SCROLLBAR LOGIC <<< */
+    #tmRoster, #tmTrans {
+        /* "Smart" Logic: 
+           1. clamp() เลือกค่ากลางระหว่าง 200px กับ 40vh (40% ของจอ) โดยไม่เกิน 320px
+           2. 320px = ประมาณ 5-6 คน ดังนั้นคนที่ 7 จะล้นและเกิด Scrollbar แน่นอน
+        */
+        max-height: 320px;       
+        overflow-y: auto;        /* Auto scroll if content > max-height */
+        
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 0;
+        scroll-behavior: smooth; /* เลื่อนนุ่มนวล */
+        overscroll-behavior: contain; /* ป้องกันการเลื่อนทะลุไปข้างหลัง */
+    }
+    
+    /* Custom Scrollbar Styling */
+    #tmRoster::-webkit-scrollbar, #tmTrans::-webkit-scrollbar { width: 6px; }
+    #tmRoster::-webkit-scrollbar-thumb, #tmTrans::-webkit-scrollbar-thumb { background-color: var(--nba-blue); border-radius: 10px; }
+    #tmRoster::-webkit-scrollbar-track, #tmTrans::-webkit-scrollbar-track { background: #eee; }
+
+    @media(max-width: 768px) { .team-content-split { grid-template-columns: 1fr; } }
+
+    /* BOX SCORE */
+    .box-score-header { font-family: 'Oswald'; font-size: 1.8rem; text-align: center; color: #FFD700; margin-bottom: 15px; }
+    .box-score-table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 20px; color:#333; }
+    .box-score-table th { background: #121212; color: #fff; padding: 8px; text-align: center; border: 1px solid #333; white-space: nowrap; }
+    .box-score-table td { padding: 6px; border: 1px solid #ddd; text-align: center; background:#fff; }
+    .box-score-team-title { font-family: 'Oswald'; font-size: 1.1rem; margin-bottom: 10px; padding-bottom:5px; border-bottom: 2px solid #ccc; color: #fff; margin-top: 15px; }
+
+    /* LINEUP SELECTOR */
+    .lineup-selector-container { display:grid; grid-template-columns: 1fr 1fr; gap:20px; padding:10px; }
+    .ls-team-box { background: #f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd; }
+    .ls-header { font-family:'Oswald'; font-size:1.2rem; margin-bottom:10px; text-align:center; border-bottom:2px solid #ccc; padding-bottom:5px; }
+    .ls-list { list-style:none; padding:0; max-height:300px; overflow-y:auto; }
+    .ls-item { display:flex; justify-content:space-between; align-items:center; background:#fff; margin-bottom:5px; padding:8px; border:1px solid #eee; border-radius:4px; transition:0.2s; cursor:pointer; }
+    .ls-item:hover { background:#f0f0f0; }
+    .ls-item.selected { background: var(--nba-blue); color:#fff; border-color:var(--nba-blue); }
+    .ls-item.selected .ls-btn { background:#fff; color:var(--nba-blue); content:'-'; }
+    .ls-info { display:flex; align-items:center; gap:10px; }
+    .ls-img { width:30px; height:30px; border-radius:50%; object-fit:cover; }
+    .ls-btn { width:25px; height:25px; border-radius:50%; background:#ddd; color:#333; display:flex; align-items:center; justify-content:center; font-weight:bold; font-family:'Oswald'; }
+    @media(max-width:768px) { .lineup-selector-container { grid-template-columns: 1fr; } }
+    
+    .footer-admin {
+  position: fixed;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+  z-index: 500;
+}
+
+.footer-admin a {
+  color: #888;
+  text-decoration: none;
+}
+
+.footer-admin a:hover {
+  color: #000;
+}
+
+/* TIERLIST STYLES */
+/* 1. คอนเทนเนอร์หลัก: ปรับให้เป็นแนวตั้งธรรมดา เพื่อให้แถวข้างในยืดได้เต็ม 100% */
+.tierlist-container { 
+    display: block; 
+    width: 100%; 
+    margin-bottom: 20px; 
+    border: 2px solid #ddd; 
+    border-radius: 8px; 
+    overflow: hidden; 
+    background: #fff; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+}
+
+.tierlist-positions { display: flex; flex-direction: column; background: #f8f9fa; border-right: 2px solid #ddd; }
+.tier-position-label { flex: 1; display: flex; align-items: center; justify-content: center; font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; color: #fff; text-align: center; padding: 15px 10px; border-bottom: 1px solid #ddd; text-transform: uppercase; min-height: 100px; }
+.tier-position-label:last-child { border-bottom: none; }
+
+.tierlist-tiers { display: flex; flex-direction: column; }
+/* 2. ตัวแถว: บังคับให้ยาวสุดขอบ และยืดความสูงให้เท่ากันทั้งหัวและท้าย */
+.tier-row {
+    display: flex;
+    width: 100%; 
+    min-height: 110px; /* เพิ่มความสูงขั้นต่ำเล็กน้อย */
+    border-bottom: 1px solid #ddd;
+    align-items: stretch; 
+} 
+
+.tier-row:last-child { border-bottom: none; }
+
+.tier-header { 
+    width: 100px; /* หรือ 120px ตามที่คุณชอบ */
+    flex-shrink: 0; /* ป้องกันหัวแถวโดนบีบจนผอม */
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-family: 'Oswald'; 
+    font-size: 1.5rem; 
+    font-weight: bold; 
+    color: #fff; 
+}
+
+.tier-header.s { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); }
+.tier-header.a { background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%); }
+.tier-header.b { background: linear-gradient(135deg, #FFD93D 0%, #FFC107 100%); }
+.tier-header.c { background: linear-gradient(135deg, #6BCB77 0%, #4CAF50 100%); }
+.tier-header.d { background: linear-gradient(135deg, #4D96FF 0%, #2196F3 100%); }
+
+.tier-players {
+    flex: 1;            /* หัวใจสำคัญ: บังคับให้ยืดเต็มพื้นที่ที่เหลือด้านขวา */
+    display: flex; 
+    flex-wrap: wrap; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 15px;      /* เพิ่ม padding ให้ดูไม่แน่นเกินไป */
+    background: #fff;   /* ใช้สีขาวทึบจะเห็นชัดว่าเต็มช่อง */
+    min-width: 0;       /* กันบั๊กหน้าจอเบี้ยว */
+}
+
+.player-card-tier { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: move; transition: 0.2s; flex: 0 0 auto; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.8); user-select: none; }
+.player-card-tier:hover { background: rgba(255,255,255,1); transform: scale(1.05); }\n.player-card-tier.dragging { opacity: 0.5; transform: scale(0.95); }\n.player-card-tier img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #ddd; object-fit: cover; transition: 0.2s; }
+.player-card-tier:hover img { transform: scale(1.1); border-color: var(--nba-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.player-card-tier-name { font-size: 0.8rem; font-weight: bold; text-align: center; color: #333; padding: 0 4px; line-height: 1.3; max-width: 100px; }
+
+.tierlist-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+.tierlist-btn { padding: 10px 15px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; font-family: 'Oswald'; text-transform: uppercase; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; }
+.tierlist-btn:hover { background: var(--nba-blue); color: #fff; border-color: var(--nba-blue); }
+.tierlist-btn.active { background: var(--nba-blue); color: #fff; border-color: var(--nba-blue); }
+
+/* ควบคุมให้รูปภาพนักบาสในหน้า Tier List แสดงผลเต็มกรอบพอดี */
+.player-card-tier img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover; /* บังคับให้รูปอยู่ตรงกลางและเต็มวงกลมพอดี */
+    object-position: top; /* เน้นให้เห็นส่วนหัวหรือใบหน้า */
+    background-color: #eee;
+    display: block;
+    margin: 0 auto 5px;
+}
+
+/* ค้นหา .player-card-tier img ในไฟล์แล้วแทนที่ด้วยตัวนี้ */
+.player-card-tier img {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important; /* บังคับให้รูปเต็มวงกลมพอดี */
+    object-position: center !important;
+    background-color: #eee;
+    display: block;
+    margin: 0 auto 5px;
+    border: 2px solid #fff; /* เพิ่มขอบขาวเพื่อให้ดูเด่นขึ้น */
+}
+
+</style>
+</head>
+<script>
+
+fetch('/content/site.json?' + Date.now())
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('page-title').innerText = data.title;
+    document.getElementById('title').innerText = data.title;
+    document.getElementById('description').innerText = data.description;
+  })
+  .catch(err => console.error("ไม่สามารถโหลด site.json:", err));
+
+
+  // Initialize admin authentication flag
+  window.isAdminAuthenticated = false;
+  
+  // เปิด popup login
+  function openAdminLogin() {
+    document.getElementById("adminLoginModal").style.display = "flex";
+  }
+
+  // ตรวจรหัสผ่าน
+  function verifyAdminPassword() {
+    const password = document.getElementById("adminPassword").value;
+    const error = document.getElementById("adminLoginError");
+
+    // ตั้งรหัสผ่านตรงนี้
+    const ADMIN_PASSWORD = "Lotto432";
+
+    if (password === ADMIN_PASSWORD) {
+      error.style.display = "none";
+      document.getElementById("adminLoginModal").style.display = "none";
+      
+      // Set authentication flag
+      window.isAdminAuthenticated = true;
+      
+      // Clear password field
+      document.getElementById("adminPassword").value = "";
+      
+      // Navigate to admin view
+      router('admin');
+    } else {
+      error.style.display = "block";
+      document.getElementById("adminPassword").value = "";
+    }
+  }
+
+  // ปิด modal เมื่อคลิกนอกกล่อง
+  window.onclick = function(event) {
+    const adminLoginModal = document.getElementById("adminLoginModal");
+    if (event.target === adminLoginModal) {
+      adminLoginModal.style.display = "none";
+    }
+    
+    const playerActionModal = document.getElementById("playerActionModal");
+    if (event.target === playerActionModal) {
+      playerActionModal.style.display = "none";
+    }
+  }
+</script>
+<body>
+
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div style="font-family:'Oswald'; color:#555;">LOADING DATABASE...</div>
+</div>
+
+<header>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div class="logo-group">
+                <img src="https://upload.wikimedia.org/wikipedia/en/0/03/National_Basketball_Association_logo.svg" alt="PBL Logo" class="logo-img">
+                <h1>PBL</h1>
+        </div>
+        <div class="header-controls">
+            <nav class="nav">
+                <button onclick="router('teams')" class="active">Teams</button>
+                <button onclick="router('players')">Players</button>
+                <button onclick="router('game')">Game</button>
+                <button onclick="router('stats')">Stats</button>
+                <button onclick="router('transactions')">Trans</button>
+                <button onclick="router('tierlist')">Tierlist</button>
+                <button onclick="router('history')">History</button>
+                <button onclick="router('admin')">Admin</button>
+            </nav>
+            <button id="themeToggleBtn" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </div>
+</header>
+<div id="adminLoginModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width:400px; width:90%;">
+                <span class="close-btn" onclick="document.getElementById('adminLoginModal').style.display='none'" style="color:#000;">&times;</span>
+                <div style="background:var(--nba-blue); color:#fff; padding:20px; text-align:center; border-radius:8px 8px 0 0;">
+                        <h2 style="margin:0; font-family:'Oswald';">🔐 ADMIN LOGIN</h2>
+                </div>
+                <div style="padding:20px;">
+                        <label>Login</label>
+                        <input type="password" id="adminPassword" placeholder="Enter password" onkeypress="if(event.key==='Enter') verifyAdminPassword()">
+                        <button class="btn" style="margin-top:15px;" onclick="verifyAdminPassword()">🔓 UNLOCK</button>
+                        <div id="adminLoginError" style="color:var(--nba-red); margin-top:10px; text-align:center; display:none; font-weight:bold;">❌ Incorrect Password</div>
+                </div>
+        </div>
+</div>
+
+<div class="container">
+
+  <div id="teams" class="view active">
+    <div class="card">
+      <h3>All Teams</h3>
+      <div class="search-box"><input type="text" id="searchTeam" onkeyup="renderTeamsView()" placeholder="Search teams..."></div>
+      <div id="viewAllTeamsGrid" class="grid-team"></div>
+    </div>
+  </div>
+
+  <div id="players" class="view">
+    <div class="card">
+      <h3>All Players</h3>
+      <div class="search-box"><input type="text" id="searchPlayer" onkeyup="renderPlayersView()" placeholder="Search players..."></div>
+      <ul id="viewAllPlayersList" style="list-style:none; padding:0;"></ul>
+    </div>
+  </div>
+
+  <div id="game" class="view">
+    <div id="gameLocked" class="card game-locked" style="display:none;">
+        <h2 id="lockedTitle">SEASON MODE LOCKED</h2>
+        <div class="game-progress"><div id="gameProgBar" class="game-bar" style="width:0%"></div></div>
+        
+        <div id="gameProgText" style="margin-top:10px;"></div>
+        
+        <button class="btn" style="margin-top:20px; max-width:200px;" onclick="router('admin')">MANAGE TEAMS</button>
+    </div>
+
+    <div id="gameUnlocked" style="display:none;">
+        <div class="card" style="background:#222; color:#fff;">
+            <div class="schedule-header" style="background:transparent; border:none; margin-bottom:0;">
+                <button class="btn" style="width:auto; padding:8px 15px;" onclick="changeMatchDay(-1)">&lt;</button>
+                <div style="text-align:center;">
+                    <h2 style="margin:0; font-family:'Oswald'; color:#FFD700; font-size: 1.5rem;" id="matchDayTitle">GAME 1</h2>
+                    <small style="color:#aaa;">REGULAR SEASON</small>
+                </div>
+                <button class="btn" style="width:auto; padding:8px 15px;" onclick="changeMatchDay(1)">&gt;</button>
+            </div>
+            <div style="text-align:center; margin-top:15px; display: flex; flex-direction: column; gap: 10px;">
+                <button id="btnStartSeason" class="btn" style="background:var(--nba-green); width:100%; font-size:1rem;" onclick="startSeason()">🏆 START SEASON (LOCK TRADES)</button>
+                <button id="btnDevSim" class="btn" style="background:var(--nba-red); width:100%; font-size:0.8rem; display:none;" onclick="dev_AutoSimulate()">⚡ DEV TOOL: SIMULATE SEASON</button>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <h3 style="color:#333; border-color:#333;">MATCHUPS</h3>
+                <div class="table-responsive">
+                    <div id="matchListContainer"></div>
+                </div>
+                <button id="btnGoFinals" class="btn" style="background:linear-gradient(45deg, #FFD700, #FFA500); color:#000; font-weight:bold; display:none; margin-top:20px;" onclick="openFinalsModal()">🏆 GO TO THE FINALS 🏆</button>
+            </div>
+            <div>
+                <h3 style="color:#333; border-color:#333;">STANDINGS</h3>
+                <div class="table-responsive">
+                    <div class="conf-header conf-east"><span>Eastern</span></div>
+                    <table class="st-table" style="margin-bottom:20px;">
+                        <thead><tr><th>Rk</th><th class="td-left">Team</th><th>W</th><th>L</th><th>%</th></tr></thead>
+                        <tbody id="standingsEast"></tbody>
+                    </table>
+                </div>
+                <div class="table-responsive">
+                    <div class="conf-header conf-west"><span>Western</span></div>
+                    <table class="st-table">
+                        <thead><tr><th>Rk</th><th class="td-left">Team</th><th>W</th><th>L</th><th>%</th></tr></thead>
+                        <tbody id="standingsWest"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="stats" class="view">
+    <div style="display:flex; flex-direction: column; gap: 10px; margin-bottom:20px;">
+        <div class="stats-sub-nav" style="margin-bottom:0; width: 100%;">
+            <button class="stats-sub-btn active" onclick="switchStatsTab('p')">Player Stats</button>
+            <button class="stats-sub-btn" onclick="switchStatsTab('t')">Team Stats</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; justify-content: center;">
+            <label style="margin:0;">SEASON:</label>
+            <select id="seasonSelector" onchange="loadSeasonStats()" style="width:auto; padding:8px;">
+                <option value="current">Current Season</option>
+            </select>
+        </div>
+    </div>
+    <div id="statsPlayers" class="stats-grid-display"></div>
+    <div id="statsTeams" class="stats-grid-display" style="display:none;"></div>
+  </div>
+
+  <div id="transactions" class="view">
+    <div class="card">
+      <h3>Transaction Market</h3>
+      <div id="transLockedMsg" style="background:#ffeeba; color:#856404; padding:15px; border:1px solid #ffeeba; border-radius:4px; margin-bottom:15px; display:none; text-align:center; font-weight:bold; font-size: 0.9rem;">
+          ⚠️ TRADE DEADLINE PASSED
+      </div>
+      <input type="text" id="transSearchInput" placeholder="Search transactions..." onkeyup="filterTransactions()" style="margin-bottom:10px;">
+      <ul id="transList" class="trans-list" style="max-height:400px; overflow-y:auto; border:1px solid #eee; padding:0; border-radius:4px; box-shadow:inset 0 0 5px rgba(0,0,0,0.05);"></ul>
+      <p id="noTransMsg" style="text-align:center; color:#999; display:none; padding:20px;">No transactions recorded yet.</p>
+    </div>
+  </div>
+
+  <div id="history" class="view">
+    <div class="card">
+        <h3>HALL OF FAME & LEGACY</h3>
+        <div id="historyList"></div>
+        <p id="noHistoryMsg" style="text-align:center; color:#999; padding:20px;">No seasons completed yet.</p>
+    </div>
+  </div>
+
+  <div id="tierlist" class="view">
+    <div class="card">
+      <h3>PLAYER TIERLIST</h3>
+      <div class="tierlist-controls" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" id="tierlistSearch" placeholder="Search players..." onkeyup="refreshTierlist()" style="flex:1; min-width:200px;">
+        <select id="tierlistPosFilter" onchange="refreshTierlist()" style="width: 150px;">
+          <option value="">All Positions</option>
+          <option value="PG">Point Guard (PG)</option>
+          <option value="SG">Shooting Guard (SG)</option>
+          <option value="SF">Small Forward (SF)</option>
+          <option value="PF">Power Forward (PF)</option>
+          <option value="C">Center (C)</option>
+        </select>
+      </div>
+      <div class="tierlist-container">
+        <div class="tierlist-tiers">
+          <div class="tier-row">
+            <div class="tier-header" style="background: linear-gradient(135deg, #999 0%, #666 100%);">POOL</div>
+            <div class="tier-players" id="tierPool"></div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-header s">S</div>
+            <div class="tier-players" id="tierS"></div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-header a">A</div>
+            <div class="tier-players" id="tierA"></div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-header b">B</div>
+            <div class="tier-players" id="tierB"></div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-header c">C</div>
+            <div class="tier-players" id="tierC"></div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-header d">D</div>
+            <div class="tier-players" id="tierD"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin" class="view">
+    <div id="adminLockedMsg" style="background:#f8d7da; color:#721c24; padding:20px; border-radius:8px; margin-bottom:20px; display:none; text-align:center;">
+        <h2>⛔ ADMIN LOCKED</h2>
+        <p>Season is in progress. Trades and edits are disabled until the season ends.</p>
+    </div>
+
+    <div id="adminContent">
+        <div class="grid-2">
+           <div class="card">
+              <h3>Create Team</h3>
+              <label>Team Name</label><input type="text" id="tName" placeholder="e.g. Chicago Bulls">
+              <label>Abbreviation (3 Chars)</label><input type="text" id="tShort" placeholder="e.g. CHI" maxlength="3" style="text-transform:uppercase;">
+              <label>Conference</label><select id="tConf"><option value="East">Eastern Conference</option><option value="West">Western Conference</option></select>
+              <label>Logo</label><input type="file" id="tLogoInput" accept="image/*">
+              <button class="btn" onclick="handleAddTeam()">Add Team</button>
+           </div>
+           <div class="card">
+              <h3>Create Player</h3>
+              <label>Player Name</label><input type="text" id="pName" placeholder="e.g. Michael Jordan">
+              <label>Team</label><select id="pTeamSelect"><option value="">-- Select Team --</option></select>
+              <label>Position (ตำแหน่ง)</label><select id="pPosition">
+                <option value="">-- Select Position --</option>
+                <option value="PG">Point Guard (PG)</option>
+                <option value="SG">Shooting Guard (SG)</option>
+                <option value="SF">Small Forward (SF)</option>
+                <option value="PF">Power Forward (PF)</option>
+                <option value="C">Center (C)</option>
+              </select>
+              <label>Photo</label><input type="file" id="pPicInput" accept="image/*">
+              <button class="btn" onclick="handleAddPlayer()">Add Player</button>
+           </div>
+        </div>
+        <div class="card" style="margin-top:20px; border-left: 5px solid #007bff;">
+           <h3>🛠️ Developer Tools</h3>
+           <p>Database is empty? Click here to generate 10 Teams & 50 Players instantly.</p>
+           <button class="btn" style="background:#007bff;" onclick="generateDemoData()">🚀 GENERATE NBA DATA (AUTO FILL)</button>
+        </div>
+        <div class="card" style="margin-top:20px;">
+           <h3>Player Management & Transactions</h3>
+           <div class="grid-2" style="margin-bottom:20px;">
+              <div>
+                 <h4 style="margin-top:0; color:var(--nba-blue); font-size:1rem;">Teams</h4>
+                 <div class="search-box"><input type="text" id="adminSearchTeam" onkeyup="filterAdminTeams()" placeholder="Search teams..."></div>
+                 <div id="adminTeamsList" style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:4px; background:var(--card-bg);"></div>
+              </div>
+              <div>
+                 <h4 style="margin-top:0; color:var(--nba-blue); font-size:1rem;">Players</h4>
+                 <div class="search-box"><input type="text" id="adminSearchPlayer" onkeyup="filterAdminPlayers()" placeholder="Search players..."></div>
+                 <div id="adminPlayersList" style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:4px; background:var(--card-bg);"></div>
+              </div>
+           </div>
+
+           <button class="btn" style="background:#dc3545;" onclick="hardReset()">FACTORY RESET (CLEAR DB)</button>
+        </div>
+        <div id="playerActionModal" class="modal" style="display:none;">
+           <div class="modal-content" style="max-width:400px; width:90%; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column;">
+              <span class="close-btn" onclick="closePlayerActionModal()" style="color:#000;">&times;</span>
+              <div style="padding:20px; flex:1; overflow-y:auto;">
+                 <h3 id="playerActionTitle" style="margin:0 0 20px 0; text-align:center;"></h3>
+                 <div id="playerActionButtons" style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn" style="background:var(--nba-green);" onclick="showMovePlayerForm()">✅ Sign / Move Player</button>
+                    <button class="btn" style="background:var(--nba-red);" onclick="showWaivePlayerForm()">❌ Waive Player</button>
+                    <button class="btn" style="background:var(--nba-sky);" onclick="showTradePlayerForm()">🔄 Trade Player</button>
+                    <button class="btn" style="background:#8B0000; margin-top:10px;" onclick="deletePlayerAction()">🗑️ DELETE PLAYER</button>
+                 </div>
+                 <div id="playerActionForm" style="display:none; margin-top:20px;"></div>
+              </div>
+           </div>
+        </div>
+
+        <div id="teamActionModal" class="modal" style="display:none;">
+           <div class="modal-content" style="max-width:400px; width:90%; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column;">
+              <span class="close-btn" onclick="closeTeamActionModal()" style="color:#000;">&times;</span>
+              <div style="padding:20px; flex:1; overflow-y:auto;">
+                 <h3 id="teamActionTitle" style="margin:0 0 20px 0; text-align:center;"></h3>
+                 <div id="teamActionButtons" style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn" style="background:var(--nba-red);" onclick="deleteTeamAction()">🗑️ DELETE TEAM</button>
+                 </div>
+              </div>
+           </div>
+        </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="matchModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeMatchModal()" style="color:#000;">&times;</span>
+        
+        <div id="liveScoreView">
+            <div class="live-score-board">
+                <div id="skHomeName">HOME</div>
+                <div id="skScoreDisplay">0 - 0</div>
+                <div id="skRoadName">AWAY</div>
+            </div>
+            <div style="padding:10px;">
+                <div class="scorekeeper-grid">
+                    <div>
+                        <div class="sk-team-header" id="skHomeHeader">HOME</div>
+                        <div class="table-responsive">
+                            <table class="sk-table">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width:120px;">Player</th>
+                                        <th style="background:#ffe0e0; color:red; font-weight:bold;">PTS</th> <th>FGM</th><th>FGA</th>
+                                        <th>3PM</th><th>3PA</th>
+                                        <th>FTM</th><th>FTA</th>
+                                        <th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>FLS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="skHomeBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sk-team-header" id="skRoadHeader">AWAY</div>
+                        <div class="table-responsive">
+                            <table class="sk-table">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width:120px;">Player</th>
+                                        <th style="background:#ffe0e0; color:red; font-weight:bold;">PTS</th>
+                                        <th>FGM</th><th>FGA</th>
+                                        <th>3PM</th><th>3PA</th>
+                                        <th>FTM</th><th>FTA</th>
+                                        <th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>FLS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="skRoadBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:10px; flex-direction: column;">
+                    <button class="btn" style="background:#666;" onclick="dev_AutoFillMatch()">🎲 AUTO-FILL</button>
+                    <button class="btn" style="background:var(--nba-green);" onclick="confirmMatchResult()">✅ CONFIRM MATCH</button>
+                </div>
+            </div>
+        </div>
+
+<div id="lineupSelectionView" style="display:none;">
+    <h2 style="text-align:center; font-family:'Oswald'; margin-top:10px;">SELECT ACTIVE ROSTER</h2>
+    <p style="text-align:center; color:#666; font-size:0.9rem;">Select at least 5 players per team to start.</p>
+    
+    <div class="lineup-selector-container">
+        <div class="ls-team-box">
+            <div class="ls-header" id="lsHomeHeader">HOME</div>
+            <div id="lsHomeCount" style="text-align:center; margin-bottom:5px; font-weight:bold; color:var(--nba-blue);">Selected: 0</div>
+            <ul id="lsHomeList" class="ls-list"></ul>
+        </div>
+
+        <div class="ls-team-box">
+            <div class="ls-header" id="lsRoadHeader">AWAY</div>
+            <div id="lsRoadCount" style="text-align:center; margin-bottom:5px; font-weight:bold; color:var(--nba-red);">Selected: 0</div>
+            <ul id="lsRoadList" class="ls-list"></ul>
+        </div>
+    </div>
+
+    <div style="text-align:center; padding:20px; border-top:1px solid #eee;">
+        <button class="btn" onclick="confirmLineups()" style="background:var(--nba-green); max-width:300px; margin:0 auto;">✅ CONFIRM & START GAME</button>
+    </div>
+</div>
+
+        <div id="boxScoreView" style="display:none; padding:15px; background:#000; color:#fff;">
+            <div id="bsHeader" class="box-score-header"></div>
+            <div class="grid-2">
+                <div>
+                    <div id="bsHomeTitle" class="box-score-team-title"></div>
+                    <div class="table-responsive">
+                        <table class="box-score-table">
+                            <thead><tr><th>Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FGM</th><th>FGA</th><th>3PM</th><th>3PA</th><th>FTM</th><th>FTA</th><th>TOV</th><th>FLS</th></tr></thead>
+                            <tbody id="bsHomeBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <div id="bsRoadTitle" class="box-score-team-title"></div>
+                    <div class="table-responsive">
+                        <table class="box-score-table">
+                            <thead><tr><th>Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FGM</th><th>FGA</th><th>3PM</th><th>3PA</th><th>FTM</th><th>FTA</th><th>TOV</th><th>FLS</th></tr></thead>
+                            <tbody id="bsRoadBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="finalsModal" class="modal">
+    <div class="modal-content" style="background:#000; color:#fff; width:95%; max-width:1000px;">
+        <span class="close-btn" onclick="document.getElementById('finalsModal').style.display='none'">&times;</span>
+        <div class="finals-vs">
+            <div class="finals-tm"><img id="finEastLogo" src=""><h2 id="finEastName">EAST</h2></div>
+            <div class="vs-text">VS</div>
+            <div class="finals-tm"><img id="finWestLogo" src=""><h2 id="finWestName">WEST</h2></div>
+        </div>
+        <div style="text-align:center; padding:30px;">
+            <h1 style="font-family:'Oswald'; color:#FFD700; margin-bottom:20px;">NBA FINALS</h1>
+            <button class="btn" style="background:linear-gradient(45deg, #d62424, #b31b1b); font-size:1.2rem;" onclick="startFinalsMatch()">🏀 PLAY CHAMPIONSHIP GAME</button>
+            <br><br>
+            <button class="btn" style="background:#333; width:auto; font-size:0.8rem;" onclick="dev_SimFinals()">⚡ SIMULATE FINALS</button>
+        </div>
+    </div>
+</div>
+
+<div id="awardsModal" class="modal">
+    <div class="modal-content" style="max-width:1300px; width:95vw;"> 
+        <span class="close-btn" onclick="document.getElementById('awardsModal').style.display='none'" style="color:#000; z-index:9999;">&times;</span>
+        <div style="background:var(--nba-blue); color:#fff; padding:20px; text-align:center;">
+            <h1 style="font-family:'Oswald'; margin:0; font-size:2rem; letter-spacing:2px;">🏆 SEASON AWARDS 🏆</h1>
+        </div>
+        <div style="padding:20px; background:#f0f2f5;">
+            <div id="awardsContent"></div>
+        </div>
+        <div style="padding:20px; text-align:center; border-top:1px solid #ddd; background:#fff;">
+            <button id="btnSaveSeason" class="btn" style="max-width:300px; font-size:1.2rem; margin:0 auto;" onclick="archiveSeason()">💾 SAVE & START NEW SEASON</button>
+        </div>
+    </div>
+</div>
+
+<div id="teamModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="document.getElementById('teamModal').style.display='none'" style="color:#fff; z-index:9999;">&times;</span>
+    <div class="team-hero">
+       <img id="tmHeroLogo" class="team-hero-logo" src="" onerror="this.onerror=null; this.style.display='none'">
+       <h1 id="tmHeroName" class="team-hero-name">Team Name</h1>
+       <div id="tmHeroConf" class="team-hero-conf">Conference</div>
+       <div id="tmRings" style="margin-top:10px; color:#FFD700; font-family:'Oswald'; font-size:1.2rem;"></div> 
+    </div>
+    <div class="team-stats-strip">
+       <div class="team-stat-box"><div class="ts-label">PPG</div><div class="ts-value" id="tmPPG">-</div></div>
+       <div class="team-stat-box"><div class="ts-label">RPG</div><div class="ts-value" id="tmRPG">-</div></div>
+       <div class="team-stat-box"><div class="ts-label">APG</div><div class="ts-value" id="tmAPG">-</div></div>
+       <div class="team-stat-box"><div class="ts-label">OPPG</div><div class="ts-value" id="tmOPPG">-</div></div>
+    </div>
+    <div class="team-content-split">
+       <div>
+           <h4 style="border-bottom:2px solid var(--nba-blue); color:var(--nba-blue);">ROSTER</h4>
+           <ul id="tmRoster" style="list-style:none; padding:0;"></ul>
+       </div>
+       <div>
+           <h4 style="border-bottom:2px solid #ccc; color:#666;">HISTORY</h4>
+           <ul id="tmTrans" style="list-style:none; padding:0;"></ul>
+       </div>
+    </div>
+  </div>
+</div>
+
+<div id="profileModal" class="modal">
+  <div class="modal-content" style="background:#121212;">
+    <span class="close-btn" onclick="document.getElementById('profileModal').style.display='none'">&times;</span>
+    <div class="hero-section">
+       <div class="hero-layout">
+           <div class="hero-left">
+               <div class="hero-img-container"><img id="profPic" class="hero-img" src="" onerror="this.onerror=null; this.src=getDummyImg('NO IMAGE');"></div>
+               <div class="hero-info"><div id="profTeam" class="hero-team-name"></div><div style="display:flex; align-items:baseline; gap:10px;"><h1 id="profName" class="hero-player-name" style="font-size:2.2rem;"></h1><span id="profPos" style="font-size:1.5rem; color:#ccc; text-transform:uppercase; letter-spacing:1px; font-weight:500;"></span></div></div>
+           </div>
+           <div class="hero-right-group">
+               <div class="hero-stats-3-box">
+                   <div class="stat-3-item"><div class="stat-3-lbl">PPG</div><div class="stat-3-val" id="hPPG">-</div></div>
+                   <div class="stat-3-item" style="border-left:1px solid rgba(255,255,255,0.2); border-right:1px solid rgba(255,255,255,0.2);"><div class="stat-3-lbl">RPG</div><div class="stat-3-val" id="hRPG">-</div></div>
+                   <div class="stat-3-item" style="border-left:1px solid rgba(255,255,255,0.2);"><div class="stat-3-lbl">APG</div><div class="stat-3-val" id="hAPG">-</div></div>
+               </div>
+           </div>
+       </div>
+    </div>
+    <div class="full-stats-container">
+       <div class="stats-grid-16">
+           <div class="stat-box-detail"><div class="stat-lbl">PTS</div><div class="stat-val" id="dPTS">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FGM</div><div class="stat-val" id="dFGM">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FGA</div><div class="stat-val" id="dFGA">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FG%</div><div class="stat-val" id="dFG_P">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">3PM</div><div class="stat-val" id="d3PM">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">3PA</div><div class="stat-val" id="d3PA">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">3P%</div><div class="stat-val" id="d3P_P">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FTM</div><div class="stat-val" id="dFTM">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FTA</div><div class="stat-val" id="dFTA">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FT%</div><div class="stat-val" id="dFT_P">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">AST</div><div class="stat-val" id="dAST">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">STL</div><div class="stat-val" id="dSTL">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">BLK</div><div class="stat-val" id="dBK">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">REB</div><div class="stat-val" id="dREB">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">TOV</div><div class="stat-val" id="dTOV">-</div></div>
+           <div class="stat-box-detail"><div class="stat-lbl">FLS</div><div class="stat-val" id="dFLS">-</div></div>
+       </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaderboardModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('leaderboardModal').style.display='none'" style="color:#000;">&times;</span>
+        <h2 id="lbTitle" style="font-family:'Oswald'; margin-top:0; color:var(--nba-blue);">Leaderboard</h2>
+        <div class="table-responsive">
+            <table class="lb-table">
+                <thead><tr><th style="width:50px;">Rank</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+                <tbody id="lbTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- 1. INDEXED DB SETUP ---
+const DB_NAME = 'NBA_Manager_DB_PRO';
+const DB_VERSION = 5; 
+let db;
+
+// Global Memory
+let teams = [], players = [], trans = [], schedule = [], history = [];
+let currentMatchDay = 1;
+let lastSelectedTeamId = "";
+let isSeasonActive = false; 
+
+function getDummyImg(text) { return `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect fill='%23ccc' width='200' height='200'/%3E%3Ctext fill='%23333' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='sans-serif'%3E${text}%3C/text%3E%3C/svg%3E`; }
+const DEFAULT_P_IMG = getDummyImg('PLAYER');
+const DEFAULT_T_IMG = getDummyImg('TM');
+
+// DB Functions
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('teams')) db.createObjectStore('teams', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('players')) db.createObjectStore('players', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('trans')) db.createObjectStore('trans', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('schedule')) db.createObjectStore('schedule', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('history')) db.createObjectStore('history', { keyPath: 'seasonId' });
+            if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+            if (!db.objectStoreNames.contains('archivedStats')) db.createObjectStore('archivedStats', { keyPath: 'id' }); 
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror = (e) => reject(e.target.error);
+    });
+}
+function dbPut(store, item) { return new Promise((r, j) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).put(item).onsuccess = () => r(); }); }
+function dbGetAll(store) { return new Promise((r, j) => { const tx = db.transaction(store, 'readonly'); tx.objectStore(store).getAll().onsuccess = (e) => r(e.target.result); }); }
+function dbDelete(store, id) { return new Promise((r, j) => { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(id).onsuccess = () => r(); }); }
+function dbClear() {
+    return new Promise((resolve, reject) => {
+        if(db) db.close(); 
+        const req = indexedDB.deleteDatabase(DB_NAME);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject();
+        req.onblocked = () => resolve();
+    });
+}
+
+// APP INIT
+async function initApp() {
+    try {
+        db = await openDB();
+        const results = await Promise.all([
+            dbGetAll('teams'), dbGetAll('players'), dbGetAll('trans'), dbGetAll('schedule'), dbGetAll('history'), dbGetAll('settings')
+        ]);
+        teams = results[0] || [];
+        players = results[1] || [];
+        trans = results[2] || [];
+        schedule = results[3] || [];
+        history = results[4] || [];
+        const settings = results[5] || [];
+        
+        const seasonState = settings.find(s => s.key === 'isSeasonActive');
+        isSeasonActive = seasonState ? seasonState.value : false;
+        
+        trans.sort((a,b) => b.date - a.date);
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        const sel = document.getElementById('seasonSelector');
+        history.forEach((h, i) => {
+            const opt = document.createElement('option');
+            opt.value = h.seasonId;
+            opt.innerText = `Season ${i + 1}`;
+            sel.appendChild(opt);
+        });
+        
+        router('teams');
+
+        // Apply persisted theme (if any)
+        try {
+            const saved = localStorage.getItem('pb_theme');
+            if(saved) applyTheme(saved);
+        } catch(e) { console.warn('Theme load failed', e); }
+    } catch (e) {
+        console.error(e);
+        if(confirm("Database Error (Version Mismatch). Reset?")) hardReset();
+    }
+}
+
+function router(id) {
+  // Check if accessing admin tab - require password verification
+  if(id === 'admin') {
+    if(!window.isAdminAuthenticated) {
+      openAdminLogin();
+      return; // Prevent access to admin tab
+    }
+  }
+
+  document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); 
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b => {
+      b.classList.remove('active');
+      if(b.getAttribute('onclick').includes(`'${id}'`)) b.classList.add('active');
+  });
+
+  if(id === 'transactions') {
+      if(isSeasonActive) document.getElementById('transLockedMsg').style.display = 'block';
+      else document.getElementById('transLockedMsg').style.display = 'none';
+      renderTransactions();
+  }
+  
+  if(id === 'admin') {
+      if(isSeasonActive) {
+          document.getElementById('adminLockedMsg').style.display = 'block';
+          document.getElementById('adminContent').style.display = 'none';
+      } else {
+          document.getElementById('adminLockedMsg').style.display = 'none';
+          document.getElementById('adminContent').style.display = 'block';
+          renderAdminUI();
+      }
+  }
+
+  if(id === 'teams') renderTeamsView();
+  if(id === 'players') renderPlayersView();
+  if(id === 'tierlist') refreshTierlist();
+  if(id === 'stats') loadSeasonStats(); 
+  if(id === 'history') renderHistoryView();
+  if(id === 'game') renderGameView(); 
+}
+
+// THEME HELPERS
+function applyTheme(theme) {
+    if(!theme) return;
+    try {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('pb_theme', theme);
+        const btn = document.getElementById('themeToggleBtn');
+        if(btn) btn.innerText = theme === 'dark' ? '🌙' : '🌞';
+    } catch(e) { console.warn('applyTheme error', e); }
+}
+function toggleTheme() {
+    try {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    } catch(e) { console.warn('toggleTheme error', e); }
+}
+
+const convertBase64 = (file) => new Promise((resolve) => {
+    if(!file) resolve(null);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+        const img = new Image(); img.src = e.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const max = 400; const scale = max/img.width;
+            canvas.width = max; canvas.height = img.height*scale;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+        }
+    }
+});
+
+// ==========================================
+// STATS LOGIC
+// ==========================================
+const PLAYER_CATS = [{ key: 'ppg', label: 'Points Per Game' }, { key: 'rpg', label: 'Rebounds Per Game' }, { key: 'apg', label: 'Assists Per Game' }, { key: 'bpg', label: 'Blocks Per Game' }, { key: 'spg', label: 'Steals Per Game' }, { key: 'fg_pct', label: 'Field Goal %' }, { key: 'fg3_m', label: '3 Pointers Made' }, { key: 'fg3_pct', label: 'Three Point %' }];
+const TEAM_CATS = [{ key: 'ppg', label: 'Points Per Game' }, { key: 'rpg', label: 'Rebounds Per Game' }, { key: 'apg', label: 'Assists Per Game' }, { key: 'bpg', label: 'Blocks Per Game' }, { key: 'spg', label: 'Steals Per Game' }, { key: 'fg_pct', label: 'Field Goal %' }, { key: 'fg3_m', label: '3 Pointers Made' }, { key: 'fg3_pct', label: 'Three Point %' }, { key: 'ft_pct', label: 'Free Throw %' }];
+let currStatsTab = 'p'; 
+let statsSource = []; 
+
+function switchStatsTab(type) {
+    currStatsTab = type;
+    document.querySelectorAll('.stats-sub-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.stats-sub-btn')[type === 'p' ? 0 : 1].classList.add('active');
+    document.getElementById('statsPlayers').style.display = type === 'p' ? 'grid' : 'none';
+    document.getElementById('statsTeams').style.display = type === 't' ? 'grid' : 'none';
+    loadSeasonStats();
+}
+
+async function loadSeasonStats() {
+    const seasonId = document.getElementById('seasonSelector').value;
+    if (seasonId === 'current') {
+        statsSource = currStatsTab === 'p' ? players : teams;
+    } else {
+        const archive = await dbGetAll('archivedStats');
+        const entry = archive.find(a => a.id.toString() === seasonId);
+        if (entry) {
+            statsSource = currStatsTab === 'p' ? entry.players : entry.teams;
+        } else {
+            statsSource = [];
+        }
+    }
+    renderStatsView();
+}
+
+function getSortedData(statKey) {
+    const hiddenKeys = ['fg_pct', 'fg3_pct', 'ft_pct', 'fg3_m'];
+    return [...statsSource].sort((a,b) => {
+        let valA = 0, valB = 0;
+        const getRaw = (item) => item.hiddenStats || item.accStats;
+        const rawA = getRaw(a);
+        const rawB = getRaw(b);
+
+        if(hiddenKeys.includes(statKey) && rawA && rawB) {
+            const getPct = (raw, make, att) => (raw[att] > 0 ? (raw[make]/raw[att])*100 : 0);
+            if(statKey === 'fg_pct') { valA = getPct(rawA, 'fgm', 'fga'); valB = getPct(rawB, 'fgm', 'fga'); }
+            else if(statKey === 'fg3_pct') { valA = getPct(rawA, 'fg3m', 'fg3a'); valB = getPct(rawB, 'fg3m', 'fg3a'); }
+            else if(statKey === 'ft_pct') { valA = getPct(rawA, 'ftm', 'fta'); valB = getPct(rawB, 'ftm', 'fta'); }
+            else if(statKey === 'fg3_m') { 
+                valA = rawA.gp > 0 ? rawA.fg3m/rawA.gp : 0;
+                valB = rawB.gp > 0 ? rawB.fg3m/rawB.gp : 0;
+            }
+        } else {
+            valA = (a.stats && a.stats[statKey]) ? parseFloat(a.stats[statKey]) : 0;
+            valB = (b.stats && b.stats[statKey]) ? parseFloat(b.stats[statKey]) : 0;
+        }
+        return valB - valA;
+    });
+}
+
+function renderStatsView() {
+    const pContainer = document.getElementById('statsPlayers');
+    const tContainer = document.getElementById('statsTeams');
+    if(currStatsTab === 'p') pContainer.innerHTML = PLAYER_CATS.map(cat => buildStatCard('p', cat)).join('');
+    if(currStatsTab === 't') tContainer.innerHTML = TEAM_CATS.map(cat => buildStatCard('t', cat)).join('');
+}
+
+function buildStatCard(type, cat) {
+    const list = getSortedData(cat.key).slice(0, 5); 
+    let listHTML = list.map((item, index) => {
+        let val = "0.0";
+        const raw = item.hiddenStats || item.accStats;
+
+        if(raw && ['fg_pct', 'fg3_pct', 'ft_pct'].includes(cat.key)) {
+             let m=0, a=0;
+             if(cat.key === 'fg_pct') { m=raw.fgm; a=raw.fga; }
+             if(cat.key === 'fg3_pct') { m=raw.fg3m; a=raw.fg3a; }
+             if(cat.key === 'ft_pct') { m=raw.ftm; a=raw.fta; }
+             val = (a > 0 ? ((m/a)*100).toFixed(1) + "%" : "0.0%");
+        } else if (raw && cat.key === 'fg3_m') {
+             val = (raw.gp > 0 ? (raw.fg3m / raw.gp).toFixed(1) : "0.0");
+        } else {
+             val = (item.stats && item.stats[cat.key]) ? parseFloat(item.stats[cat.key]).toFixed(1) : "0.0";
+        }
+
+        let teamInfo = "";
+        let imgSrc = ""; 
+
+        if (type === 'p') {
+            if(item.teamName) teamInfo = item.teamName;
+            else {
+                const t = teams.find(t => t.id === item.teamId);
+                teamInfo = t ? t.short : 'FA';
+            }
+            imgSrc = item.pic ? item.pic : DEFAULT_P_IMG;
+        } else {
+            teamInfo = item.conf ? item.conf.substr(0,1).toUpperCase() : '-';
+            imgSrc = item.logo ? item.logo : DEFAULT_T_IMG;
+        }
+        
+        const clickAction = document.getElementById('seasonSelector').value === 'current' ? `onclick="${type==='p' ? `openProfile(${item.id})` : `openTeamProfile(${item.id})`}"` : '';
+        const cursor = document.getElementById('seasonSelector').value === 'current' ? 'clickable' : '';
+        
+        return `
+        <li class="leader-item ${cursor}" ${clickAction}>
+            <div class="rank-num">${index + 1}.</div>
+            <img src="${imgSrc}" class="ld-img"> 
+            <div class="ld-info">
+                <span class="ld-name">${item.name}</span>
+                <span class="ld-team">${teamInfo}</span>
+            </div>
+            <div class="ld-val">${val}</div>
+        </li>`;
+    }).join('');
+    return `<div class="stat-card"><div class="stat-card-header"><h4 class="stat-title">${cat.label}</h4><a class="stat-link" onclick="openFullLeaderboard('${cat.key}', '${cat.label}')">SEE ALL ></a></div><ul class="leader-list">${listHTML}</ul></div>`;
+}
+
+function openFullLeaderboard(key, label) {
+    const list = getSortedData(key);
+    document.getElementById('lbTitle').innerText = label;
+    document.getElementById('lbTableBody').innerHTML = list.map((item, index) => {
+         let val = "0.0";
+         const raw = item.hiddenStats || item.accStats;
+
+         if(raw && ['fg_pct', 'fg3_pct', 'ft_pct'].includes(key)) {
+             let m=0, a=0;
+             if(key === 'fg_pct') { m=raw.fgm; a=raw.fga; }
+             if(key === 'fg3_pct') { m=raw.fg3m; a=raw.fg3a; }
+             if(key === 'ft_pct') { m=raw.ftm; a=raw.fta; }
+             val = (a > 0 ? ((m/a)*100).toFixed(1) + "%" : "0.0%");
+         } else if (raw && key === 'fg3_m') {
+             val = (raw.gp > 0 ? (raw.fg3m / raw.gp).toFixed(1) : "0.0");
+         } else {
+             val = (item.stats && item.stats[key]) ? parseFloat(item.stats[key]).toFixed(1) : "0.0";
+         }
+
+         let sub = "";
+         if(currStatsTab === 'p') {
+             sub = item.teamName ? item.teamName : (teams.find(t => t.id === item.teamId)?.name || 'FA');
+         } else {
+             sub = item.conf + 'ern Conf';
+         }
+         return `<tr><td>${index+1}</td><td><b>${item.name}</b><br><small style="color:#888;">${sub}</small></td><td style="text-align:right; font-family:'Oswald'; font-weight:bold;">${val}</td></tr>`;
+    }).join('');
+    document.getElementById('leaderboardModal').style.display = 'flex';
+}
+
+function renderTeamsView() {
+    const k = document.getElementById('searchTeam').value.toLowerCase();
+    document.getElementById('viewAllTeamsGrid').innerHTML = teams.filter(t => t.name.toLowerCase().includes(k) || t.short.toLowerCase().includes(k)).map(t => `
+        <div class="card clickable" onclick="openTeamProfile(${t.id})" style="text-align:center; padding:15px; margin-bottom:0;">
+           ${t.logo ? `<img src="${t.logo}" style="width:60px;height:60px;object-fit:contain;margin-bottom:10px;">` : ''}
+           <div style="font-weight:bold; color:var(--nba-blue);">${t.short}</div>
+           <div style="font-size:0.9rem;">${t.name}</div>
+        </div>
+    `).join('');
+}
+function renderPlayersView() {
+    const k = document.getElementById('searchPlayer').value.toLowerCase();
+    document.getElementById('viewAllPlayersList').innerHTML = players.filter(p => p.name.toLowerCase().includes(k)).map(p => {
+       const t = teams.find(x => x.id === p.teamId);
+       return `
+       <li class="clickable" onclick="openProfile(${p.id})" style="padding:10px; border-bottom:1px solid #eee; display:flex; align-items:center; gap:10px;">
+          ${p.pic ? `<img src="${p.pic}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">` : '<div style="width:40px;height:40px;background:#eee;border-radius:50%;"></div>'}
+          <div><b>${p.name}</b> <br><small style="color:#666;">${t ? t.name : 'Free Agent'}</small></div>
+       </li>`;
+    }).join('');
+}
+
+function renderAdminUI() {
+    const populate = (id) => {
+        const sel = document.getElementById(id);
+        const oldVal = sel.value;
+        sel.innerHTML = '<option value="">-- Select Team --</option>';
+        teams.forEach(t => sel.innerHTML += `<option value="${t.id}">${t.name}</option>`);
+        if(id === 'pTeamSelect' && lastSelectedTeamId) sel.value = lastSelectedTeamId; else sel.value = oldVal;
+    };
+    populate('pTeamSelect'); populate('admMoveTeam');
+
+    const populateP = (id, filterFn) => {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '<option value="">-- Select Player --</option>';
+        players.filter(filterFn).sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+            const t = teams.find(x => x.id === p.teamId);
+            sel.innerHTML += `<option value="${p.id}">${p.name} (${t ? t.short : 'FA'})</option>`;
+        });
+    };
+    populateP('admMovePlayer', () => true);
+    populateP('admWaivePlayer', p => p.teamId); 
+    populateP('admTradeP1', p => p.teamId);
+    populateP('admTradeP2', p => p.teamId);
+
+    const rt = teams.slice().reverse().map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:10px 8px; font-size:0.9rem; cursor:pointer; transition:0.2s; border-radius:4px;" onclick="openTeamActionModal(${t.id})" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">
+            <span style="display:flex;align-items:center;gap:10px; flex:1;">
+                ${t.logo ? `<img src="${t.logo}" style="width:28px;height:28px;object-fit:contain;">` : ''} 
+                <b style="color:var(--nba-blue);">${t.short}</b> - ${t.name}
+            </span>
+        </div>
+    `).join('');
+
+    const rp = players.slice().reverse().map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #eee;padding:10px 8px; font-size:0.9rem; cursor:pointer; transition:0.2s; border-radius:4px;" onclick="openPlayerActionModal(${p.id})" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">
+            <span style="display:flex;align-items:flex-start;gap:10px; flex:1;">
+                ${p.pic ? `<img src="${p.pic}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">` : '<div style="width:28px;height:28px;background:#eee;border-radius:50%;"></div>'} 
+                <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-weight:600; color:var(--nba-blue);">${p.name}</div><div style="color:#999; font-size:0.7rem;">${p.position || 'N/A'}</div></div>
+            </span>
+        </div>
+    `).join('');
+    
+    document.getElementById('adminTeamsList').innerHTML = rt || '<div style="color:#999;text-align:center;padding:20px; font-size:0.9rem;">No teams</div>';
+    document.getElementById('adminPlayersList').innerHTML = rp || '<div style="color:#999;text-align:center;padding:20px; font-size:0.9rem;">No players</div>';
+}
+
+async function handleAddTeam() {
+    if (teams.length >= 10) return alert("⛔ LIMIT REACHED: 10 Teams Max");
+    const name = document.getElementById('tName').value.trim();
+    const short = document.getElementById('tShort').value.toUpperCase().trim();
+    const conf = document.getElementById('tConf').value;
+    if(!name || !short) return alert("Please fill Name and Abbreviation.");
+    const logo = await convertBase64(document.getElementById('tLogoInput').files[0]);
+    const newTeam = { id: Date.now(), name, short, conf, logo, stats: {}, accStats:{gp:0,pts:0,reb:0,ast:0,blk:0,stl:0,fgm:0,fga:0,fg3m:0,fg3a:0,ftm:0,fta:0}, w: 0, l: 0, rings: 0 };
+    teams.push(newTeam); await dbPut('teams', newTeam);
+    renderAdminUI(); document.getElementById('tName').value = ''; document.getElementById('tShort').value = '';
+}
+async function handleAddPlayer() {
+    const name = document.getElementById('pName').value.trim();
+    const tid = document.getElementById('pTeamSelect').value;
+    const position = document.getElementById('pPosition').value;
+    if(!name || !tid) return alert("Please fill Name and Select Team.");
+    lastSelectedTeamId = tid;
+    const pic = await convertBase64(document.getElementById('pPicInput').files[0]);
+    const newPlayer = { id: Date.now(), name, teamId: parseInt(tid), position, pic, stats: {}, hiddenStats: { gp:0, pts:0, reb:0, ast:0, stl:0, blk:0, fga:0, fgm:0, fta:0, ftm:0, fg3m:0, fg3a:0, tov:0, pf:0 }, tier: 'D' };
+    players.push(newPlayer); await dbPut('players', newPlayer);
+    renderAdminUI(); document.getElementById('pName').value = ''; document.getElementById('pName').focus();
+}
+async function deleteItem(type, id) {
+    if(type === 'team') {
+        teams = teams.filter(t => t.id !== id); await dbDelete('teams', id);
+        for(let p of players) { if(p.teamId === id) { p.teamId = null; await dbPut('players', p); } }
+    }
+    if(type === 'player') { players = players.filter(p => p.id !== id); await dbDelete('players', id); }
+    renderAdminUI();
+}
+function filterAdminTeams() {
+    const k = document.getElementById('adminSearchTeam').value.toLowerCase();
+    const rt = teams.filter(t => t.name.toLowerCase().includes(k) || t.short.toLowerCase().includes(k)).reverse().map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:10px 8px; font-size:0.9rem; cursor:pointer; transition:0.2s; border-radius:4px;" onclick="openTeamActionModal(${t.id})" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">
+            <span style="display:flex;align-items:center;gap:10px; flex:1;">
+                ${t.logo ? `<img src="${t.logo}" style="width:28px;height:28px;object-fit:contain;">` : ''} 
+                <b style="color:var(--nba-blue);">${t.short}</b> - ${t.name}
+            </span>
+        </div>
+    `).join('');
+    document.getElementById('adminTeamsList').innerHTML = rt || '<div style="color:#999;text-align:center;padding:20px; font-size:0.9rem;">No teams found</div>';
+}
+function filterAdminPlayers() {
+    const k = document.getElementById('adminSearchPlayer').value.toLowerCase();
+    const rp = players.filter(p => p.name.toLowerCase().includes(k)).reverse().map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #eee;padding:10px 8px; font-size:0.9rem; cursor:pointer; transition:0.2s; border-radius:4px;" onclick="openPlayerActionModal(${p.id})" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">
+            <span style="display:flex;align-items:flex-start;gap:10px; flex:1;">
+                ${p.pic ? `<img src="${p.pic}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">` : '<div style="width:28px;height:28px;background:#eee;border-radius:50%;"></div>'} 
+                <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-weight:600; color:var(--nba-blue);">${p.name}</div><div style="color:#999; font-size:0.7rem;">${p.position || 'N/A'}</div></div>
+            </span>
+        </div>
+    `).join('');
+    document.getElementById('adminPlayersList').innerHTML = rp || '<div style="color:#999;text-align:center;padding:20px; font-size:0.9rem;">No players found</div>';
+}
+async function hardReset() { 
+    if(confirm("WARNING: This will delete ALL teams, players, and history. Continue?")) { 
+        await dbClear(); 
+        location.reload(); 
+    } 
+}
+function switchAdminTrans(tab) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+    if(tab==='move') { document.querySelectorAll('.admin-tab-btn')[0].classList.add('active'); document.getElementById('admMove').classList.add('active'); }
+    if(tab==='waive') { document.querySelectorAll('.admin-tab-btn')[1].classList.add('active'); document.getElementById('admWaive').classList.add('active'); }
+    if(tab==='trade') { document.querySelectorAll('.admin-tab-btn')[2].classList.add('active'); document.getElementById('admTrade').classList.add('active'); }
+    renderAdminUI();
+}
+async function execMove() {
+    const pid = parseInt(document.getElementById('admMovePlayer').value);
+    const tid = parseInt(document.getElementById('admMoveTeam').value);
+    if(!pid || !tid) return alert("Select Player and Team");
+    const p = players.find(x => x.id === pid); const newTeam = teams.find(x => x.id === tid); const oldTeam = teams.find(x => x.id === p.teamId);
+    if(p.teamId === tid) return alert("Player is already in this team.");
+    p.teamId = tid; await dbPut('players', p);
+    const newTrans = { id: Date.now(), type: 'move', pId: p.id, pName: p.name, pPic: p.pic, pPos: p.position, fromTeam: oldTeam ? oldTeam.name : 'Free Agent', fromLogo: oldTeam ? oldTeam.logo : null, toTeam: newTeam.name, toLogo: newTeam.logo, date: Date.now() };
+    trans.push(newTrans); await dbPut('trans', newTrans); alert("Success!"); renderAdminUI();
+}
+async function execWaive() {
+    const pid = parseInt(document.getElementById('admWaivePlayer').value); if(!pid) return;
+    const p = players.find(x => x.id === pid); const oldTeam = teams.find(x => x.id === p.teamId);
+    p.teamId = null; await dbPut('players', p);
+    const newTrans = { id: Date.now(), type: 'waive', pId: p.id, pName: p.name, pPic: p.pic, pPos: p.position, fromTeam: oldTeam ? oldTeam.name : 'Unknown', fromLogo: oldTeam ? oldTeam.logo : null, toTeam: 'Free Agent', date: Date.now() };
+    trans.push(newTrans); await dbPut('trans', newTrans); alert("Waived."); renderAdminUI();
+}
+async function execTrade() {
+    const p1Id = parseInt(document.getElementById('admTradeP1').value); const p2Id = parseInt(document.getElementById('admTradeP2').value);
+    if(!p1Id || !p2Id || p1Id===p2Id) return alert("Select 2 different players");
+    const p1 = players.find(x => x.id === p1Id); const p2 = players.find(x => x.id === p2Id);
+    const t1 = teams.find(x => x.id === p1.teamId); const t2 = teams.find(x => x.id === p2.teamId);
+    if(!t1 || !t2 || t1.id===t2.id) return alert("Trade Invalid");
+    p1.teamId = t2.id; p2.teamId = t1.id; await dbPut('players', p1); await dbPut('players', p2);
+    const newTrans = { id: Date.now(), type: 'trade', p1Id: p1.id, p1Name: p1.name, p1Pic: p1.pic, p1Pos: p1.position, t1Name: t1.name, t1Logo: t1.logo, p2Id: p2.id, p2Name: p2.name, p2Pic: p2.pic, p2Pos: p2.position, t2Name: t2.name, t2Logo: t2.logo, date: Date.now() };
+    trans.push(newTrans); await dbPut('trans', newTrans); alert("Trade Done"); renderAdminUI();
+}
+function renderTransactions() {
+    const list = document.getElementById('transList');
+    const msg = document.getElementById('noTransMsg');
+    if(trans.length === 0) { list.innerHTML=''; msg.style.display='block'; return; }
+    msg.style.display = 'none';
+    const sortedTrans = [...trans].sort((a,b) => b.date - a.date);
+    list.innerHTML = sortedTrans.map(t => {
+        const dateStr = new Date(t.date).toLocaleDateString() + ' ' + new Date(t.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const pImg = t.pPic || DEFAULT_P_IMG;
+        const t1Img = t.fromLogo || DEFAULT_T_IMG;
+        const t2Img = t.toLogo || DEFAULT_T_IMG;
+        const pPos = t.pPos || 'N/A';
+        const p1Pos = t.p1Pos || 'N/A';
+        const p2Pos = t.p2Pos || 'N/A';
+        if(t.type === 'trade') {
+            const p1Img = t.p1Pic || DEFAULT_P_IMG; const p2Img = t.p2Pic || DEFAULT_P_IMG;
+            const tm1Img = t.t1Logo || DEFAULT_T_IMG; const tm2Img = t.t2Logo || DEFAULT_T_IMG;
+            return `<li class="trans-card type-trade"><div style="width:100%;"><div style="color:var(--nba-sky);font-weight:bold;margin-bottom:5px;">🔄 BLOCKBUSTER TRADE<span style="font-size:0.7rem; color:#999; margin-left:10px;">${dateStr}</span></div><div class="trade-row clickable" onclick="openProfile(${t.p1Id})"><div class="trade-chip"><img src="${p1Img}" class="tc-player-img" style="width:35px;height:35px;"><div><b>${t.p1Name}</b> <span style="color:#999;font-size:0.8rem;">${p1Pos}</span><br><small>To ${t.t2Name}</small></div></div><div class="tc-visual"><img src="${tm1Img}" class="tc-team-logo"> ⇄ <img src="${tm2Img}" class="tc-team-logo"></div></div><div class="trade-row clickable" onclick="openProfile(${t.p2Id})"><div class="trade-chip"><img src="${p2Img}" class="tc-player-img" style="width:35px;height:35px;"><div><b>${t.p2Name}</b> <span style="color:#999;font-size:0.8rem;">${p2Pos}</span><br><small>To ${t.t1Name}</small></div></div></div></div></li>`;
+        } else {
+            const isMove = t.type === 'move';
+            const colorClass = isMove ? 'type-move' : 'type-waive';
+            const arrowColor = isMove ? 'color:var(--nba-green);' : 'color:var(--nba-red);';
+            const arrowSymbol = isMove ? '→' : '×';
+            const icon = isMove ? '✍️' : '⚠️';
+            const subText = isMove ? `Signed with <b>${t.toTeam}</b>` : `Waived by <b>${t.fromTeam}</b>`;
+            let visualHTML = isMove ? `${t.fromLogo ? `<img src="${t.fromLogo}" class="tc-team-logo">` : '<small>FA</small>'} <span style="font-size:1.2rem; font-weight:bold; ${arrowColor}">${arrowSymbol}</span> <img src="${t2Img}" class="tc-team-logo">` : `<img src="${t1Img}" class="tc-team-logo"> <span style="font-size:1.2rem; font-weight:bold; ${arrowColor}">${arrowSymbol}</span> <small>FA</small>`;
+            return `<li class="trans-card ${colorClass} clickable" onclick="openProfile(${t.pId})"><img src="${pImg}" class="tc-player-img"><div class="tc-content"><div class="tc-header">${icon} ${t.pName} <span style="color:#999;font-size:0.8rem;">${pPos}</span><span style="font-size:0.7rem; color:#999; margin-left:10px;">${dateStr}</span></div><div class="tc-sub">${subText}</div></div><div class="tc-visual" style="min-width:80px;justify-content:center;">${visualHTML}</div></li>`;
+        }
+    }).join('');
+}
+
+let dataControlFullContent = '';
+let transactionsFullList = [];
+
+let selectedPlayerId = null;
+
+function filterPlayerManagement() {
+    const query = document.getElementById('dataSearchInput').value.toLowerCase();
+    const list = document.getElementById('adminRecentList');
+    
+    if(!query) {
+        list.innerHTML = dataControlFullContent;
+        return;
+    }
+    
+    const teams_filtered = teams.filter(t => t.name.toLowerCase().includes(query) || t.short.toLowerCase().includes(query));
+    const players_filtered = players.filter(p => p.name.toLowerCase().includes(query));
+    
+    const rt = teams_filtered.map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px; font-size:0.9rem;">
+            <span style="display:flex;align-items:center;gap:10px;">
+                ${t.logo ? `<img src="${t.logo}" style="width:25px;height:25px;object-fit:contain;">` : ''} 
+                <b>${t.name}</b>
+            </span>
+            <button onclick="deleteItem('team',${t.id})" style="color:#fff; background:var(--nba-red); border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">DEL</button>
+        </div>
+    `).join('');
+    
+    const rp = players_filtered.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #eee;padding:12px 8px; font-size:0.9rem; cursor:pointer; transition:0.2s; border-radius:4px;" onclick="openPlayerActionModal(${p.id})" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='transparent'">
+            <span style="display:flex;align-items:flex-start;gap:12px;">
+                ${p.pic ? `<img src="${p.pic}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-top:2px;">` : ''} 
+                <div style="display:flex; flex-direction:column; gap:4px;"><div style="font-size:1.1rem; font-weight:600;">${p.name}</div><div style="color:#999; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">${p.position || 'N/A'}</div></div>
+            </span>
+            <button onclick="event.stopPropagation(); deleteItem('player',${p.id})" style="color:#fff; background:var(--nba-red); border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">DEL</button>
+        </div>
+    `).join('');
+    
+    let htmlContent = '';
+    if (rt) htmlContent += `<div style="background:#f4f4f4; padding:5px; font-weight:bold; font-size:0.8rem; color:#666; position:sticky; top:0; z-index:2;">TEAMS (${teams_filtered.length})</div>${rt}`;
+    if (rp) htmlContent += `<div style="background:#f4f4f4; padding:5px; font-weight:bold; font-size:0.8rem; color:#666; margin-top:0; position:sticky; top:0; z-index:2; border-top:1px solid #ddd;">PLAYERS (${players_filtered.length})</div>${rp}`;
+    
+    list.innerHTML = htmlContent || '<div style="color:#999;text-align:center;padding:20px;">No results found</div>';
+}
+
+function openPlayerActionModal(playerId) {
+    selectedPlayerId = playerId;
+    const player = players.find(p => p.id === playerId);
+    if(!player) return;
+    
+    document.getElementById('playerActionTitle').innerText = `${player.name} (${player.position || 'N/A'})`;
+    document.getElementById('playerActionButtons').style.display = 'flex';
+    document.getElementById('playerActionForm').style.display = 'none';
+    document.getElementById('playerActionForm').innerHTML = '';
+    document.getElementById('playerActionModal').style.display = 'flex';
+}
+
+function closePlayerActionModal() {
+    document.getElementById('playerActionModal').style.display = 'none';
+    selectedPlayerId = null;
+}
+
+function openTeamActionModal(teamId) {
+    const team = teams.find(t => t.id === teamId);
+    if(!team) return;
+    window.selectedTeamId = teamId;
+    document.getElementById('teamActionTitle').innerText = `${team.name.toUpperCase()}`;
+    document.getElementById('teamActionModal').style.display = 'flex';
+}
+
+function closeTeamActionModal() {
+    document.getElementById('teamActionModal').style.display = 'none';
+}
+
+async function deleteTeamAction() {
+    const teamId = window.selectedTeamId;
+    const team = teams.find(t => t.id === teamId);
+    if(!team) return;
+    
+    // Remove all players from this team
+    players.filter(p => p.teamId === teamId).forEach(p => {
+        p.teamId = null;
+        dbPut('players', p);
+    });
+    players = players.filter(p => p.teamId !== teamId);
+    
+    // Delete the team
+    await dbDelete('teams', teamId);
+    teams = teams.filter(t => t.id !== teamId);
+    
+    closeTeamActionModal();
+    renderAdminUI();
+}
+
+async function deletePlayerAction() {
+    const playerId = selectedPlayerId;
+    const player = players.find(p => p.id === playerId);
+    if(!player) return;
+    
+    // Delete the player
+    await dbDelete('players', playerId);
+    players = players.filter(p => p.id !== playerId);
+    
+    closePlayerActionModal();
+    renderAdminUI();
+}
+
+function showMovePlayerForm() {
+    const player = players.find(p => p.id === selectedPlayerId);
+    if(!player) return;
+    
+    const currentTeam = teams.find(t => t.id === player.teamId);
+    const teamOptions = teams.map(t => `<option value="${t.id}" ${t.id === player.teamId ? 'selected' : ''}>${t.name}</option>`).join('');
+    
+    document.getElementById('playerActionButtons').style.display = 'none';
+    document.getElementById('playerActionForm').style.display = 'block';
+    document.getElementById('playerActionForm').innerHTML = `
+        <label>Current Team:</label>
+        <div style="padding:10px; background:#f0f0f0; border-radius:4px; margin-bottom:10px; font-weight:bold;">${currentTeam ? currentTeam.name : 'Free Agent'}</div>
+        <label>Move to Team:</label>
+        <select id="moveDestTeam" style="margin-bottom:10px; max-height:200px; overflow-y:auto;">
+            ${teamOptions}
+        </select>
+        <button class="btn" style="background:var(--nba-green);" onclick="executeMoveAction()">✅ Confirm Move</button>
+        <button class="btn" style="background:#999; margin-top:10px;" onclick="resetPlayerActionForm()">❌ Cancel</button>
+    `;
+}
+
+function showWaivePlayerForm() {
+    const player = players.find(p => p.id === selectedPlayerId);
+    if(!player) return;
+    
+    const currentTeam = teams.find(t => t.id === player.teamId);
+    
+    document.getElementById('playerActionButtons').style.display = 'none';
+    document.getElementById('playerActionForm').style.display = 'block';
+    document.getElementById('playerActionForm').innerHTML = `
+        <div style="padding:15px; background:#ffe0e0; border-radius:4px; margin-bottom:15px; text-align:center;">
+            <p style="margin:0; font-weight:bold; color:#c00;">Are you sure you want to waive ${player.name}?</p>
+            <p style="margin:5px 0 0 0; font-size:0.9rem; color:#666;">from ${currentTeam ? currentTeam.name : 'Free Agent'}</p>
+        </div>
+        <button class="btn" style="background:var(--nba-red);" onclick="executeWaiveAction()">✅ Confirm Waive</button>
+        <button class="btn" style="background:#999; margin-top:10px;" onclick="resetPlayerActionForm()">❌ Cancel</button>
+    `;
+}
+
+function showTradePlayerForm() {
+    const player = players.find(p => p.id === selectedPlayerId);
+    if(!player) return;
+    
+    const otherPlayers = players.filter(p => p.id !== selectedPlayerId && p.teamId);
+    const playerOptions = otherPlayers.map(p => {
+        const t = teams.find(x => x.id === p.teamId);
+        return `<option value="${p.id}">${p.name} (${t ? t.name : 'FA'})</option>`;
+    }).join('');
+    
+    document.getElementById('playerActionButtons').style.display = 'none';
+    document.getElementById('playerActionForm').style.display = 'block';
+    document.getElementById('playerActionForm').innerHTML = `
+        <label>Trade ${player.name} for:</label>
+        <select id="tradePartner" style="margin-bottom:10px; max-height:250px; overflow-y:auto;">
+            <option value="">-- Select Player --</option>
+            ${playerOptions}
+        </select>
+        <button class="btn" style="background:var(--nba-sky);" onclick="executeTradeAction()">✅ Confirm Trade</button>
+        <button class="btn" style="background:#999; margin-top:10px;" onclick="resetPlayerActionForm()">❌ Cancel</button>
+    `;
+}
+
+function resetPlayerActionForm() {
+    document.getElementById('playerActionButtons').style.display = 'flex';
+    document.getElementById('playerActionForm').style.display = 'none';
+    document.getElementById('playerActionForm').innerHTML = '';
+}
+
+async function executeMoveAction() {
+    if(!selectedPlayerId) return;
+    
+    const destTeamId = parseInt(document.getElementById('moveDestTeam').value);
+    const player = players.find(p => p.id === selectedPlayerId);
+    const oldTeam = teams.find(t => t.id === player.teamId);
+    const newTeam = teams.find(t => t.id === destTeamId);
+    
+    player.teamId = destTeamId;
+    await dbPut('players', player);
+    
+    const transData = { id: Date.now(), type: 'move', pId: player.id, pName: player.name, pPic: player.pic, pPos: player.position, fromTeam: oldTeam ? oldTeam.name : 'Free Agent', fromLogo: oldTeam ? oldTeam.logo : null, toTeam: newTeam.name, toLogo: newTeam.logo, date: Date.now() };
+    await dbPut('trans', transData);
+    trans.push(transData);
+    
+    closePlayerActionModal();
+    renderAdminUI();
+    renderTransactions();
+    alert(`${player.name} moved to ${newTeam.name}!`);
+}
+
+async function executeWaiveAction() {
+    if(!selectedPlayerId) return;
+    
+    const player = players.find(p => p.id === selectedPlayerId);
+    const oldTeam = teams.find(t => t.id === player.teamId);
+    
+    player.teamId = null;
+    await dbPut('players', player);
+    
+    const transData = { id: Date.now(), type: 'waive', pId: player.id, pName: player.name, pPic: player.pic, pPos: player.position, fromTeam: oldTeam ? oldTeam.name : 'Unknown', fromLogo: oldTeam ? oldTeam.logo : null, toTeam: 'Free Agent', date: Date.now() };
+    await dbPut('trans', transData);
+    trans.push(transData);
+    
+    closePlayerActionModal();
+    renderAdminUI();
+    renderTransactions();
+    alert(`${player.name} has been waived!`);
+}
+
+async function executeTradeAction() {
+    if(!selectedPlayerId) return;
+    
+    const tradePartnerId = parseInt(document.getElementById('tradePartner').value);
+    if(!tradePartnerId) return alert('Select a player to trade');
+    
+    const p1 = players.find(p => p.id === selectedPlayerId);
+    const p2 = players.find(p => p.id === tradePartnerId);
+    const t1 = teams.find(t => t.id === p1.teamId);
+    const t2 = teams.find(t => t.id === p2.teamId);
+    
+    if(!t1 || !t2 || t1.id === t2.id) return alert('Trade Invalid');
+    
+    p1.teamId = t2.id; 
+    p2.teamId = t1.id; 
+    await dbPut('players', p1); 
+    await dbPut('players', p2);
+    
+    const transData = { id: Date.now(), type: 'trade', p1Id: p1.id, p1Name: p1.name, p1Pic: p1.pic, p1Pos: p1.position, t1Name: t1.name, t1Logo: t1.logo, p2Id: p2.id, p2Name: p2.name, p2Pic: p2.pic, p2Pos: p2.position, t2Name: t2.name, t2Logo: t2.logo, date: Date.now() };
+    await dbPut('trans', transData);
+    trans.push(transData);
+    
+    closePlayerActionModal();
+    renderAdminUI();
+    renderTransactions();
+    alert(`Trade completed: ${p1.name} ↔ ${p2.name}!`);
+}
+
+function filterDataControl() {
+    const query = document.getElementById('dataSearchInput').value.toLowerCase();
+    const list = document.getElementById('adminRecentList');
+    
+    if(!query) {
+        list.innerHTML = dataControlFullContent;
+        return;
+    }
+    
+    const teams_filtered = teams.filter(t => t.name.toLowerCase().includes(query) || t.short.toLowerCase().includes(query));
+    const players_filtered = players.filter(p => p.name.toLowerCase().includes(query));
+    
+    const rt = teams_filtered.map(t => `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px; font-size:0.9rem;">
+            <span style="display:flex;align-items:center;gap:10px;">
+                ${t.logo ? `<img src="${t.logo}" style="width:25px;height:25px;object-fit:contain;">` : ''} 
+                <b>${t.name}</b>
+            </span>
+            <button onclick="deleteItem('team',${t.id})" style="color:#fff; background:var(--nba-red); border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">DEL</button>
+        </div>
+    `).join('');
+    
+    const rp = players_filtered.map(p => `
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px; font-size:0.9rem;">
+            <span style="display:flex;align-items:center;gap:10px;">
+                ${p.pic ? `<img src="${p.pic}" style="width:25px;height:25px;border-radius:50%;object-fit:cover;">` : ''} 
+                <span><b>${p.name}</b> <span style="color:#999; font-size:0.8rem;">${p.position || 'N/A'}</span></span>
+            </span>
+            <button onclick="deleteItem('player',${p.id})" style="color:#fff; background:var(--nba-red); border:none; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">DEL</button>
+        </div>
+    `).join('');
+    
+    let htmlContent = '';
+    if (rt) htmlContent += `<div style="background:#f4f4f4; padding:5px; font-weight:bold; font-size:0.8rem; color:#666; position:sticky; top:0; z-index:2;">TEAMS (${teams_filtered.length})</div>${rt}`;
+    if (rp) htmlContent += `<div style="background:#f4f4f4; padding:5px; font-weight:bold; font-size:0.8rem; color:#666; margin-top:0; position:sticky; top:0; z-index:2; border-top:1px solid #ddd;">PLAYERS (${players_filtered.length})</div>${rp}`;
+    
+    list.innerHTML = htmlContent || '<div style="color:#999;text-align:center;padding:20px;">No results found</div>';
+}
+
+function filterTransactions() {
+    const query = document.getElementById('transSearchInput').value.toLowerCase();
+    const list = document.getElementById('transList');
+    
+    if(!query) {
+        renderTransactions();
+        return;
+    }
+    
+    const filtered = trans.filter(t => {
+        const pName = t.pName ? t.pName.toLowerCase() : '';
+        const p1Name = t.p1Name ? t.p1Name.toLowerCase() : '';
+        const p2Name = t.p2Name ? t.p2Name.toLowerCase() : '';
+        const fromTeam = t.fromTeam ? t.fromTeam.toLowerCase() : '';
+        const toTeam = t.toTeam ? t.toTeam.toLowerCase() : '';
+        return pName.includes(query) || p1Name.includes(query) || p2Name.includes(query) || fromTeam.includes(query) || toTeam.includes(query);
+    });
+    
+    const sortedTrans = [...filtered].sort((a,b) => b.date - a.date);
+    list.innerHTML = sortedTrans.map(t => {
+        const pImg = t.pPic || DEFAULT_P_IMG;
+        const t1Img = t.fromLogo || DEFAULT_T_IMG;
+        const t2Img = t.toLogo || DEFAULT_T_IMG;
+        const pPos = t.pPos || 'N/A';
+        const p1Pos = t.p1Pos || 'N/A';
+        const p2Pos = t.p2Pos || 'N/A';
+        if(t.type === 'trade') {
+            const p1Img = t.p1Pic || DEFAULT_P_IMG; const p2Img = t.p2Pic || DEFAULT_P_IMG;
+            const tm1Img = t.t1Logo || DEFAULT_T_IMG; const tm2Img = t.t2Logo || DEFAULT_T_IMG;
+            return `<li class="trans-card type-trade"><div style="width:100%;"><div style="color:var(--nba-sky);font-weight:bold;margin-bottom:5px;">BLOCKBUSTER TRADE</div><div class="trade-row clickable" onclick="openProfile(${t.p1Id})"><div class="trade-chip"><img src="${p1Img}" class="tc-player-img" style="width:35px;height:35px;"><div><b>${t.p1Name}</b> <span style="color:#999;font-size:0.8rem;">${p1Pos}</span><br><small>To ${t.t2Name}</small></div></div><div class="tc-visual"><img src="${tm1Img}" class="tc-team-logo"> ⇄ <img src="${tm2Img}" class="tc-team-logo"></div></div><div class="trade-row clickable" onclick="openProfile(${t.p2Id})"><div class="trade-chip"><img src="${p2Img}" class="tc-player-img" style="width:35px;height:35px;"><div><b>${t.p2Name}</b> <span style="color:#999;font-size:0.8rem;">${p2Pos}</span><br><small>To ${t.t1Name}</small></div></div></div></div></li>`;
+        } else {
+            const isMove = t.type === 'move';
+            const colorClass = isMove ? 'type-move' : 'type-waive';
+            const arrowColor = isMove ? 'color:var(--nba-green);' : 'color:var(--nba-red);';
+            const arrowSymbol = isMove ? '→' : '×';
+            const subText = isMove ? `Signed with <b>${t.toTeam}</b>` : `Waived by <b>${t.fromTeam}</b>`;
+            let visualHTML = isMove ? `${t.fromLogo ? `<img src="${t.fromLogo}" class="tc-team-logo">` : '<small>FA</small>'} <span style="font-size:1.2rem; font-weight:bold; ${arrowColor}">${arrowSymbol}</span> <img src="${t2Img}" class="tc-team-logo">` : `<img src="${t1Img}" class="tc-team-logo"> <span style="font-size:1.2rem; font-weight:bold; ${arrowColor}">${arrowSymbol}</span> <small>FA</small>`;
+            return `<li class="trans-card ${colorClass} clickable" onclick="openProfile(${t.pId})"><img src="${pImg}" class="tc-player-img"><div class="tc-content"><div class="tc-header">${t.pName} <span style="color:#999;font-size:0.8rem;">${pPos}</span></div><div class="tc-sub">${subText}</div></div><div class="tc-visual" style="min-width:80px;justify-content:center;">${visualHTML}</div></li>`;
+        }
+    }).join('') || '<li style="color:#999;text-align:center;padding:20px;">No transactions found</li>';
+}
+
+// 2. GAME ENGINE 
+function getMaxRounds() {
+    const n = teams.length;
+    if (n < 2) return 1;
+    return n % 2 === 0 ? n - 1 : n;
+}
+
+async function generateSchedule() {
+    schedule = [];
+    const tIds = teams.map(t => t.id);
+    let matchId = 1;
+    let tempTeams = [...tIds];
+    if(tempTeams.length % 2 !== 0) tempTeams.push(null);
+    const totalRounds = tempTeams.length - 1;
+    const half = tempTeams.length / 2;
+    for (let round = 0; round < totalRounds; round++) {
+        for (let i = 0; i < half; i++) {
+            const t1 = tempTeams[i]; const t2 = tempTeams[tempTeams.length - 1 - i];
+            if (t1 !== null && t2 !== null) {
+                schedule.push({ id: matchId++, day: round + 1, homeId: t1, roadId: t2, status: 'pending', stats: null });
+            }
+        }
+        tempTeams.splice(1, 0, tempTeams.pop());
+    }
+    const promises = schedule.map(m => dbPut('schedule', m));
+    await Promise.all(promises);
+}
+
+async function startSeason() {
+    if(!confirm("Start Season? Trades will be locked until season ends.")) return;
+    isSeasonActive = true;
+    await dbPut('settings', { key: 'isSeasonActive', value: true });
+    
+    if(schedule.length === 0) {
+        await generateSchedule();
+    }
+    location.reload();
+}
+
+function renderGameView() {
+    const east = teams.filter(t => t.conf === 'East').length;
+    const west = teams.filter(t => t.conf === 'West').length;
+    
+    const invalidTeams = teams.filter(t => {
+        const rosterSize = players.filter(p => p.teamId === t.id).length;
+        return rosterSize < 5;
+    });
+
+    const isReady = (east >= 5 && west >= 5 && invalidTeams.length === 0);
+
+    if (!isReady) {
+        document.getElementById('gameLocked').style.display = 'block';
+        document.getElementById('gameUnlocked').style.display = 'none';
+        
+        let msg = `<div style="text-align:left; background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; margin-top:10px;">`;
+        msg += `<strong>⛔ CANNOT START SEASON:</strong><ul style="margin:5px 0; padding-left:20px;">`;
+        
+        if (east < 5) msg += `<li>Need 5 East Teams (Current: ${east})</li>`;
+        if (west < 5) msg += `<li>Need 5 West Teams (Current: ${west})</li>`;
+        
+        if (invalidTeams.length > 0) {
+            msg += `<li>The following teams need at least 5 players:</li>`;
+            msg += `<ul style="font-size:0.9rem; color:#d63384;">`;
+            invalidTeams.forEach(t => {
+                const count = players.filter(p => p.teamId === t.id).length;
+                msg += `<li>- ${t.name} (Has ${count}/5)</li>`;
+            });
+            msg += `</ul>`;
+        }
+        
+        msg += `</ul></div>`;
+        document.getElementById('gameProgText').innerHTML = msg;
+        return;
+    }
+
+    document.getElementById('gameLocked').style.display = 'none';
+    document.getElementById('gameUnlocked').style.display = 'block';
+    
+    const btnStart = document.getElementById('btnStartSeason');
+    const btnSim = document.getElementById('btnDevSim');
+    
+    if(isSeasonActive) {
+        btnStart.style.display = 'none';
+        btnSim.style.display = 'inline-block';
+        if(schedule.length === 0) generateSchedule();
+    } else {
+        btnStart.style.display = 'inline-block';
+        btnSim.style.display = 'none';
+    }
+    
+    renderSchedule(); 
+    renderStandings();
+}
+
+function renderSchedule() {
+    const max = getMaxRounds();
+    if (currentMatchDay > max) currentMatchDay = max;
+    
+    const matches = schedule.filter(m => m.day === currentMatchDay);
+    document.getElementById('matchDayTitle').innerText = `GAME ${currentMatchDay} / ${max}`;
+    
+    let tableHTML = `
+    <table class="game-table">
+        <thead>
+            <tr>
+                <th style="width:40%; text-align:right;">HOME TEAM</th>
+                <th style="width:100px; min-width:100px;">SCORE</th> 
+                <th style="width:40%; text-align:left;">AWAY TEAM</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    const rows = matches.map(m => {
+        const home = teams.find(t => t.id === m.homeId); 
+        const road = teams.find(t => t.id === m.roadId);
+        
+        if(!home || !road) return ""; // SAFETY CHECK FOR DELETED TEAMS
+
+        const scoreDisplay = (m.status === 'final' && m.stats) ? `${m.stats.homeScore} - ${m.stats.roadScore}` : "VS";
+        const statusClass = m.status === 'final' ? 'color:#333;' : 'color:#999;';
+        const clickAction = m.status === 'final' ? `openBoxScore(${m.id})` : `openScorekeeper(${m.id})`;
+
+        return `
+        <tr class="clickable" onclick="${clickAction}">
+            <td>
+                <div class="gt-team right">
+                    ${home.short} <img src="${home.logo||DEFAULT_T_IMG}" class="gt-logo">
+                </div>
+            </td>
+            <td>
+                <div class="gt-score" style="${statusClass}">${scoreDisplay}</div>
+                ${m.status==='final' ? '<div style="text-align:center; font-size:0.7rem; color:green;">FINAL</div>' : ''}
+            </td>
+            <td>
+                <div class="gt-team">
+                    <img src="${road.logo||DEFAULT_T_IMG}" class="gt-logo"> ${road.short}
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    tableHTML += rows + `</tbody></table>`;
+    document.getElementById('matchListContainer').innerHTML = tableHTML;
+    
+    const allFinal = schedule.length > 0 && schedule.every(m => m.status === 'final');
+    document.getElementById('btnGoFinals').style.display = allFinal ? 'block' : 'none';
+}
+
+function changeMatchDay(dir) {
+    const max = getMaxRounds();
+    const next = currentMatchDay + dir;
+    if(next > 0 && next <= max) { currentMatchDay = next; renderSchedule(); }
+}
+
+let activeMatchId = null;
+
+let tempHomeRoster = [];
+let tempRoadRoster = [];
+
+function openScorekeeper(mid) {
+    if(!isSeasonActive) return alert("Please START SEASON first!");
+    
+    activeMatchId = mid;
+    tempHomeRoster = [];
+    tempRoadRoster = [];
+    
+    const match = schedule.find(m => m.id === mid);
+    const home = teams.find(t => t.id === match.homeId);
+    const road = teams.find(t => t.id === match.roadId);
+
+    document.getElementById('lsHomeHeader').innerText = home.name;
+    document.getElementById('lsRoadHeader').innerText = road.name;
+
+    const allHomePlayers = players.filter(p => p.teamId === home.id);
+    const allRoadPlayers = players.filter(p => p.teamId === road.id);
+
+    const renderList = (list, containerId, side) => {
+        const ul = document.getElementById(containerId);
+        ul.innerHTML = list.map(p => `
+            <li class="ls-item" id="ls-p-${p.id}" onclick="togglePlayerSelection(${p.id}, '${side}')">
+                <div class="ls-info">
+                    <img src="${p.pic || DEFAULT_P_IMG}" class="ls-img">
+                    <span>${p.name}</span>
+                </div>
+                <div class="ls-btn" id="ls-btn-${p.id}">+</div>
+            </li>
+        `).join('');
+    };
+
+    renderList(allHomePlayers, 'lsHomeList', 'home');
+    renderList(allRoadPlayers, 'lsRoadList', 'road');
+
+    updateSelectionCounts();
+
+    document.getElementById('lineupSelectionView').style.display = 'block';
+    document.getElementById('liveScoreView').style.display = 'none';
+    document.getElementById('boxScoreView').style.display = 'none';
+    document.getElementById('matchModal').style.display = 'flex';
+}
+
+function togglePlayerSelection(pid, side) {
+    const arr = (side === 'home') ? tempHomeRoster : tempRoadRoster;
+    const idx = arr.indexOf(pid);
+
+    if(idx > -1) {
+        arr.splice(idx, 1);
+        document.getElementById(`ls-p-${pid}`).classList.remove('selected');
+        document.getElementById(`ls-btn-${pid}`).innerText = '+';
+    } else {
+        if(arr.length >= 5) {
+            return alert("⛔ เลือกได้สูงสุดทีมละ 5 คนเท่านั้นครับ (Max 5 Players)");
+        }
+        arr.push(pid); 
+        document.getElementById(`ls-p-${pid}`).classList.add('selected');
+        document.getElementById(`ls-btn-${pid}`).innerText = '-';
+    }
+    updateSelectionCounts();
+}
+
+function updateSelectionCounts() {
+    document.getElementById('lsHomeCount').innerText = `Selected: ${tempHomeRoster.length}`;
+    document.getElementById('lsRoadCount').innerText = `Selected: ${tempRoadRoster.length}`;
+}
+
+function confirmLineups() {
+    if(tempHomeRoster.length !== 5 || tempRoadRoster.length !== 5) {
+        return alert("⚠️ กติกา: ต้องเลือกผู้เล่นให้ครบ 5 คน (Selected: " + tempHomeRoster.length + " vs " + tempRoadRoster.length + ")");
+    }
+
+    let home, road;
+
+    if (activeMatchId === 'FINALS') {
+        home = window.finalists.east;
+        road = window.finalists.west;
+    } else {
+        const match = schedule.find(m => m.id === activeMatchId);
+        home = teams.find(t => t.id === match.homeId);
+        road = teams.find(t => t.id === match.roadId);
+    }
+
+    document.getElementById('skHomeName').innerText = home.short; 
+    document.getElementById('skRoadName').innerText = road.short;
+    document.getElementById('skScoreDisplay').innerText = "0 - 0";
+    
+    document.getElementById('skHomeHeader').innerText = home.name; 
+    document.getElementById('skRoadHeader').innerText = road.name;
+
+    const confirmBtn = document.querySelector('#liveScoreView button[onclick^="confirm"]');
+    if (activeMatchId === 'FINALS') {
+        confirmBtn.setAttribute('onclick', 'confirmFinals()');
+        confirmBtn.innerText = "🏆 CLAIM CHAMPIONSHIP"; 
+    } else {
+        confirmBtn.setAttribute('onclick', 'confirmMatchResult()');
+        confirmBtn.innerText = "✅ CONFIRM MATCH";
+    }
+
+    const buildRow = (p) => `
+    <tr data-pid="${p.id}">
+        <td style="text-align:left; padding-left:10px;"><b>${p.name}</b></td>
+        <td><input type="number" class="sk-input i-pts sk-pts-col" readonly value="0"></td>
+        <td><input type="number" class="sk-input i-fgm" onkeyup="autoCalcRow(this)" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-fga" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-3pm" onkeyup="autoCalcRow(this)" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-3pa" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-ftm" onkeyup="autoCalcRow(this)" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-fta" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-reb" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-ast" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-stl" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-blk" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-tov" placeholder="0"></td>
+        <td><input type="number" class="sk-input i-pf" placeholder="0"></td>
+    </tr>`;
+
+    const hPlayers = players.filter(p => tempHomeRoster.includes(p.id));
+    const rPlayers = players.filter(p => tempRoadRoster.includes(p.id));
+
+    document.getElementById('skHomeBody').innerHTML = hPlayers.map(buildRow).join('');
+    document.getElementById('skRoadBody').innerHTML = rPlayers.map(buildRow).join('');
+
+    document.getElementById('lineupSelectionView').style.display = 'none';
+    document.getElementById('liveScoreView').style.display = 'block';
+}
+
+// ⚡ SMART AUTO CALC: Fix FGM < 3PM Error
+function autoCalcRow(input) {
+    const row = input.closest('tr');
+    let fgm = parseInt(row.querySelector('.i-fgm').value) || 0;
+    const p3m = parseInt(row.querySelector('.i-3pm').value) || 0;
+    const ftm = parseInt(row.querySelector('.i-ftm').value) || 0;
+    
+    // Auto-Correct: FGM must be at least equal to 3PM
+    if(p3m > fgm) {
+        fgm = p3m;
+        row.querySelector('.i-fgm').value = fgm;
+    }
+    
+    const pts = (fgm * 2) + p3m + ftm; // Formula: 2*(FGM) + 1*(3PM) + 1*(FTM) ==> Since FGM includes 3s as 2pts
+    row.querySelector('.i-pts').value = pts;
+    
+    calcLiveScore();
+}
+
+function openBoxScore(mid) {
+    const m = schedule.find(x => x.id === mid);
+    if (!m || !m.stats) return;
+
+    document.getElementById('liveScoreView').style.display = 'none';
+    document.getElementById('boxScoreView').style.display = 'block';
+
+    const h = teams.find(t => t.id === m.homeId);
+    const r = teams.find(t => t.id === m.roadId);
+
+    document.getElementById('bsHeader').innerHTML = `<span style="color:#fff">${h.short}</span> ${m.stats.homeScore} - ${m.stats.roadScore} <span style="color:#fff">${r.short}</span>`;
+    
+    document.getElementById('bsHomeTitle').innerText = h.name;
+    document.getElementById('bsRoadTitle').innerText = r.name;
+
+    const buildRow = (s) => {
+        const pName = players.find(p => p.id === s.pid)?.name || "Unknown";
+        return `<tr>
+            <td style="text-align:left; font-weight:bold;">${pName}</td>
+            <td style="font-weight:bold;">${s.pts}</td>
+            <td>${s.reb}</td><td>${s.ast}</td><td>${s.stl}</td><td>${s.blk}</td>
+            <td>${s.fgm}</td><td>${s.fga}</td><td>${s.fg3m}</td><td>${s.fg3a}</td><td>${s.ftm}</td><td>${s.fta}</td><td>${s.tov}</td><td>${s.pf}</td>
+        </tr>`;
+    };
+
+    if (m.stats.homeBox) document.getElementById('bsHomeBody').innerHTML = m.stats.homeBox.map(buildRow).join('');
+    if (m.stats.roadBox) document.getElementById('bsRoadBody').innerHTML = m.stats.roadBox.map(buildRow).join('');
+
+    document.getElementById('matchModal').style.display = 'flex';
+}
+
+function closeMatchModal() { document.getElementById('matchModal').style.display = 'none'; }
+
+function calcLiveScore() {
+    const sum = (sel) => Array.from(document.querySelectorAll(sel)).reduce((a, b) => a + (parseInt(b.value)||0), 0);
+    const h = sum('#skHomeBody .i-pts');
+    const r = sum('#skRoadBody .i-pts');
+    document.getElementById('skScoreDisplay').innerText = `${h} - ${r}`;
+}
+
+async function confirmMatchResult() {
+    const match = schedule.find(m => m.id === activeMatchId); if(!match) return;
+    
+    let isValid = true;
+    let err = "";
+
+    const validateRow = (row, teamName) => {
+        const name = row.cells[0].innerText;
+        const val = (c) => parseInt(row.querySelector(`.${c}`).value)||0;
+        
+        const pts = val('i-pts');
+        const fgm = val('i-fgm'); const fga = val('i-fga');
+        const p3m = val('i-3pm'); const p3a = val('i-3pa');
+        const ftm = val('i-ftm'); const fta = val('i-fta');
+
+        if(fgm > fga) return `${name} (${teamName}): FGM (${fgm}) > FGA (${fga})`;
+        if(p3m > p3a) return `${name} (${teamName}): 3PM (${p3m}) > 3PA (${p3a})`;
+        if(ftm > fta) return `${name} (${teamName}): FTM (${ftm}) > FTA (${fta})`;
+        if(p3m > fgm) return `${name} (${teamName}): 3PM (${p3m}) > Total FGM (${fgm})`;
+
+        const calcPts = (fgm * 2) + p3m + ftm;
+        if(pts !== calcPts) return `${name} (${teamName}): PTS (${pts}) != Calculated (${calcPts}). Please check stats.`;
+
+        return null; 
+    };
+
+    const hRows = document.querySelectorAll('#skHomeBody tr');
+    const hName = document.getElementById('skHomeName').innerText;
+    for(let r of hRows) { let msg = validateRow(r, hName); if(msg) { alert("❌ DATA ERROR:\n" + msg); return; } }
+
+    const rRows = document.querySelectorAll('#skRoadBody tr');
+    const rName = document.getElementById('skRoadName').innerText;
+    for(let r of rRows) { let msg = validateRow(r, rName); if(msg) { alert("❌ DATA ERROR:\n" + msg); return; } }
+    
+    const extractStats = (tbodyId) => {
+        const rows = document.querySelectorAll(`#${tbodyId} tr`);
+        let teamTotal = { score: 0, pStats: [] };
+        rows.forEach(row => {
+            const pid = parseInt(row.dataset.pid);
+            const val = (cls) => parseInt(row.querySelector(`.${cls}`).value) || 0;
+            const s = { 
+                pts:val('i-pts'), reb:val('i-reb'), ast:val('i-ast'), stl:val('i-stl'), blk:val('i-blk'), 
+                fgm:val('i-fgm'), fga:val('i-fga'), fg3m:val('i-3pm'), fg3a:val('i-3pa'), 
+                ftm:val('i-ftm'), fta:val('i-fta'), tov:val('i-tov'), pf:val('i-pf') 
+            };
+            teamTotal.score += s.pts; 
+            teamTotal.pStats.push({ pid, ...s });
+        });
+        return teamTotal;
+    };
+
+    const hData = extractStats('skHomeBody'); 
+    const rData = extractStats('skRoadBody');
+    
+    match.status = 'final'; 
+    match.stats = { 
+        homeScore: hData.score, 
+        roadScore: rData.score,
+        homeBox: hData.pStats,
+        roadBox: rData.pStats
+    };
+    
+    const h = teams.find(t => t.id === match.homeId); const r = teams.find(t => t.id === match.roadId);
+    if (hData.score > rData.score) h.w++; else h.l++;
+    if (rData.score > hData.score) r.w++; else r.l++;
+    
+    await dbPut('teams', h); await dbPut('teams', r); await dbPut('schedule', match);
+
+    const updateP = async (pStats) => {
+        for (let ps of pStats) {
+            const p = players.find(x => x.id === ps.pid);
+            if(p) {
+                if(!p.hiddenStats) p.hiddenStats = { gp:0, pts:0, reb:0, ast:0, stl:0, blk:0, fga:0, fgm:0, fta:0, ftm:0, fg3m:0, fg3a:0, tov:0, pf:0 };
+                
+                p.hiddenStats.gp++;
+                for(let k in ps) { if(k!=='pid') p.hiddenStats[k] = (p.hiddenStats[k]||0) + ps[k]; }
+                
+                const avg = (key) => (p.hiddenStats[key] / p.hiddenStats.gp).toFixed(1);
+                const pct = (m, a) => (p.hiddenStats[a] > 0 ? (p.hiddenStats[m]/p.hiddenStats[a])*100 : 0).toFixed(1);
+                
+                p.stats = {
+                    ppg: avg('pts'), rpg: avg('reb'), apg: avg('ast'), spg: avg('stl'), bpg: avg('blk'),
+                    fg_pct: pct('fgm','fga'), fg3_pct: pct('fg3m','fg3a'), ft_pct: pct('ftm','fta'),
+                    fg3_m: avg('fg3m')
+                };
+                await dbPut('players', p);
+            }
+        }
+    };
+    await updateP(hData.pStats); 
+    await updateP(rData.pStats);
+    
+    const updateT = async (tId, pStats, oppScore) => {
+        const t = teams.find(x=>x.id===tId);
+        if(t) {
+            if(!t.accStats) t.accStats = { gp:0, pts:0, reb:0, ast:0, blk:0, stl:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, ptsAllowed:0 };
+            
+            t.accStats.gp++;
+            t.accStats.ptsAllowed = (t.accStats.ptsAllowed || 0) + oppScore;
+
+            pStats.forEach(ps => {
+                for(let k in ps) { 
+                    if(k!=='pid' && t.accStats[k]!==undefined) t.accStats[k] += ps[k]; 
+                }
+            });
+            
+            const avg = (k) => (t.accStats[k]/t.accStats.gp).toFixed(1);
+            const pct = (m,a) => (t.accStats[a]>0 ? (t.accStats[m]/t.accStats[a])*100 : 0).toFixed(1);
+            const avgOpp = (t.accStats.ptsAllowed / t.accStats.gp).toFixed(1);
+
+            t.stats = {
+                ppg: avg('pts'), rpg: avg('reb'), apg: avg('ast'), spg: avg('stl'), bpg: avg('blk'),
+                fg_pct: pct('fgm','fga'), fg3_pct: pct('fg3m','fg3a'), ft_pct: pct('ftm','fta'),
+                fg3_m: avg('fg3m'), oppg: avgOpp 
+            };
+            await dbPut('teams', t);
+        }
+    }
+    await updateT(h.id, hData.pStats, rData.score); 
+    await updateT(r.id, rData.pStats, hData.score);
+    
+    closeMatchModal(); renderGameView();
+}
+
+async function dev_AutoFillMatch() {
+    document.querySelectorAll('#skHomeBody tr, #skRoadBody tr').forEach(row => {
+        // Random Stats Logic
+        const fga = Math.floor(Math.random() * 15) + 1;
+        const fgm = Math.floor(Math.random() * (fga + 1));
+        
+        const max3pa = fga; 
+        const p3a = Math.floor(Math.random() * (Math.min(max3pa, 8) + 1));
+        const p3m = Math.floor(Math.random() * (Math.min(p3a, fgm) + 1)); 
+        
+        const fta = Math.floor(Math.random() * 6);
+        const ftm = Math.floor(Math.random() * (fta + 1));
+        
+        const reb = Math.floor(Math.random() * 10);
+        const ast = Math.floor(Math.random() * 8);
+        const stl = Math.floor(Math.random() * 3);
+        const blk = Math.floor(Math.random() * 2);
+        const tov = Math.floor(Math.random() * 4);
+        const pf = Math.floor(Math.random() * 6);
+
+        // Fill Inputs
+        row.querySelector('.i-fga').value = fga;
+        row.querySelector('.i-fgm').value = fgm;
+        row.querySelector('.i-3pa').value = p3a;
+        row.querySelector('.i-3pm').value = p3m;
+        row.querySelector('.i-fta').value = fta;
+        row.querySelector('.i-ftm').value = ftm;
+        
+        row.querySelector('.i-reb').value = reb;
+        row.querySelector('.i-ast').value = ast;
+        row.querySelector('.i-stl').value = stl;
+        row.querySelector('.i-blk').value = blk;
+        row.querySelector('.i-tov').value = tov;
+        row.querySelector('.i-pf').value = pf;
+
+        autoCalcRow(row.querySelector('.i-fgm'));
+    });
+}
+
+async function dev_AutoSimulate() {
+    if(!confirm("Simulate remaining games?")) return;
+    const pending = schedule.filter(m => m.status === 'pending');
+    for (const m of pending) {
+        activeMatchId = m.id;
+        
+        const h = teams.find(t=>t.id===m.homeId); const r = teams.find(t=>t.id===m.roadId);
+        
+        // Skip ghost games
+        if(!h || !r) {
+             m.status = 'cancelled';
+             await dbPut('schedule', m);
+             continue;
+        }
+
+        const simTeamStats = (tid) => {
+            const roster = players.filter(p=>p.teamId===tid);
+            let statsArr = [];
+            let totalScore = 0;
+            roster.forEach(p => {
+                 let s = { pid:p.id, pts:Math.floor(Math.random()*25)+2, reb:Math.floor(Math.random()*10), ast:Math.floor(Math.random()*8), stl:Math.floor(Math.random()*3), blk:Math.floor(Math.random()*2), fgm:5, fga:10, fg3m:1, fg3a:3, ftm:2, fta:3, tov:1, pf:1 };
+                 totalScore += s.pts;
+                 statsArr.push(s);
+            });
+            return { score: totalScore, pStats: statsArr };
+        };
+
+        const hData = simTeamStats(h.id); const rData = simTeamStats(r.id);
+        m.status = 'final'; 
+        m.stats = {
+            homeScore:hData.score, 
+            roadScore:rData.score,
+            homeBox: hData.pStats,
+            roadBox: rData.pStats
+        };
+        
+        if(hData.score>rData.score) h.w++; else h.l++; if(rData.score>hData.score) r.w++; else r.l++;
+        
+        await dbPut('teams', h); await dbPut('teams', r); await dbPut('schedule', m);
+
+        const updateP = async (pStats) => {
+            for (let ps of pStats) {
+                const p = players.find(x => x.id === ps.pid);
+                if(p) {
+                    if(!p.hiddenStats) p.hiddenStats = { gp:0, pts:0, reb:0, ast:0, stl:0, blk:0, fga:0, fgm:0, fta:0, ftm:0, fg3m:0, fg3a:0, tov:0 };
+                    p.hiddenStats.gp++;
+                    for(let k in ps) { if(k!=='pid') p.hiddenStats[k] = (p.hiddenStats[k]||0) + ps[k]; }
+                    const avg = (key) => (p.hiddenStats[key] / p.hiddenStats.gp).toFixed(1);
+                    p.stats = { ppg: avg('pts'), rpg: avg('reb'), apg: avg('ast'), spg: avg('stl'), bpg: avg('blk') };
+                    await dbPut('players', p);
+                }
+            }
+        };
+        await updateP(hData.pStats); await updateP(rData.pStats);
+        
+         const updateT = async (tId, pStats, oppScore) => {
+            const t = teams.find(x=>x.id===tId);
+            if(t) {
+                if(!t.accStats) t.accStats = { gp:0, pts:0, reb:0, ast:0, blk:0, stl:0, fgm:0, fga:0, fg3m:0, fg3a:0, ftm:0, fta:0, ptsAllowed:0 };
+                t.accStats.gp++;
+                t.accStats.ptsAllowed = (t.accStats.ptsAllowed || 0) + oppScore;
+                pStats.forEach(ps => { for(let k in ps) { if(k!=='pid' && t.accStats[k]!==undefined) t.accStats[k] += ps[k]; } });
+                const avg = (k) => (t.accStats[k]/t.accStats.gp).toFixed(1);
+                const avgOpp = (t.accStats.ptsAllowed / t.accStats.gp).toFixed(1);
+                t.stats = { ppg: avg('pts'), rpg: avg('reb'), apg: avg('ast'), spg: avg('stl'), bpg: avg('blk'), fg3_m: avg('fg3m'), oppg: avgOpp };
+                await dbPut('teams', t);
+            }
+        }
+        await updateT(h.id, hData.pStats, rData.score); await updateT(r.id, rData.pStats, hData.score);
+    }
+    renderGameView();
+}
+
+function openFinalsModal() {
+    const eastList = teams.filter(t=>t.conf==='East').sort((a,b)=>b.w-a.w);
+    const westList = teams.filter(t=>t.conf==='West').sort((a,b)=>b.w-a.w);
+
+    if (eastList.length === 0 || westList.length === 0) {
+        alert("⚠️ Error: Data Missing");
+        return;
+    }
+
+    const east = eastList[0];
+    const west = westList[0];
+
+    document.getElementById('finEastLogo').src = east.logo||DEFAULT_T_IMG; 
+    document.getElementById('finEastName').innerText = east.name;
+    document.getElementById('finWestLogo').src = west.logo||DEFAULT_T_IMG; 
+    document.getElementById('finWestName').innerText = west.name;
+    
+    // SAVE TO STORAGE TO PREVENT REFRESH BUG
+    window.finalists = { east, west }; 
+    localStorage.setItem('seasonFinalists', JSON.stringify({east, west}));
+    
+    document.getElementById('finalsModal').style.display='flex';
+}
+
+function startFinalsMatch() {
+    document.getElementById('finalsModal').style.display = 'none'; 
+    activeMatchId = 'FINALS'; 
+    
+    // LOAD FROM STORAGE IF MISSING (FIX REFRESH BUG)
+    if (!window.finalists) {
+        const saved = localStorage.getItem('seasonFinalists');
+        if (saved) window.finalists = JSON.parse(saved);
+        else { alert("Finals data lost. Please go back."); return; }
+    }
+    
+    const f = window.finalists; 
+
+    tempHomeRoster = [];
+    tempRoadRoster = [];
+
+    document.getElementById('lsHomeHeader').innerText = f.east.name;
+    document.getElementById('lsRoadHeader').innerText = f.west.name;
+
+    const allHomePlayers = players.filter(p => p.teamId === f.east.id);
+    const allRoadPlayers = players.filter(p => p.teamId === f.west.id);
+
+    const renderList = (list, containerId, side) => {
+        const ul = document.getElementById(containerId);
+        ul.innerHTML = list.map(p => `
+            <li class="ls-item" id="ls-p-${p.id}" onclick="togglePlayerSelection(${p.id}, '${side}')">
+                <div class="ls-info">
+                    <img src="${p.pic || DEFAULT_P_IMG}" class="ls-img">
+                    <span>${p.name}</span>
+                </div>
+                <div class="ls-btn" id="ls-btn-${p.id}">+</div>
+            </li>
+        `).join('');
+    };
+
+    renderList(allHomePlayers, 'lsHomeList', 'home');
+    renderList(allRoadPlayers, 'lsRoadList', 'road');
+
+    updateSelectionCounts();
+
+    document.getElementById('lineupSelectionView').style.display = 'block';
+    document.getElementById('liveScoreView').style.display = 'none';
+    document.getElementById('boxScoreView').style.display = 'none';
+    document.getElementById('matchModal').style.display = 'flex';
+}
+async function confirmFinals() {
+    const sum = (sel) => Array.from(document.querySelectorAll(sel)).reduce((a, b) => a + (parseInt(b.value)||0), 0);
+    const hScore = sum('#skHomeBody .i-pts'); const rScore = sum('#skRoadBody .i-pts');
+    const f = window.finalists;
+    const winner = hScore > rScore ? f.east : f.west;
+    let max=0; let fMvp=null;
+    document.querySelectorAll('.sk-input.i-pts').forEach(inp=>{
+        if(parseInt(inp.value)>max) { max=parseInt(inp.value); fMvp = players.find(p=>p.id==inp.closest('tr').dataset.pid); }
+    });
+    closeMatchModal(); calculateAwards(winner, fMvp);
+}
+function calculateAwards(champ, fMvp) {
+    let bestEff = -1; let mvp = null; let dpoyScore = -1; let dpoy = null;
+    players.forEach(p => {
+        if(!p.hiddenStats) return;
+        const s = p.hiddenStats;
+        const eff = (s.pts+s.reb+s.ast+s.stl+s.blk) - ((s.fga-s.fgm) + (s.fta-s.ftm) + s.tov);
+        if(eff > bestEff) { bestEff = eff; mvp = p; }
+        const d = (s.stl*2) + (s.blk*2) + s.reb;
+        if(d > dpoyScore) { dpoyScore = d; dpoy = p; }
+    });
+    
+    window.seasonResult = {
+        seasonId: Date.now(),
+        date: new Date().toLocaleDateString(),
+        champ: { name: champ.name, logo: champ.logo || DEFAULT_T_IMG },
+        mvp: { name: mvp?.name || '-', pic: mvp?.pic || DEFAULT_P_IMG },
+        dpoy: { name: dpoy?.name || '-', pic: dpoy?.pic || DEFAULT_P_IMG },
+        fmvp: { name: fMvp?.name || '-', pic: fMvp?.pic || DEFAULT_P_IMG }
+    };
+    
+    document.getElementById('awardsContent').innerHTML = `
+        <div class="award-section" style="border-left:5px solid gold;"><div class="award-title">🏆 CHAMPION</div><div class="award-winner"><img src="${window.seasonResult.champ.logo}" style="width:160px;"><h4>${window.seasonResult.champ.name}</h4></div></div>
+        <div class="award-section"><div class="award-title">🌟 MVP</div><div class="award-winner"><img src="${window.seasonResult.mvp.pic}" class="aw-img"><h4>${window.seasonResult.mvp.name}</h4></div></div>
+        <div class="award-section"><div class="award-title">🛡️ DPOY</div><div class="award-winner"><img src="${window.seasonResult.dpoy.pic}" class="aw-img"><h4>${window.seasonResult.dpoy.name}</h4></div></div>
+        <div class="award-section"><div class="award-title">🏅 FINALS MVP</div><div class="award-winner"><img src="${window.seasonResult.fmvp.pic}" class="aw-img"><h4>${window.seasonResult.fmvp.name}</h4></div></div>
+    `;
+
+    const btnSave = document.getElementById('btnSaveSeason');
+    if(btnSave) btnSave.style.display = 'inline-block';
+    
+    window.seasonSnapshot = {
+        players: JSON.parse(JSON.stringify(players.map(p => ({...p, teamName: teams.find(t=>t.id===p.teamId)?.name})))),
+        teams: JSON.parse(JSON.stringify(teams))
+    };
+    
+    document.getElementById('awardsModal').style.display='flex';
+}
+async function archiveSeason() {
+    const archiveData = {
+        id: window.seasonResult.seasonId.toString(),
+        seasonId: window.seasonResult.seasonId,
+        ...window.seasonResult,
+        players: window.seasonSnapshot.players,
+        teams: window.seasonSnapshot.teams
+    };
+
+    await dbPut('history', window.seasonResult);
+    await dbPut('archivedStats', archiveData); 
+
+    const champTeam = teams.find(t => t.name === window.seasonResult.champ.name);
+    if (champTeam) {
+          champTeam.rings = (champTeam.rings || 0) + 1;
+          await dbPut('teams', champTeam);
+    }
+    
+    for(let t of teams) { t.w=0; t.l=0; t.accStats={gp:0,pts:0,reb:0,ast:0,blk:0,stl:0,fgm:0,fga:0,fg3m:0,fg3a:0,ftm:0,fta:0}; t.stats={}; await dbPut('teams', t); }
+    for(let p of players) { p.hiddenStats=null; p.stats={}; await dbPut('players', p); }
+    
+    const tx = db.transaction('schedule', 'readwrite'); tx.objectStore('schedule').clear();
+    localStorage.removeItem('seasonFinalists'); // CLEAN UP
+    
+    isSeasonActive = false;
+    await dbPut('settings', { key: 'isSeasonActive', value: false });
+
+    location.reload();
+}
+
+function renderHistoryView() {
+    const cont = document.getElementById('historyList');
+    if(history.length===0) { document.getElementById('noHistoryMsg').style.display='block'; return; }
+    document.getElementById('noHistoryMsg').style.display='none';
+    
+    cont.innerHTML = history.slice().reverse().map((h, i) => {
+        const cName = h.champ ? h.champ.name : (h.champName || '-');
+        const mName = h.mvp ? h.mvp.name : (h.mvpName || '-');
+        const seasonNum = history.length - i;
+        
+        return `
+        <div class="card clickable" onclick="openHistoryDetails(${h.seasonId})" style="display:flex; justify-content:space-between; align-items:center; transition: transform 0.2s;">
+            <div>
+                <h2 style="margin:0; color:#FFD700; font-family:'Oswald';">SEASON ${seasonNum}</h2>
+                <small style="color:#888;">${h.date}</small>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-weight:bold; font-size:1.2rem;">🏆 ${cName}</div>
+                <div style="color:#666;">MVP: ${mName}</div>
+                <div style="font-size:0.8rem; color:var(--nba-blue); margin-top:5px;">Click to view full awards</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openHistoryDetails(sid) {
+    const h = history.find(x => x.seasonId === sid);
+    if(!h) return;
+
+    const cLogo = h.champ?.logo || DEFAULT_T_IMG;
+    const cName = h.champ?.name || h.champName;
+    
+    const mPic = h.mvp?.pic || DEFAULT_P_IMG;
+    const mName = h.mvp?.name || h.mvpName;
+    
+    const dPic = h.dpoy?.pic || DEFAULT_P_IMG;
+    const dName = h.dpoy?.name || "N/A (Old Data)";
+    
+    const fPic = h.fmvp?.pic || DEFAULT_P_IMG;
+    const fName = h.fmvp?.name || "N/A (Old Data)";
+
+    document.getElementById('awardsContent').innerHTML = `
+        <div class="award-section" style="border-left:5px solid gold;">
+            <div class="award-title">🏆 CHAMPION</div>
+            <div class="award-winner"><img src="${cLogo}" style="width:160px;"><h4>${cName}</h4></div>
+        </div>
+        <div class="award-section">
+            <div class="award-title">🌟 MVP</div>
+            <div class="award-winner"><img src="${mPic}" class="aw-img"><h4>${mName}</h4></div>
+        </div>
+        <div class="award-section">
+            <div class="award-title">🛡️ DPOY</div>
+            <div class="award-winner"><img src="${dPic}" class="aw-img"><h4>${dName}</h4></div>
+        </div>
+        <div class="award-section">
+            <div class="award-title">🏅 FINALS MVP</div>
+            <div class="award-winner"><img src="${fPic}" class="aw-img"><h4>${fName}</h4></div>
+        </div>
+    `;
+
+    const btnSave = document.getElementById('btnSaveSeason');
+    if(btnSave) btnSave.style.display = 'none';
+
+    document.getElementById('awardsModal').style.display = 'flex';
+}
+
+function renderStandings() {
+    const build = (conf, id) => {
+        // TIE BREAKER LOGIC ADDED: Win > Point Differential > Random
+        let list = teams.filter(t => t.conf === conf).sort((a,b) => {
+             if(b.w !== a.w) return b.w - a.w; // Win
+             // Diff
+             let diffA = (a.accStats?.ptsAllowed) ? (a.accStats.pts || 0) - a.accStats.ptsAllowed : 0;
+             let diffB = (b.accStats?.ptsAllowed) ? (b.accStats.pts || 0) - b.accStats.ptsAllowed : 0;
+             return diffB - diffA;
+        });
+        document.getElementById(id).innerHTML = list.map((t, i) => `<tr><td>${i+1}</td><td class="td-left clickable" onclick="openTeamProfile(${t.id})">${t.logo?`<img src="${t.logo}" class="st-logo">`:''} ${t.name}</td><td><b>${t.w}</b></td><td>${t.l}</td><td>${((t.w/(t.w+t.l))||0).toFixed(3)}</td></tr>`).join('');
+    };
+    build('East', 'standingsEast'); build('West', 'standingsWest');
+}
+function openTeamProfile(id) {
+    const t = teams.find(x=>x.id===id);
+    document.getElementById('tmHeroName').innerText = t.name;
+    
+    const img = document.getElementById('tmHeroLogo');
+    if(t.logo) {
+        img.src = t.logo;
+        img.style.display = 'block'; 
+    } else {
+        img.style.display = 'none'; 
+    }
+
+    const s = t.stats || {};
+    document.getElementById('tmPPG').innerText = s.ppg || '-';
+    document.getElementById('tmRPG').innerText = s.rpg || '-';
+    document.getElementById('tmAPG').innerText = s.apg || '-';
+    document.getElementById('tmOPPG').innerText = s.oppg || '-';
+
+    document.getElementById('tmRings').innerText = t.rings ? `🏆 ${t.rings} Championships` : "No Championships";
+    
+    const teamHistory = trans.filter(tr => {
+        if(tr.type === 'trade') return tr.t1Name === t.name || tr.t2Name === t.name;
+        return tr.fromTeam === t.name || tr.toTeam === t.name;
+    });
+    document.getElementById('tmTrans').innerHTML = teamHistory.length ? teamHistory.slice().reverse().map(tr => {
+        if(tr.type === 'trade') return `<li style="padding:5px 0; color:var(--nba-sky);">Trade Involvement (See Market)</li>`;
+        const isIn = (tr.toTeam === t.name);
+        const color = isIn ? 'green' : 'red';
+        const txt = tr.type === 'move' ? (isIn ? 'Signed' : 'Left') : 'Waived';
+        return `<li style="padding:5px 0; font-size:0.85rem; border-bottom:1px dashed #eee;"><span style="color:var(--nba-${color}); font-weight:bold;">${txt}</span>: ${tr.pName}</li>`;
+    }).join('') : '<li style="padding:5px 0; color:#999;">No recent activity</li>';
+    
+    const roster = players.filter(p => p.teamId === Number(id));
+    document.getElementById('tmRoster').innerHTML = roster.length ? roster.map(p => `
+        <li class="clickable" onclick="openProfile(${p.id})" style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
+            <img src="${p.pic || 'https://www.w3schools.com/howto/img_avatar.png'}" 
+     style="width:30px;height:30px;border-radius:50%;margin-right:10px;object-fit:cover;"
+     onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+            <span>${p.name}</span>
+        </li>
+    `).join('') : '<li style="padding:15px; color:#999; text-align:center;">No players</li>';
+
+    document.getElementById('teamModal').style.display='flex';
+}
+
+function openProfile(pid) {
+    const p = players.find(x => x.id === pid); if(!p) return;
+    const t = teams.find(x => x.id === p.teamId);
+    
+    document.getElementById('profName').innerText = p.name;
+    document.getElementById('profTeam').innerText = t ? t.name : "FREE AGENT";
+    document.getElementById('profPos').innerText = p.position ? p.position : 'N/A';
+    document.getElementById('profPic').src = p.pic ? p.pic : DEFAULT_P_IMG;
+    
+    const s = p.stats || {}; 
+    const h = p.hiddenStats || { gp:0, pts:0, reb:0, ast:0, stl:0, blk:0, fga:0, fgm:0, fta:0, ftm:0, fg3m:0, fg3a:0, tov:0, pf:0 };
+    const gp = h.gp > 0 ? h.gp : 1;
+
+    const avg = (val) => (h.gp > 0 ? (val / gp).toFixed(1) : "-");
+    const pct = (m, a) => (a > 0 ? ((m / a) * 100).toFixed(1) + "%" : "-");
+
+    document.getElementById('hPPG').innerText = s.ppg || '-';
+    document.getElementById('hRPG').innerText = s.rpg || '-';
+    document.getElementById('hAPG').innerText = s.apg || '-';
+
+    document.getElementById('dPTS').innerText = s.ppg || '-';
+    document.getElementById('dFGM').innerText = avg(h.fgm);
+    document.getElementById('dFGA').innerText = avg(h.fga);
+    document.getElementById('dFG_P').innerText = pct(h.fgm, h.fga);
+    
+    document.getElementById('d3PM').innerText = avg(h.fg3m);
+    document.getElementById('d3PA').innerText = avg(h.fg3a);
+    document.getElementById('d3P_P').innerText = pct(h.fg3m, h.fg3a);
+    
+    document.getElementById('dFTM').innerText = avg(h.ftm);
+    document.getElementById('dFTA').innerText = avg(h.fta);
+    document.getElementById('dFT_P').innerText = pct(h.ftm, h.fta);
+    
+    document.getElementById('dAST').innerText = s.apg || '-';
+    document.getElementById('dSTL').innerText = s.spg || '-';
+    document.getElementById('dBK').innerText  = s.bpg || '-';
+    document.getElementById('dREB').innerText = s.rpg || '-';
+    
+    document.getElementById('dTOV').innerText = avg(h.tov);
+    document.getElementById('dFLS').innerText = avg(h.pf);
+
+    document.getElementById('profileModal').style.display = 'flex';
+}
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = "none";
+    }
+}
+
+// ==========================================
+// 🛠️ DEVELOPER TOOLS: AUTO FILL
+// ==========================================
+
+const firstNames = ["James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Charles", "Marcus", "Trey", "DeAndre", "LaMelo", "Zion", "Ja", "Jalen", "Kobe", "Shaq", "Vince"];
+const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore"];
+
+function getRandomName() { 
+    return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`; 
+}
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function generateDemoData() {
+    if(!confirm("🚀 AUTO-FILL SYSTEM:\nGenerate 10 teams & fill 5 players each?\n(Existing data safe)\n\nConfirm?")) return;
+
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    document.querySelector('#loadingOverlay div:last-child').innerText = "GENERATING DATA...";
+
+    await ensureBaseTeamsExist();
+    await fillMissingPlayers();
+
+    document.getElementById('loadingOverlay').style.display = 'none';
+    
+    setTimeout(() => {
+        alert("✅ SUCCESS: Data Generated Successfully!");
+        location.reload();
+    }, 500);
+}
+
+async function ensureBaseTeamsExist() {
+    const demoTeams = [
+        { id: 1, name: 'Chicago Bulls', short: 'CHI', conf: 'East', logo: 'https://upload.wikimedia.org/wikipedia/en/6/67/Chicago_Bulls_logo.svg', w:0, l:0, rings:6, stats:{} },
+        { id: 2, name: 'Boston Celtics', short: 'BOS', conf: 'East', logo: 'https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg', w:0, l:0, rings:17, stats:{} },
+        { id: 3, name: 'Miami Heat', short: 'MIA', conf: 'East', logo: 'https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg', w:0, l:0, rings:3, stats:{} },
+        { id: 4, name: 'New York Knicks', short: 'NYK', conf: 'East', logo: 'https://upload.wikimedia.org/wikipedia/en/2/25/New_York_Knicks_logo.svg', w:0, l:0, rings:2, stats:{} },
+        { id: 5, name: 'Philadelphia 76ers', short: 'PHI', conf: 'East', logo: 'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg', w:0, l:0, rings:3, stats:{} },
+        { id: 6, name: 'LA Lakers', short: 'LAL', conf: 'West', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg', w:0, l:0, rings:17, stats:{} },
+        { id: 7, name: 'Golden State Warriors', short: 'GSW', conf: 'West', logo: 'https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg', w:0, l:0, rings:7, stats:{} },
+        { id: 8, name: 'Phoenix Suns', short: 'PHX', conf: 'West', logo: 'https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg', w:0, l:0, rings:0, stats:{} },
+        { id: 9, name: 'Denver Nuggets', short: 'DEN', conf: 'West', logo: 'https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg', w:0, l:0, rings:1, stats:{} },
+        { id: 10, name: 'Dallas Mavericks', short: 'DAL', conf: 'West', logo: 'https://upload.wikimedia.org/wikipedia/en/9/97/Dallas_Mavericks_logo.svg', w:0, l:0, rings:1, stats:{} }
+    ];
+
+    for (let dt of demoTeams) {
+        const eastCount = teams.filter(t => t.conf === 'East').length;
+        const westCount = teams.filter(t => t.conf === 'West').length;
+
+        if (eastCount >= 5 && westCount >= 5) {
+            break; 
+        }
+
+        const exists = teams.some(t => t.name === dt.name);
+        if (!exists) {
+            if (dt.conf === 'East' && eastCount >= 5) continue;
+            if (dt.conf === 'West' && westCount >= 5) continue;
+
+            dt.id = Date.now() + Math.floor(Math.random() * 1000); 
+            await dbPut('teams', dt);
+            teams.push(dt);
+            await new Promise(r => setTimeout(r, 10)); 
+        }
+    }
+}
+
+async function fillMissingPlayers() {
+    for (let t of teams) {
+        const currentRoster = players.filter(p => p.teamId === t.id);
+        let count = currentRoster.length;
+
+        if (count < 5) {
+            const needed = 5 - count;
+            const positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            for (let i = 0; i < needed; i++) {
+                await delay(50); 
+                const uniqueId = Date.now() + Math.floor(Math.random() * 99999);
+                const randomName = getRandomName();
+                const randomAvatar = `https://i.pravatar.cc/150?u=${uniqueId}`;
+                const randomPosition = positions[Math.floor(Math.random() * positions.length)];
+                const randomTier = ['S', 'A', 'B', 'C', 'D'][Math.floor(Math.random() * 5)];
+                
+                const newPlayer = {
+                    id: uniqueId,
+                    name: randomName,
+                    teamId: t.id,
+                    position: randomPosition,
+                    pic: randomAvatar,
+                    stats: {},
+                    hiddenStats: { gp:0, pts:0, reb:0, ast:0, stl:0, blk:0, fga:0, fgm:0, fta:0, ftm:0, fg3m:0, fg3a:0, tov:0, pf:0 }
+                };
+                
+                await dbPut('players', newPlayer);
+                players.push(newPlayer);
+            }
+        }
+    }
+}
+
+// Tierlist Functions
+function refreshTierlist() {
+    // Initialize empty tiers
+    ['tierPool', 'tierS', 'tierA', 'tierB', 'tierC', 'tierD'].forEach(tierId => {
+        document.getElementById(tierId).innerHTML = '';
+    });
+    
+    const posFilter = document.getElementById('tierlistPosFilter').value;
+    const searchQuery = document.getElementById('tierlistSearch').value.toLowerCase();
+    
+    // Get all players
+    let filteredPlayers = players.slice();
+    
+    // Filter by position if selected
+    if(posFilter) {
+        filteredPlayers = filteredPlayers.filter(p => p.position === posFilter);
+    }
+    
+    // Filter by search query
+    if(searchQuery) {
+        filteredPlayers = filteredPlayers.filter(p => p.name.toLowerCase().includes(searchQuery));
+    }
+    
+    // Organize by tier assignment
+    const tierPool = filteredPlayers.filter(p => !p.tier || !['S', 'A', 'B', 'C', 'D'].includes(p.tier));
+    const tierS = filteredPlayers.filter(p => p.tier === 'S');
+    const tierA = filteredPlayers.filter(p => p.tier === 'A');
+    const tierB = filteredPlayers.filter(p => p.tier === 'B');
+    const tierC = filteredPlayers.filter(p => p.tier === 'C');
+    const tierD = filteredPlayers.filter(p => p.tier === 'D');
+    
+    // Render each tier
+    renderTierRow('tierPool', tierPool);
+    renderTierRow('tierS', tierS);
+    renderTierRow('tierA', tierA);
+    renderTierRow('tierB', tierB);
+    renderTierRow('tierC', tierC);
+    renderTierRow('tierD', tierD);
+}
+
+
+function renderTierRow(tierId, playersList) {
+    const container = document.getElementById(tierId);
+    const tierName = tierId.replace('tier', '').toUpperCase();
+    container.innerHTML = playersList.map(p => {
+        const posText = p.position || 'N/A';
+        return `
+            <div class="player-card-tier" draggable="true" ondragstart="dragStartPlayer(event, ${p.id})" ondragover="dragOverTier(event)" ondrop="dropToTier(event, '${tierName}')" title="${p.name} - ${posText} (Drag to move between tiers)">
+                ${p.pic ? `<img src="${p.pic}" alt="${p.name}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">` : `<img src="https://www.w3schools.com/howto/img_avatar.png" style="width:70px;height:70px;border-radius:50%;">`}
+                <div class="player-card-tier-name">${p.name}</div>
+                <div style="font-size:0.7rem; color:#666; font-weight:bold;">${posText}</div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add drag-over handlers to empty tier containers
+    container.ondragover = (e) => dragOverTier(e);
+    container.ondrop = (e) => dropToTier(e, tierName);
+}
+
+let draggedPlayerId = null;
+
+function dragStartPlayer(e, playerId) {
+    draggedPlayerId = playerId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.closest('.player-card-tier').classList.add('dragging');
+}
+
+function dragOverTier(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function dropToTier(e, tierName) {
+    e.preventDefault();
+    if(!draggedPlayerId) return;
+    
+    const player = players.find(p => p.id === draggedPlayerId);
+    if(player) {
+        player.tier = tierName;
+        dbPut('players', player);
+        refreshTierlist();
+        draggedPlayerId = null;
+    }
+}
+
+initApp();
+
+</script>
+</body>
+</html>
