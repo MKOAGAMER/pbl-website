@@ -427,7 +427,8 @@ fetch('/content/site.json?' + Date.now())
     const error = document.getElementById("adminLoginError");
 
     // ตั้งรหัสผ่านตรงนี้
-    const ADMIN_PASSWORD = "Lotto432";
+    // Disabled: legacy client-side passwords are not an authorization boundary.
+    const ADMIN_PASSWORD = null;
 
     if (password === ADMIN_PASSWORD) {
       error.style.display = "none";

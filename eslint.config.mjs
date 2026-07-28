@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Preserved prototype modules that are no longer part of the App Router build.
+    "app/components/home/**",
+    "app/lib/data/**",
+    "app/lib/supabase/**",
+    "app/lib/utils.ts",
+    "app/types/**",
   ]),
 ]);
 

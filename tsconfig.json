@@ -30,5 +30,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "app/components/home/**",
+    "app/lib/data/**",
+    "app/lib/supabase/**",
+    "app/lib/utils.ts",
+    "app/types/**"
+  ]
 }
