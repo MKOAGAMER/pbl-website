@@ -22,7 +22,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
   const [sort, setSort] = useState<SortMode>('name');
 
   const positions = useMemo(
-    () => [...new Set(players.map((player) => player.position).filter(Boolean))].sort(),
+    () => [...new Set(players.flatMap((player) => player.positions).filter(Boolean))].sort(),
     [players],
   );
   const teamsById = useMemo(() => new Map(teams.map((team) => [team.id, team])), [teams]);
@@ -32,14 +32,14 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
 
     return players
       .filter((player) => teamId === 'all' || (teamId === 'free-agent' ? !player.teamId : player.teamId === teamId))
-      .filter((player) => position === 'all' || player.position === position)
+      .filter((player) => position === 'all' || player.positions.includes(position))
       .filter((player) => {
         if (!normalizedQuery) return true;
         const team = teamsById.get(player.teamId);
         return [
           player.displayName,
           player.robloxUsername,
-          player.position,
+          player.positions.join(' '),
           team?.name ?? '',
           team?.abbreviation ?? '',
         ].some((value) => value.toLowerCase().includes(normalizedQuery));
@@ -142,7 +142,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
                     <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
                     <span className="min-w-0">
                       <span className="flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.11em] text-[var(--ink-faint)]">
-                        #{player.jerseyNumber} <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" /> {player.position}
+                        #{player.jerseyNumber} <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" /> {player.positions.join(' / ')}
                       </span>
                       <span className="mt-1.5 block truncate text-xl font-black tracking-[-0.04em] transition group-hover:text-[var(--orange-soft)]">{player.displayName}</span>
                       <span className="mt-1 flex items-center gap-1.5 truncate text-xs text-[var(--ink-faint)]"><UserRound className="h-3.5 w-3.5" /> @{player.robloxUsername}</span>

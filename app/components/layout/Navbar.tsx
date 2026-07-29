@@ -12,7 +12,7 @@ const internalLinks = [
   { href: '/', key: 'home' }, { href: '/games', key: 'live' }, { href: '/standings', key: 'standings' },
   { href: '/teams', key: 'teams' }, { href: '/players', key: 'players' }, { href: '/stats', key: 'stats' },
   { href: '/trades', key: 'trades' },
-  { href: '/rankings', key: 'rankings' }, { href: '/accolades', key: 'accolades' }, { href: '/playoffs', key: 'playoffs' },
+  { href: '/tournaments', key: 'tournaments' }, { href: '/rankings', key: 'rankings' }, { href: '/accolades', key: 'accolades' }, { href: '/playoffs', key: 'playoffs' },
   { href: '/news', key: 'news' }, { href: '/partners', key: 'partners' }, { href: '/staff', key: 'staff' },
   { href: '/links', key: 'community' }, { href: '/privacy', key: 'privacy' }, { href: '/terms', key: 'terms' },
 ] as const;

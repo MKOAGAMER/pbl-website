@@ -10,7 +10,8 @@
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
 5. `supabase/migrations/202607290004_player_identity_discord.sql`
 6. `supabase/migrations/202607290005_staff_control.sql`
-7. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
+7. `supabase/migrations/202607290006_franchise_profiles_tournaments.sql`
+8. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะและระบบอัปโหลดจากเครื่อง
 8. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 
 Migration ลำดับที่ 4 เพิ่ม:

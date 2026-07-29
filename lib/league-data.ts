@@ -181,6 +181,11 @@ function mapPlayer(row: Row, statsRow?: Row, roster?: Row): Player {
         stringValue(row.username, 'Unknown Player'),
     ),
   );
+  const primaryPosition = stringValue(roster?.position, stringValue(row.position, 'UTIL'));
+  const storedPositions = Array.isArray(row.positions)
+    ? row.positions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : [];
+  const positions = [...new Set([primaryPosition, ...storedPositions])].slice(0, 3);
   return {
     id: stringValue(row.id, slugify(displayName)),
     slug: stringValue(row.slug, slugify(displayName)),
@@ -190,10 +195,11 @@ function mapPlayer(row: Row, statsRow?: Row, roster?: Row): Player {
       roster?.jersey_number,
       numberValue(row.jersey_number, numberValue(row.number)),
     ),
-    position: stringValue(roster?.position, stringValue(row.position, 'G')),
+    position: primaryPosition,
+    positions,
     teamId: stringValue(roster?.team_id, stringValue(row.team_id)),
     avatarUrl: stringValue(row.avatar_url) || null,
-    bio: stringValue(row.bio, `${displayName} competes in the Practical Basketball Asia League.`),
+    bio: stringValue(row.bio),
     isActive: booleanValue(row.is_active, booleanValue(row.active, true)),
     stats: mapStats(statsRow),
   };
@@ -342,7 +348,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
         .select('season_id, team_id, wins, losses'),
       supabase
         .from('players')
-        .select('id, first_name, last_name, slug, roblox_username, position, team_id, avatar_url, bio, is_active')
+        .select('id, first_name, last_name, slug, roblox_username, position, positions, team_id, avatar_url, bio, is_active')
         .order('last_name'),
       supabase
         .from('rosters')

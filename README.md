@@ -31,9 +31,10 @@ npm run dev
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
 5. `supabase/migrations/202607290004_player_identity_discord.sql`
 6. `supabase/migrations/202607290005_staff_control.sql`
-7. `supabase/storage.sql` สำหรับ public asset buckets เดิม
+7. `supabase/migrations/202607290006_franchise_profiles_tournaments.sql`
+8. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
-Migration ล่าสุดย้าย staff/links เดิมเข้าสู่ Content Studio และ backfill รูป Roblox ให้ player profile ที่มีอยู่แล้ว
+Migration ล่าสุดเพิ่ม Franchise Owner, การซื้อ/ปล่อยผู้เล่นผ่านการอนุมัติของ Staff, About และหลายตำแหน่งของผู้เล่น รวมถึง Tournament Control ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ
 
 ## ตรวจคุณภาพ
 

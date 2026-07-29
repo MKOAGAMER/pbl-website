@@ -73,10 +73,13 @@ export async function GET(request: Request) {
       .maybeSingle<{ role: UserRole; admin_permission: AdminPermission | null }>();
 
     const privileged = existing?.role === 'staff' || existing?.role === 'admin';
+    const franchiseOwner = existing?.role === 'franchise_owner';
     // Existing manual grants remain authoritative; otherwise map MKOA ranks.
     const role: UserRole = privileged
       ? existing.role
-      : groupPermission === 'group_holder' || groupPermission === 'admin'
+      : franchiseOwner
+        ? 'franchise_owner'
+        : groupPermission === 'group_holder' || groupPermission === 'admin'
         ? 'admin'
         : 'player';
     // Both PBAL leadership ranks are full web administrators. Group rank is
@@ -139,6 +142,7 @@ export async function GET(request: Request) {
           last_name: '',
           slug: `roblox-${roblox.sub}`,
           position: 'UTIL',
+          positions: ['UTIL'],
           team_id: null,
         });
     if (playerWrite.error) throw playerWrite.error;

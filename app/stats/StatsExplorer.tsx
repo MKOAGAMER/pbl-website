@@ -251,7 +251,7 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
                       <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" primaryColor={team?.primaryColor} secondaryColor={team?.secondaryColor} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-black transition group-hover:text-[var(--orange-soft)]">{player.displayName}</span>
-                        <span className="mt-0.5 block truncate text-[0.62rem] text-[var(--ink-faint)]">{player.position} - @{player.robloxUsername}</span>
+                        <span className="mt-0.5 block truncate text-[0.62rem] text-[var(--ink-faint)]">{player.positions.join(' / ')} - @{player.robloxUsername}</span>
                       </span>
                     </span>
                     <span className="hidden min-w-0 items-center gap-2 text-xs font-bold text-[var(--ink-soft)] sm:flex">
@@ -299,7 +299,7 @@ function LeaderSpotlight({
         <span className={`grid h-8 w-8 place-items-center rounded-full text-xs font-black ${rank === 1 ? 'bg-[var(--orange)] text-black' : 'bg-[var(--surface-soft)] text-[var(--ink-soft)]'}`}>#{rank}</span>
       </div>
       <h3 className="mt-5 truncate text-lg font-black tracking-[-0.035em] transition group-hover:text-[var(--orange-soft)]">{player.displayName}</h3>
-      <p className="mt-1 text-xs font-bold text-[var(--ink-faint)]">{team?.abbreviation ?? 'FA'} - {player.position}</p>
+      <p className="mt-1 text-xs font-bold text-[var(--ink-faint)]">{team?.abbreviation ?? 'FA'} - {player.positions.join(' / ')}</p>
       <div className="mt-5 flex items-end justify-between border-t border-[var(--line)] pt-4">
         <span>
           <span className="number-tabular block text-3xl font-black tracking-[-0.06em] text-[var(--orange-soft)]">{formatMetricValue(player.stats[metric.key], metric)}</span>

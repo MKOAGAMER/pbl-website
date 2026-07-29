@@ -224,19 +224,20 @@ export async function updatePlayerProfile(formData: FormData) {
   const { supabase } = await requireAdminPermission('staff');
   const parsed = z.object({
     playerId: uuid, displayName: z.string().trim().min(1).max(80), avatarUrl: optionalUrl,
-    bio: z.string().trim().max(1500), position, isActive: z.boolean(),
+    bio: z.string().trim().max(1500), positions: z.array(position).min(1).max(3), isActive: z.boolean(),
   }).safeParse({
     playerId: formData.get('player_id'), displayName: formData.get('display_name'), avatarUrl: formData.get('avatar_url'),
-    bio: formData.get('bio'), position: formData.get('position'), isActive: formData.get('is_active') === 'on',
+    bio: formData.get('bio'), positions: formData.getAll('positions'), isActive: formData.get('is_active') === 'on',
   });
-  if (!parsed.success) redirect('/admin/league?error=invalid-player');
+  if (!parsed.success) redirect('/admin/players?error=invalid-player');
   const { error } = await supabase.from('players').update({
     name: parsed.data.displayName, first_name: parsed.data.displayName, last_name: '', avatar_url: parsed.data.avatarUrl || null,
-    bio: parsed.data.bio || null, position: parsed.data.position, is_active: parsed.data.isActive, updated_at: new Date().toISOString(),
+    bio: parsed.data.bio || null, position: parsed.data.positions[0], positions: parsed.data.positions,
+    is_active: parsed.data.isActive, updated_at: new Date().toISOString(),
   }).eq('id', parsed.data.playerId);
-  if (error) redirect('/admin/league?error=player-save');
+  if (error) redirect('/admin/players?error=player-save');
   refreshLeague();
-  redirect('/admin/league?saved=player-updated');
+  redirect('/admin/players?saved=player-updated');
 }
 
 export async function syncPlayerAvatar(formData: FormData) {
@@ -244,13 +245,13 @@ export async function syncPlayerAvatar(formData: FormData) {
   const parsed = z.object({ playerId: uuid, username: z.string().trim().regex(/^[A-Za-z0-9_]{3,20}$/) }).safeParse({
     playerId: formData.get('player_id'), username: formData.get('roblox_username'),
   });
-  if (!parsed.success) redirect('/admin/league?error=invalid-player');
+  if (!parsed.success) redirect('/admin/players?error=invalid-player');
   const roblox = await getRobloxUserByUsername(parsed.data.username).catch(() => null);
-  if (!roblox?.avatarUrl) redirect('/admin/league?error=roblox-user-not-found');
+  if (!roblox?.avatarUrl) redirect('/admin/players?error=roblox-user-not-found');
   const { error } = await supabase.from('players').update({ avatar_url: roblox.avatarUrl, updated_at: new Date().toISOString() }).eq('id', parsed.data.playerId);
-  if (error) redirect('/admin/league?error=player-save');
+  if (error) redirect('/admin/players?error=player-save');
   refreshLeague();
-  redirect('/admin/league?saved=player-synced');
+  redirect('/admin/players?saved=player-synced');
 }
 
 export async function movePlayer(formData: FormData) {

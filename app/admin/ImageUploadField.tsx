@@ -8,9 +8,10 @@ type ImageUploadFieldProps = {
   label: string;
   initialValue?: string | null;
   help?: string;
+  bucket?: 'team-logos' | 'player-photos' | 'news-images' | 'staff-avatars';
 };
 
-export function ImageUploadField({ name, label, initialValue, help }: ImageUploadFieldProps) {
+export function ImageUploadField({ name, label, initialValue, help, bucket = 'news-images' }: ImageUploadFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(initialValue ?? '');
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,7 @@ export function ImageUploadField({ name, label, initialValue, help }: ImageUploa
     setError('');
     const body = new FormData();
     body.set('file', file);
+    body.set('bucket', bucket);
     try {
       const response = await fetch('/api/admin/media', { method: 'POST', body });
       const payload = await response.json() as { asset?: { secure_url?: string }; error?: string };

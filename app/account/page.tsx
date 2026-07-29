@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BadgeCheck, Gamepad2, MessageCircle, ShieldCheck, UserRound } from 'lucide-react';
+import { BadgeCheck, Gamepad2, MessageCircle, ShieldCheck } from 'lucide-react';
 import { getCurrentUser } from '@/lib/session';
 import { isDiscordAuthConfigured } from '@/lib/discord-auth';
+import { createAdminClient } from '@/lib/supabase-admin';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
+import { ProfileAboutForm } from './ProfileAboutForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +28,10 @@ export default async function AccountPage({ searchParams }: Props) {
   const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
   if (!user) redirect('/login?next=/account');
   const discordReady = isDiscordAuthConfigured();
+  const supabase = createAdminClient();
+  const { data: playerProfile } = supabase
+    ? await supabase.from('players').select('bio, slug').eq('user_id', user.id).maybeSingle()
+    : { data: null };
 
   return (
     <main className="site-shell py-12 sm:py-16">
@@ -41,18 +48,16 @@ export default async function AccountPage({ searchParams }: Props) {
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-6">
             <div className="flex items-start gap-4">
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt="" className="h-16 w-16 rounded-2xl object-cover" />
-              ) : <span className="grid h-16 w-16 place-items-center rounded-2xl bg-[var(--surface-soft)]"><UserRound className="h-6 w-6" /></span>}
+              <PlayerAvatar src={user.avatarUrl} name={user.username} size="lg" />
               <div className="min-w-0">
                 <p className="truncate text-xl font-black">{user.username}</p>
-                <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--orange-soft)]">{user.role} · Free Agent by default</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--orange-soft)]">{user.role.replaceAll('_', ' ')}</p>
               </div>
             </div>
             <div className="mt-6 space-y-3 border-t border-[var(--line)] pt-5 text-sm text-[var(--ink-soft)]">
               <p className="flex items-center gap-3"><Gamepad2 className="h-4 w-4 text-[var(--orange-soft)]" /> Roblox ID {user.robloxId}</p>
-              <p className="flex items-center gap-3"><ShieldCheck className="h-4 w-4 text-[var(--orange-soft)]" /> League role: {user.role}</p>
+              <p className="flex items-center gap-3"><ShieldCheck className="h-4 w-4 text-[var(--orange-soft)]" /> League role: {user.role.replaceAll('_', ' ')}</p>
+              {user.role === 'franchise_owner' && <Link href="/trades" className="inline-flex font-black text-[var(--orange-soft)]">Request an acquisition or player release →</Link>}
             </div>
           </section>
 
@@ -77,6 +82,7 @@ export default async function AccountPage({ searchParams }: Props) {
             )}
           </section>
         </div>
+        <ProfileAboutForm initialBio={typeof playerProfile?.bio === 'string' ? playerProfile.bio : ''} />
       </div>
     </main>
   );

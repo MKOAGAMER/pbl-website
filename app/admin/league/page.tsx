@@ -13,9 +13,7 @@ import {
   deleteTeam,
   movePlayer,
   scheduleGame,
-  syncPlayerAvatar,
   updateGame,
-  updatePlayerProfile,
   updateSeason,
   updateTeam,
 } from './actions';
@@ -38,7 +36,7 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
   const [seasonResult, teamResult, playerResult, rosterResult, seasonTeamResult, gameResult] = await Promise.all([
     supabase.from('seasons').select('id, name, status, is_public, starts_on, ends_on').order('starts_on', { ascending: false }),
     supabase.from('teams').select('id, name, abbreviation, city, description, logo_url, primary_color, secondary_color, website_url, home_venue, is_active').order('name'),
-    supabase.from('players').select('id, name, first_name, last_name, roblox_username, avatar_url, bio, team_id, position, is_active').order('name'),
+    supabase.from('players').select('id, name, roblox_username').order('name'),
     supabase.from('rosters').select('season_id, player_id, team_id, jersey_number, status').eq('status', 'active'),
     supabase.from('season_teams').select('season_id, team_id, conference, is_active'),
     supabase.from('games').select('id, season_id, home_team_id, away_team_id, scheduled_at, venue, status, home_score, away_score, stream_url, notes').order('scheduled_at', { ascending: false }).limit(100),
@@ -105,7 +103,7 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
             <Input name="secondary_color" label="Secondary" type="color" defaultValue="#ffffff" required />
             <Input name="website_url" label="Website" type="url" placeholder="https://..." wide />
             <Textarea name="description" label="Description" wide />
-            <ImageUploadField name="logo_url" label="Team logo" help="Upload directly or paste an image URL." />
+            <ImageUploadField name="logo_url" label="Team logo" bucket="team-logos" help="Upload directly or paste an image URL." />
             <div className="sm:col-span-2"><SubmitButton>Create team</SubmitButton></div>
           </form> : <EmptyOperation text="Create a season before adding teams." />}
         </OperationCard>
@@ -165,7 +163,7 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
                 <Input name="secondary_color" label="Secondary" type="color" defaultValue={value(team.secondary_color) || '#ffffff'} required />
                 <Input name="website_url" label="Website" type="url" defaultValue={value(team.website_url)} wide />
                 <Textarea name="description" label="Description" defaultValue={value(team.description)} wide />
-                <ImageUploadField name="logo_url" label="Team logo" initialValue={value(team.logo_url)} />
+                <ImageUploadField name="logo_url" label="Team logo" bucket="team-logos" initialValue={value(team.logo_url)} />
                 <Checkbox name="is_active" label="Team is active" defaultChecked={bool(team.is_active)} />
                 <div className="sm:col-span-2"><SubmitButton>Save team</SubmitButton></div>
               </form>
@@ -173,19 +171,6 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
             </div></details>;
           })}
           {!allTeams.length && <EmptyOperation text="No teams yet." />}
-        </ManageSection>
-
-        <ManageSection icon={UserRoundCog} title="Manage player profiles" description="Use the real Roblox headshot, edit public profile text and control publication.">
-          {players.map((player) => <details key={value(player.id)} className="admin-record"><summary>@{value(player.roblox_username) || value(player.name)} <RecordMeta>{value(player.position)} · {bool(player.is_active) ? 'Published' : 'Hidden'}</RecordMeta></summary><form action={updatePlayerProfile} className="mt-4 grid gap-3 sm:grid-cols-2">
-            <input type="hidden" name="player_id" value={value(player.id)} /><input type="hidden" name="roblox_username" value={value(player.roblox_username)} />
-            <Input name="display_name" label="Display name" defaultValue={value(player.name) || `${value(player.first_name)} ${value(player.last_name)}`.trim()} required wide />
-            <PositionSelect defaultValue={value(player.position)} />
-            <Checkbox name="is_active" label="Publish player" defaultChecked={bool(player.is_active)} />
-            <Textarea name="bio" label="Biography" defaultValue={value(player.bio)} wide />
-            <ImageUploadField name="avatar_url" label="Player profile image" initialValue={value(player.avatar_url)} help="Upload a custom image or sync the current Roblox headshot." />
-            <div className="flex flex-wrap gap-2 sm:col-span-2"><SubmitButton>Save player</SubmitButton><button type="submit" formAction={syncPlayerAvatar} className="rounded-xl border border-[var(--line)] px-4 text-xs font-black uppercase tracking-[0.08em]">Sync Roblox image</button></div>
-          </form></details>)}
-          {!players.length && <EmptyOperation text="No player profiles yet." />}
         </ManageSection>
 
         <ManageSection icon={Pencil} title="Manage games" description="Correct schedule, matchup, status, scores, stream URL and notes, or remove a game.">

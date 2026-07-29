@@ -116,7 +116,7 @@ export default async function PlayerDetailPage({ params }: Props) {
 
             <div>
               <div className="flex flex-wrap items-center gap-2 text-[0.65rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">
-                <span>{player.position}</span>
+                <span>{player.positions.join(' / ')}</span>
                 <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" />
                 <span className={player.isActive ? 'text-emerald-300' : ''}>{player.isActive ? 'Active roster' : 'Inactive'}</span>
               </div>
@@ -162,11 +162,11 @@ export default async function PlayerDetailPage({ params }: Props) {
           <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
             <p className="eyebrow">Player profile</p>
             <h2 className="display-type mt-4 text-3xl sm:text-4xl">About {player.displayName}</h2>
-            <p className="mt-5 text-pretty text-sm leading-7 text-[var(--ink-soft)] sm:text-base">{player.bio}</p>
+            <p className="mt-5 text-pretty text-sm leading-7 text-[var(--ink-soft)] sm:text-base">{player.bio || 'This player has not written an About yet.'}</p>
 
             <dl className="mt-7 grid gap-px overflow-hidden rounded-[1.2rem] border border-[var(--line)] bg-[var(--line)] sm:grid-cols-2">
               <ProfileFact label="Roblox username" value={`@${player.robloxUsername}`} />
-              <ProfileFact label="Position" value={player.position} />
+              <ProfileFact label="Positions" value={player.positions.join(' / ')} />
               <ProfileFact label="Jersey number" value={`#${player.jerseyNumber}`} />
               <ProfileFact label="Roster status" value={player.isActive ? 'Active' : 'Inactive'} />
             </dl>
@@ -250,7 +250,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                       <PlayerAvatar src={teammate.avatarUrl} name={teammate.displayName} size="sm" className="!h-11 !w-11" primaryColor={team.primaryColor} secondaryColor={team.secondaryColor} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-black transition group-hover:text-[var(--orange-soft)]">{teammate.displayName}</span>
-                        <span className="mt-1 block text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--ink-faint)]">#{teammate.jerseyNumber} - {teammate.position}</span>
+                        <span className="mt-1 block text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--ink-faint)]">#{teammate.jerseyNumber} - {teammate.positions.join(' / ')}</span>
                       </span>
                     </span>
                     <span className="mt-4 flex items-center justify-between border-t border-[var(--line)] pt-3 text-xs text-[var(--ink-soft)]">

@@ -15,7 +15,7 @@ export function SearchHub({ players, teams }: { players: Player[]; teams: Team[]
     const value = query.trim().toLowerCase();
     if (!value) return { players: players.slice(0, 6), teams: teams.slice(0, 6) };
     return {
-      players: players.filter((player) => [player.displayName, player.robloxUsername, player.position].some((item) => item.toLowerCase().includes(value))).slice(0, 12),
+      players: players.filter((player) => [player.displayName, player.robloxUsername, player.positions.join(' ')].some((item) => item.toLowerCase().includes(value))).slice(0, 12),
       teams: teams.filter((team) => [team.name, team.abbreviation, team.city].some((item) => item.toLowerCase().includes(value))).slice(0, 12),
     };
   }, [players, query, teams]);

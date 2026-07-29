@@ -50,6 +50,7 @@ export interface Player {
   robloxUsername: string;
   jerseyNumber: number;
   position: string;
+  positions: string[];
   teamId: string;
   avatarUrl?: string | null;
   bio: string;

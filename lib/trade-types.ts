@@ -1,4 +1,5 @@
 export type TradeStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type TradeRequestKind = 'acquire' | 'release' | 'transfer';
 
 export type TradeRecord = {
   id: string;
@@ -13,10 +14,10 @@ export type TradeRecord = {
   toTeamAbbreviation: string;
   tradeDate: string;
   status: TradeStatus;
+  requestKind: TradeRequestKind;
   notes: string;
   reviewNote: string;
   requestedAt: string;
   reviewedAt: string | null;
   isOwnRequest: boolean;
 };
-

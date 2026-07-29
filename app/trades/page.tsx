@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getCurrentUser } from '@/lib/session';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { getSiteData } from '@/lib/league-data';
-import type { TradeRecord, TradeStatus } from '@/lib/trade-types';
+import type { TradeRecord, TradeRequestKind, TradeStatus } from '@/lib/trade-types';
 import { TradeCenter } from './TradeCenter';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export default async function TradesPage() {
     const [tradesResult, playersResult, teamsResult] = await Promise.all([
       supabase
         .from('trades')
-        .select('id, player_id, from_team_id, to_team_id, trade_date, status, notes, review_note, created_by, created_at, reviewed_at')
+        .select('id, player_id, from_team_id, to_team_id, trade_date, status, request_kind, notes, review_note, created_by, created_at, reviewed_at')
         .order('trade_date', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(300),
@@ -69,6 +69,7 @@ export default async function TradesPage() {
       toTeamAbbreviation: toTeam?.abbreviation ?? '—',
       tradeDate: text(row.trade_date),
       status: text(row.status) as TradeStatus,
+      requestKind: (text(row.request_kind) || 'transfer') as TradeRequestKind,
       notes: text(row.notes),
       reviewNote: text(row.review_note),
       requestedAt: text(row.created_at),
@@ -84,6 +85,8 @@ export default async function TradesPage() {
       teams={siteData.teams}
       currentUsername={user?.username ?? null}
       isStaff={isStaff}
+      canRequestTrade={isStaff || user?.role === 'franchise_owner'}
+      franchiseTeamId={user?.franchiseTeamId ?? null}
     />
   );
 }

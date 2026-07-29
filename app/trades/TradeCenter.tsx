@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeftRight, CheckCircle2, Clock3, Filter, Search, Send, ShieldCheck, XCircle } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import type { Player, Team } from '@/lib/league-types';
-import type { TradeRecord, TradeStatus } from '@/lib/trade-types';
+import type { TradeRecord, TradeRequestKind, TradeStatus } from '@/lib/trade-types';
 
 type Props = {
   trades: TradeRecord[];
@@ -13,12 +13,25 @@ type Props = {
   teams: Team[];
   currentUsername: string | null;
   isStaff: boolean;
+  canRequestTrade: boolean;
+  franchiseTeamId: string | null;
 };
 
-export function TradeCenter({ trades, players, teams, currentUsername, isStaff }: Props) {
+export function TradeCenter({ trades, players, teams, currentUsername, isStaff, canRequestTrade, franchiseTeamId }: Props) {
   const router = useRouter();
-  const [playerId, setPlayerId] = useState(players[0]?.id ?? '');
-  const selectedPlayer = players.find((player) => player.id === playerId);
+  const [requestKind, setRequestKind] = useState<TradeRequestKind>(franchiseTeamId ? 'acquire' : 'transfer');
+  const eligiblePlayers = useMemo(() => {
+    if (!franchiseTeamId || requestKind === 'transfer') return players;
+    return requestKind === 'release'
+      ? players.filter((player) => player.teamId === franchiseTeamId)
+      : players.filter((player) => player.teamId && player.teamId !== franchiseTeamId);
+  }, [franchiseTeamId, players, requestKind]);
+  const [playerId, setPlayerId] = useState(() => (
+    franchiseTeamId
+      ? players.find((player) => player.teamId && player.teamId !== franchiseTeamId)?.id ?? ''
+      : players[0]?.id ?? ''
+  ));
+  const selectedPlayer = eligiblePlayers.find((player) => player.id === playerId);
   const destinations = teams.filter((team) => team.id !== selectedPlayer?.teamId);
   const [toTeamId, setToTeamId] = useState('');
   const [notes, setNotes] = useState('');
@@ -42,7 +55,8 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff }
   async function submitTrade(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('');
-    if (!playerId || !toTeamId) {
+    const destinationTeamId = requestKind === 'acquire' && franchiseTeamId ? franchiseTeamId : toTeamId;
+    if (!playerId || !destinationTeamId) {
       setMessage('กรุณาเลือกผู้เล่นและทีมปลายทาง');
       return;
     }
@@ -51,7 +65,7 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff }
       const response = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ playerId, toTeamId, notes }),
+        body: JSON.stringify({ playerId, toTeamId: destinationTeamId, requestKind, notes }),
       });
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error || 'ส่งคำขอไม่สำเร็จ');
@@ -94,30 +108,48 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff }
               <div className="mt-6 rounded-xl border border-[var(--line)] bg-[var(--page)] p-4 text-sm leading-6 text-[var(--ink-soft)]">
                 เข้าสู่ระบบด้วย Roblox ก่อนยื่นคำขอ <Link href="/login?next=/trades" className="font-black text-[var(--orange-soft)]">เข้าสู่ระบบ →</Link>
               </div>
+            ) : !canRequestTrade ? (
+              <div className="mt-6 rounded-xl border border-[var(--line)] bg-[var(--page)] p-4 text-sm leading-6 text-[var(--ink-soft)]">
+                การยื่นคำขอซื้อขายสงวนไว้สำหรับยศ <strong className="text-[var(--ink)]">Franchise Owner</strong> และทีมงานลีก ติดต่อแอดมินเพื่อขอรับยศและผูกทีม Franchise
+              </div>
             ) : (
               <form onSubmit={submitTrade} className="mt-6 space-y-4">
                 <p className="text-xs text-[var(--ink-faint)]">ยื่นคำขอในชื่อ <strong className="text-[var(--ink)]">{currentUsername}</strong></p>
+                {franchiseTeamId && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ประเภทธุรกรรม
+                  <select value={requestKind} onChange={(event) => {
+                    const kind = event.target.value as TradeRequestKind;
+                    setRequestKind(kind);
+                    const nextPlayers = kind === 'release'
+                      ? players.filter((player) => player.teamId === franchiseTeamId)
+                      : players.filter((player) => player.teamId && player.teamId !== franchiseTeamId);
+                    setPlayerId(nextPlayers[0]?.id ?? '');
+                    setToTeamId('');
+                  }} className="admin-input mt-2">
+                    <option value="acquire">ซื้อผู้เล่นเข้าทีม</option>
+                    <option value="release">ขาย / ส่งผู้เล่นออกจากทีม</option>
+                  </select>
+                </label>}
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ผู้เล่น
                   <select value={playerId} onChange={(event) => { setPlayerId(event.target.value); setToTeamId(''); }} className="admin-input mt-2" required>
-                    {players.map((player) => <option key={player.id} value={player.id}>{player.displayName}</option>)}
+                    {eligiblePlayers.map((player) => <option key={player.id} value={player.id}>{player.displayName}</option>)}
                   </select>
                 </label>
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3 text-center">
                   <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ต้นทาง</span><strong className="mt-1 block text-sm">{teams.find((team) => team.id === selectedPlayer?.teamId)?.abbreviation ?? 'FA'}</strong></span>
                   <ArrowLeftRight className="h-5 w-5 text-[var(--orange-soft)]" />
-                  <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ปลายทาง</span><strong className="mt-1 block text-sm">{teams.find((team) => team.id === toTeamId)?.abbreviation ?? '—'}</strong></span>
+                  <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ปลายทาง</span><strong className="mt-1 block text-sm">{teams.find((team) => team.id === (requestKind === 'acquire' ? franchiseTeamId : toTeamId))?.abbreviation ?? '—'}</strong></span>
                 </div>
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ทีมปลายทาง
+                {requestKind !== 'acquire' && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ทีมปลายทาง
                   <select value={toTeamId} onChange={(event) => setToTeamId(event.target.value)} className="admin-input mt-2" required>
                     <option value="">เลือกทีม</option>
                     {destinations.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
                   </select>
-                </label>
+                </label>}
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">หมายเหตุ (ไม่บังคับ)
                   <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} maxLength={500} className="admin-input mt-2 py-3" placeholder="ข้อมูลประกอบคำขอ" />
                 </label>
                 {message && <p role="status" className="rounded-xl border border-[var(--line)] bg-[var(--page)] px-3 py-2.5 text-sm text-[var(--ink-soft)]">{message}</p>}
-                <button type="submit" disabled={submitting || players.length === 0} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] px-5 text-xs font-black uppercase tracking-[0.12em] text-black disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="submit" disabled={submitting || eligiblePlayers.length === 0} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] px-5 text-xs font-black uppercase tracking-[0.12em] text-black disabled:cursor-not-allowed disabled:opacity-50">
                   {submitting ? 'กำลังส่ง...' : 'ส่งให้ทีมงานตรวจสอบ'}
                 </button>
               </form>
@@ -161,7 +193,7 @@ function TradeRow({ trade }: { trade: TradeRecord }) {
     <article className="rounded-[1.4rem] border border-[var(--line)] bg-[var(--surface)] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">{new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(new Date(`${trade.tradeDate}T00:00:00`))}</p>
+          <p className="text-[0.62rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">{trade.requestKind === 'acquire' ? 'ซื้อเข้าทีม' : trade.requestKind === 'release' ? 'ขายออกจากทีม' : 'ย้ายทีม'} · {new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(new Date(`${trade.tradeDate}T00:00:00`))}</p>
           {trade.playerSlug ? <Link href={`/players/${trade.playerSlug}`} className="mt-2 block text-xl font-black hover:text-[var(--orange-soft)]">{trade.playerName}</Link> : <h3 className="mt-2 text-xl font-black">{trade.playerName}</h3>}
         </div>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.08em] ${config.className}`}><StatusIcon className="h-3.5 w-3.5" />{config.label}</span>
@@ -176,4 +208,3 @@ function TradeRow({ trade }: { trade: TradeRecord }) {
     </article>
   );
 }
-

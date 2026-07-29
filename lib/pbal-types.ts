@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'player' | 'staff' | 'admin';
+export type UserRole = 'guest' | 'player' | 'franchise_owner' | 'staff' | 'admin';
 export type AdminPermission = 'editor' | 'staff' | 'super_admin';
 
 export type PbalUser = {
@@ -9,6 +9,7 @@ export type PbalUser = {
   role: UserRole;
   groupMember: boolean;
   adminPermission: AdminPermission | null;
+  franchiseTeamId: string | null;
   discordId: string | null;
   discordUsername: string | null;
   discordAvatarUrl: string | null;

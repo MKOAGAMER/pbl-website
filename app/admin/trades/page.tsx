@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteData } from '@/lib/league-data';
-import type { TradeRecord, TradeStatus } from '@/lib/trade-types';
+import type { TradeRecord, TradeRequestKind, TradeStatus } from '@/lib/trade-types';
 import { TradeReviewQueue } from './TradeReviewQueue';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ export default async function TradeReviewPage() {
   const [tradesResult, playersResult, teamsResult] = await Promise.all([
     supabase
       .from('trades')
-      .select('id, player_id, from_team_id, to_team_id, trade_date, status, notes, review_note, created_at, reviewed_at')
+      .select('id, player_id, from_team_id, to_team_id, trade_date, status, request_kind, notes, review_note, created_at, reviewed_at')
       .order('created_at', { ascending: false })
       .limit(200),
     supabase.from('players').select('id, name, first_name, last_name, slug'),
@@ -54,6 +54,7 @@ export default async function TradeReviewPage() {
       toTeamAbbreviation: toTeam?.abbreviation ?? '—',
       tradeDate: asText(row.trade_date),
       status: asText(row.status) as TradeStatus,
+      requestKind: (asText(row.request_kind) || 'transfer') as TradeRequestKind,
       notes: asText(row.notes),
       reviewNote: asText(row.review_note),
       requestedAt: asText(row.created_at),

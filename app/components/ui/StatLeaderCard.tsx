@@ -22,7 +22,7 @@ export function StatLeaderCard({ player, team, rank, label, value }: StatLeaderC
         <span className="block truncate text-sm font-black">{player.displayName}</span>
         <span className="mt-1 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-faint)]">
           <TeamLogo team={team} size="sm" className="!h-4 !w-4 !rounded-md !text-[0.35rem]" />
-          {team.abbreviation} · {player.position}
+          {team.abbreviation} · {player.positions.join(' / ')}
         </span>
       </span>
       <span className="text-right">

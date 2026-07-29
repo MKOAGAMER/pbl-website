@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const { data: localUsers, error: localError } = await admin.supabase
     .from('users')
-    .select('roblox_id, username, avatar_url, role, admin_permission')
+    .select('roblox_id, username, avatar_url, role, admin_permission, franchise_team_id')
     .ilike('username', `%${parsed.data}%`)
     .order('username')
     .limit(12);
@@ -43,6 +43,7 @@ export async function GET(request: Request) {
           avatarUrl: user.avatarUrl ?? (access?.avatar_url ? String(access.avatar_url) : null),
           role: access?.role ?? 'player',
           adminPermission: access?.admin_permission ?? null,
+          franchiseTeamId: access?.franchise_team_id ?? null,
           registered: Boolean(access),
         };
       }),
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
           id: String(user.roblox_id), username: String(user.username), displayName: String(user.username),
           avatarUrl: user.avatar_url ? String(user.avatar_url) : null, verified: false, registered: true,
           role: user.role, adminPermission: user.admin_permission,
+          franchiseTeamId: user.franchise_team_id,
         })),
       }, { headers: { 'cache-control': 'private, no-store' } });
     }

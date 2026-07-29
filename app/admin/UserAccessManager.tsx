@@ -13,11 +13,14 @@ type SearchUser = {
   avatarUrl: string | null;
   verified: boolean;
   registered: boolean;
-  role: 'player' | 'staff' | 'admin';
+  role: 'player' | 'franchise_owner' | 'staff' | 'admin';
   adminPermission: 'editor' | 'staff' | 'super_admin' | null;
+  franchiseTeamId: string | null;
 };
 
-export function UserAccessManager() {
+type TeamOption = { id: string; name: string };
+
+export function UserAccessManager({ teams }: { teams: TeamOption[] }) {
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<SearchUser[]>([]);
   const [busy, setBusy] = useState(false);
@@ -60,23 +63,35 @@ export function UserAccessManager() {
       {message && <p role="status" className="mt-3 text-sm text-[var(--ink-faint)]">{message}</p>}
 
       <div className="mt-5 space-y-3">
-        {users.map((user) => (
-          <form key={user.id} action={updateRobloxUserAccess} className="grid items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3 lg:grid-cols-[1fr_10rem_12rem_auto]">
-            <input type="hidden" name="roblox_username" value={user.username} />
-            <div className="flex min-w-0 items-center gap-3">
-              <PlayerAvatar src={user.avatarUrl} name={user.username} size="sm" className="!h-11 !w-11" />
-              <div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-sm font-black">{user.username}{user.verified && <Verified className="h-3.5 w-3.5 text-sky-300" />}</p><p className="mt-0.5 truncate text-xs text-[var(--ink-faint)]">{user.displayName} · {user.registered ? 'PBAL account' : 'Not registered yet'}</p></div>
-            </div>
-            <select name="role" defaultValue={user.role} className="admin-input" aria-label={`Role for ${user.username}`}>
-              <option value="player">Player</option><option value="staff">Staff</option><option value="admin">Admin</option>
-            </select>
-            <select name="admin_permission" defaultValue={user.adminPermission ?? ''} className="admin-input" aria-label={`Admin permission for ${user.username}`}>
-              <option value="">No staff control</option><option value="editor">Editor</option><option value="staff">Staff</option><option value="super_admin">Super Admin</option>
-            </select>
-            <SubmitButton><span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Save access</span></SubmitButton>
-          </form>
-        ))}
+        {users.map((user) => <AccessForm key={user.id} user={user} teams={teams} />)}
       </div>
     </section>
   );
+}
+
+function AccessForm({ user, teams }: { user: SearchUser; teams: TeamOption[] }) {
+  const [role, setRole] = useState<SearchUser['role']>(user.role);
+  const [permission, setPermission] = useState(user.adminPermission ?? '');
+  const [franchiseTeamId, setFranchiseTeamId] = useState(user.franchiseTeamId ?? '');
+  const staffRole = role === 'staff' || role === 'admin';
+
+  return <form action={updateRobloxUserAccess} className="grid items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-4 xl:grid-cols-[minmax(14rem,1fr)_10rem_12rem_14rem_auto]">
+    <input type="hidden" name="roblox_username" value={user.username} />
+    <div className="flex min-w-0 items-center gap-3">
+      <PlayerAvatar src={user.avatarUrl} name={user.username} size="sm" className="!h-11 !w-11" />
+      <div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-sm font-black">{user.username}{user.verified && <Verified className="h-3.5 w-3.5 text-sky-300" />}</p><p className="mt-0.5 truncate text-xs text-[var(--ink-faint)]">{user.displayName} · {user.registered ? 'PBAL account' : 'Not registered yet'}</p></div>
+    </div>
+    <select name="role" value={role} onChange={(event) => { const nextRole = event.target.value as SearchUser['role']; setRole(nextRole); if (nextRole === 'staff' || nextRole === 'admin') { setPermission((current) => current || 'staff'); setFranchiseTeamId(''); } else { setPermission(''); if (nextRole !== 'franchise_owner') setFranchiseTeamId(''); } }} className="admin-input" aria-label={`Role for ${user.username}`}>
+      <option value="player">Player</option><option value="franchise_owner">Franchise Owner</option><option value="staff">Staff</option><option value="admin">Admin</option>
+    </select>
+    {!staffRole && <input type="hidden" name="admin_permission" value="" />}
+    <select name="admin_permission" value={permission} onChange={(event) => setPermission(event.target.value as typeof permission)} disabled={!staffRole} className="admin-input disabled:opacity-45" aria-label={`Admin permission for ${user.username}`}>
+      <option value="">No staff control</option><option value="editor">Editor</option><option value="staff">Staff</option><option value="super_admin">Super Admin</option>
+    </select>
+    {role !== 'franchise_owner' && <input type="hidden" name="franchise_team_id" value="" />}
+    <select name="franchise_team_id" value={franchiseTeamId} onChange={(event) => setFranchiseTeamId(event.target.value)} disabled={role !== 'franchise_owner'} required={role === 'franchise_owner'} className="admin-input disabled:opacity-45" aria-label={`Franchise team for ${user.username}`}>
+      <option value="">Choose franchise team</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
+    </select>
+    <SubmitButton><span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Save access</span></SubmitButton>
+  </form>;
 }

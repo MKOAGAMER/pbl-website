@@ -75,6 +75,12 @@
   end
   $storage_setup$;
 
+  drop policy if exists pbl_assets_public_read on storage.objects;
+  drop policy if exists pbl_team_logos_write on storage.objects;
+  drop policy if exists pbl_editor_player_photos_write on storage.objects;
+  drop policy if exists pbl_editor_news_images_write on storage.objects;
+  drop policy if exists pbl_admin_staff_avatars_write on storage.objects;
+
   create policy pbl_assets_public_read on storage.objects
     for select to anon, authenticated
     using (bucket_id in ('team-logos', 'player-photos', 'news-images', 'staff-avatars'));

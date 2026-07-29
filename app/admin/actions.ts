@@ -82,16 +82,19 @@ export async function updateRobloxUserAccess(formData: FormData) {
   const { supabase } = await requireAdminPermission('super_admin');
   const parsed = z.object({
     username: z.string().trim().regex(/^[A-Za-z0-9_]{3,20}$/),
-    role: z.enum(['player', 'staff', 'admin']),
+    role: z.enum(['player', 'franchise_owner', 'staff', 'admin']),
     permission: z.enum(['', 'editor', 'staff', 'super_admin']),
+    franchiseTeamId: z.union([z.literal(''), z.string().uuid()]),
   }).safeParse({
     username: formData.get('roblox_username'),
     role: formData.get('role'),
     permission: formData.get('admin_permission'),
+    franchiseTeamId: formData.get('franchise_team_id'),
   });
   if (!parsed.success) redirect('/admin?error=invalid-access');
   const privileged = parsed.data.role === 'staff' || parsed.data.role === 'admin';
   if (privileged !== Boolean(parsed.data.permission)) redirect('/admin?error=invalid-access');
+  if (parsed.data.role === 'franchise_owner' && !parsed.data.franchiseTeamId) redirect('/admin?error=invalid-access');
 
   const roblox = await getRobloxUserByUsername(parsed.data.username);
   if (!roblox) redirect('/admin?error=roblox-user-not-found');
@@ -103,6 +106,7 @@ export async function updateRobloxUserAccess(formData: FormData) {
     role: parsed.data.role,
     group_member: groupMember,
     admin_permission: parsed.data.permission || null,
+    franchise_team_id: parsed.data.role === 'franchise_owner' ? parsed.data.franchiseTeamId : null,
   }, { onConflict: 'roblox_id' }).select('id').single<{ id: string }>();
   if (userError || !leagueUser) {
     console.error('[user-access]', userError?.message);
@@ -126,6 +130,7 @@ export async function updateRobloxUserAccess(formData: FormData) {
         last_name: '',
         slug: `roblox-${roblox.id}`,
         position: 'UTIL',
+        positions: ['UTIL'],
         team_id: null,
       });
   if (playerWrite.error) {

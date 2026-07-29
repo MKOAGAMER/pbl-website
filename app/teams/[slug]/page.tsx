@@ -158,7 +158,7 @@ export default async function TeamDetailPage({ params }: Props) {
                       <span className="mt-0.5 block truncate text-xs text-[var(--ink-faint)]">@{player.robloxUsername}</span>
                     </span>
                   </span>
-                  <span className="rounded-full border border-[var(--line)] bg-[var(--surface-soft)] px-3 py-1 text-center text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--ink-soft)]">{player.position}</span>
+                  <span className="rounded-full border border-[var(--line)] bg-[var(--surface-soft)] px-3 py-1 text-center text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--ink-soft)]">{player.positions.join(' / ')}</span>
                   <span className="hidden grid-cols-3 gap-3 md:grid">
                     <RosterMetric label="PPG" value={player.stats.pointsPerGame.toFixed(1)} />
                     <RosterMetric label="RPG" value={player.stats.reboundsPerGame.toFixed(1)} />
