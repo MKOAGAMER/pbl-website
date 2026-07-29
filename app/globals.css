@@ -8,19 +8,19 @@
 }
 
 :root {
-  --page: #0b0f16;
-  --page-deep: #070a0f;
-  --surface: #111722;
-  --surface-raised: #171f2c;
-  --surface-soft: #1d2635;
-  --ink: #f6f2e9;
-  --ink-soft: #b9c0ca;
-  --ink-faint: #7d8795;
+  --page: #090a0d;
+  --page-deep: #050608;
+  --surface: #111216;
+  --surface-raised: #181a20;
+  --surface-soft: #22242b;
+  --ink: #f7f4ef;
+  --ink-soft: #b7b8bf;
+  --ink-faint: #777a83;
   --line: rgba(255, 255, 255, 0.1);
   --line-strong: rgba(255, 255, 255, 0.18);
-  --orange: #ff6b22;
-  --orange-soft: #ffb067;
-  --blue: #5277ff;
+  --orange: #ff4b1f;
+  --orange-soft: #ff784b;
+  --blue: #ff4b1f;
   --mint: #4ee1ba;
   --danger: #ff5065;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
@@ -52,10 +52,7 @@ body {
   margin: 0;
   min-height: 100vh;
   overflow-x: clip;
-  background:
-    radial-gradient(circle at 12% -4%, color-mix(in srgb, var(--orange) 15%, transparent), transparent 28rem),
-    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--blue) 14%, transparent), transparent 30rem),
-    var(--page);
+  background: radial-gradient(circle at 10% -4%, color-mix(in srgb, var(--orange) 18%, transparent), transparent 30rem), var(--page);
   color: var(--ink);
   font-family: var(--font-geist-sans), "Noto Sans Thai", "Segoe UI", sans-serif;
   text-rendering: optimizeLegibility;
@@ -104,6 +101,107 @@ a {
   letter-spacing: -0.055em;
   line-height: 0.93;
 }
+
+.race-display,
+.race-display * {
+  font-family: var(--font-geist-sans), "Arial Black", sans-serif;
+  font-weight: 950;
+  font-style: italic;
+  letter-spacing: -0.075em;
+  line-height: 0.83;
+  text-transform: uppercase;
+}
+
+.race-eyebrow {
+  color: var(--orange-soft);
+  font-size: 0.67rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.race-mark {
+  position: relative;
+  overflow: hidden;
+  background: var(--orange);
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+}
+
+.race-mark::after {
+  position: absolute;
+  inset: 8px -12px auto;
+  height: 1px;
+  transform: rotate(-24deg);
+  background: rgba(0, 0, 0, 0.45);
+  content: "";
+}
+
+.race-nav {
+  flex: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.47rem 0.48rem;
+  color: var(--ink-soft);
+  font-size: 0.62rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.race-nav:hover,
+.race-nav-active {
+  border-color: var(--orange);
+  color: var(--ink);
+}
+
+.race-panel {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.06), transparent 35%),
+    repeating-linear-gradient(125deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 5px),
+    color-mix(in srgb, var(--surface) 93%, transparent);
+  box-shadow: 0 24px 75px rgba(0,0,0,0.32);
+  backdrop-filter: blur(16px);
+}
+
+.carbon-panel {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(30deg, rgba(255,255,255,0.025) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.025) 87.5%),
+    linear-gradient(150deg, rgba(255,255,255,0.02) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.02) 87.5%);
+  background-size: 12px 21px;
+}
+
+.race-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.speed-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--orange), transparent 80%);
+}
+
+.scroll-reveal {
+  animation: race-reveal 700ms cubic-bezier(.2,.8,.2,1) both;
+  animation-timeline: view();
+  animation-range: entry 4% cover 30%;
+}
+
+@keyframes race-reveal {
+  from { opacity: 0; transform: translateY(30px) skewY(1.5deg); }
+  to { opacity: 1; transform: translateY(0) skewY(0); }
+}
+
+@keyframes race-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(110%); }
+}
+
+.footer-link { color: var(--ink-soft); font-size: .875rem; font-weight: 700; transition: color 150ms ease; }
+.footer-link:hover { color: var(--orange-soft); }
 
 .eyebrow {
   display: inline-flex;

@@ -21,6 +21,8 @@ import { TeamLogo } from '@/app/components/ui/TeamLogo';
 import { getPlayerBySlug, getSiteData } from '@/lib/league-data';
 import type { PlayerStats } from '@/lib/league-types';
 import { initials } from '@/lib/utils';
+import { getPlayerSeasonHistory } from '@/lib/league-history';
+import { PlayerSeasonHistoryTable } from '@/app/components/ui/SeasonHistory';
 
 type Props = { params: Promise<{ slug: string }> };
 type RankedStat = keyof Pick<PlayerStats, 'pointsPerGame' | 'reboundsPerGame' | 'assistsPerGame' | 'stealsPerGame' | 'blocksPerGame'>;
@@ -47,6 +49,8 @@ export default async function PlayerDetailPage({ params }: Props) {
   const [player, data] = await Promise.all([getPlayerBySlug(slug), getSiteData()]);
 
   if (!player) notFound();
+
+  const seasonHistory = await getPlayerSeasonHistory(player, data.season);
 
   const team = data.teams.find((item) => item.id === player.teamId);
   const eligiblePlayers = data.players.filter((item) => item.stats.gamesPlayed > 0);
@@ -187,6 +191,8 @@ export default async function PlayerDetailPage({ params }: Props) {
             </dl>
           </section>
         </div>
+
+        <PlayerSeasonHistoryTable entries={seasonHistory} />
 
         <section className="mt-14 sm:mt-16">
           <SectionHeading

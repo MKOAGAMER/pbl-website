@@ -6,6 +6,11 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { getSiteData, isSiteDataHealthy } from '@/lib/league-data';
 import { getSiteUrl } from '@/lib/site-url';
+import { getSiteConfig } from '@/lib/site-config';
+import type { CSSProperties } from 'react';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
+import { StaffControlStrip } from './components/layout/StaffControlStrip';
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -21,23 +26,25 @@ export const revalidate = 60;
 const baseMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Practical Basketball League',
-    template: '%s | PBL',
+    default: 'PBAL — Practical Basketball League',
+    template: '%s | PBAL',
   },
   description:
     'The official home of the Practical Basketball League — schedules, results, standings, player stats and league news.',
-  applicationName: 'Practical Basketball League',
-  keywords: ['PBL', 'basketball league', 'Roblox basketball', 'league standings', 'player stats'],
+  applicationName: 'PBAL — Practical Basketball League',
+  keywords: ['PBAL', 'PBL', 'basketball league', 'Roblox basketball', 'league standings', 'player stats'],
   openGraph: {
-    title: 'Practical Basketball League',
-    description: 'Follow every matchup, team, player and story from the PBL.',
-    siteName: 'Practical Basketball League',
+    title: 'PBAL — Practical Basketball League',
+    description: 'Live scores, standings, player profiles and every PBAL matchup.',
+    siteName: 'PBAL',
     type: 'website',
+    images: [{ url: '/og.png', width: 1659, height: 948, alt: 'PBAL basketball at full speed' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Practical Basketball League',
-    description: 'Follow every matchup, team, player and story from the PBL.',
+    title: 'PBAL — Practical Basketball League',
+    description: 'Live scores, standings, player profiles and every PBAL matchup.',
+    images: ['/og.png'],
   },
 };
 
@@ -53,10 +60,19 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const data = await getSiteData();
+  const [data, siteConfig, locale, messages] = await Promise.all([getSiteData(), getSiteConfig(), getLocale(), getMessages()]);
+  const themeStyle = {
+    '--orange': siteConfig.theme.primary,
+    '--orange-soft': siteConfig.theme.primary,
+    '--blue': siteConfig.theme.secondary,
+    '--page': siteConfig.theme.background,
+    '--page-deep': siteConfig.theme.background,
+    '--surface': siteConfig.theme.surface,
+    '--ink': siteConfig.theme.foreground,
+  } as CSSProperties;
 
   return (
-    <html lang="en" className={geist.variable} suppressHydrationWarning>
+    <html lang={locale} className={geist.variable} style={themeStyle} suppressHydrationWarning>
       <body>
         <a
           href="#main-content"
@@ -64,8 +80,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         >
           Skip to content
         </a>
-        <Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers siteConfig={siteConfig}>
           <Navbar />
+          <StaffControlStrip />
           {data.source === 'demo' && (
             <div className="border-b border-amber-400/20 bg-amber-400/10 px-4 py-2.5 text-center text-xs font-bold text-amber-100">
               Preview mode · All league data shown below is fictional and will never be used in production.
@@ -80,7 +98,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             {children}
           </main>
           <Footer />
-        </Providers>
+          </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

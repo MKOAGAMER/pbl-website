@@ -336,6 +336,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       accoladesResult,
       staffResult,
       linksResult,
+      siteConfigResult,
     ] = await Promise.all([
       supabase
         .from('seasons')
@@ -383,6 +384,11 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
         .select('id, label, url, kind, description, sort_order, is_active')
         .eq('is_active', true)
         .order('sort_order'),
+      supabase
+        .from('site_config')
+        .select('staff, links')
+        .eq('id', 'main')
+        .maybeSingle(),
     ]);
 
     const requiredResults = [
@@ -398,6 +404,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       accoladesResult,
       staffResult,
       linksResult,
+      siteConfigResult,
     ];
     if (requiredResults.some(failed)) {
       console.error('[pbl-data:public-load] One or more required Supabase queries failed.', {
@@ -409,8 +416,29 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
     const seasons = rows(seasonsResult).map(mapSeason);
     const season = seasons.find((item) => item.isCurrent) ?? seasons[0];
     const news = rows(newsResult).map(mapNews);
-    const staff = rows(staffResult).map(mapStaff);
-    const links = rows(linksResult).map(mapLink);
+    const runtimeConfig = siteConfigResult.data as
+      | { staff?: unknown; links?: unknown }
+      | null;
+    const configuredStaff = Array.isArray(runtimeConfig?.staff)
+      ? (runtimeConfig.staff as Row[]).map((item) => mapStaff({
+          display_name: item.name,
+          role: item.title,
+          roblox_username: item.robloxUsername,
+          avatar_url: item.avatarUrl,
+        }))
+      : [];
+    const configuredLinks = Array.isArray(runtimeConfig?.links)
+      ? (runtimeConfig.links as Row[]).map((item) => mapLink({
+          label: item.label,
+          url: item.url,
+        }))
+      : [];
+    const staff = Array.isArray(runtimeConfig?.staff)
+      ? configuredStaff
+      : rows(staffResult).map(mapStaff);
+    const links = Array.isArray(runtimeConfig?.links)
+      ? configuredLinks
+      : rows(linksResult).map(mapLink);
 
     if (!season) {
       return {

@@ -18,6 +18,8 @@ import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
 import { getSiteData, getTeamBySlug } from '@/lib/league-data';
 import { initials, winPercentage } from '@/lib/utils';
+import { getTeamSeasonHistory } from '@/lib/league-history';
+import { TeamSeasonHistoryTable } from '@/app/components/ui/SeasonHistory';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -43,6 +45,8 @@ export default async function TeamDetailPage({ params }: Props) {
   const [team, data] = await Promise.all([getTeamBySlug(slug), getSiteData()]);
 
   if (!team) notFound();
+
+  const seasonHistory = await getTeamSeasonHistory(team, data.season);
 
   const roster = data.players
     .filter((player) => player.teamId === team.id)
@@ -170,6 +174,8 @@ export default async function TeamDetailPage({ params }: Props) {
             </div>
           )}
         </section>
+
+        <TeamSeasonHistoryTable entries={seasonHistory} />
 
         <section className="mt-14 sm:mt-16">
           <SectionHeading

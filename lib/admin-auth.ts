@@ -1,39 +1,85 @@
+import 'server-only';
+
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
-import { createClient } from './supabase-server';
+import { createAdminClient } from './supabase-admin';
+import { getCurrentUser } from './session';
+import type { AdminPermission } from './pbal-types';
 
+// Legacy names remain accepted so preserved operational actions still compile.
 export type StaffRole =
+  | AdminPermission
   | 'team_manager'
-  | 'editor'
   | 'statistician'
-  | 'admin'
-  | 'super_admin';
+  | 'admin';
+
+const permissionRank: Record<AdminPermission, number> = {
+  editor: 1,
+  staff: 2,
+  super_admin: 3,
+};
+
+export async function getApiAdminContext(minimum: AdminPermission = 'editor') {
+  const supabase = createAdminClient();
+  const user = await getCurrentUser();
+  if (!supabase || !user?.adminPermission) return null;
+  if (user.role !== 'staff' && user.role !== 'admin') return null;
+  if (permissionRank[user.adminPermission] < permissionRank[minimum]) return null;
+  return { supabase, user, permission: user.adminPermission };
+}
+
+function legacyPermission(role: StaffRole): AdminPermission {
+  if (role === 'super_admin' || role === 'admin') return 'super_admin';
+  if (role === 'staff' || role === 'team_manager' || role === 'statistician') return 'staff';
+  return 'editor';
+}
 
 export const getStaffSession = cache(async () => {
-  const supabase = await createClient();
-  if (!supabase) return { supabase: null, user: null, profile: null };
+  const supabase = createAdminClient();
+  const user = await getCurrentUser();
+  const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) return { supabase, user: null, profile: null };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, display_name, role, managed_team_id')
-    .eq('id', authData.user.id)
-    .maybeSingle();
-
-  return { supabase, user: authData.user, profile };
+  return {
+    supabase,
+    user,
+    profile: isStaff && user
+      ? {
+          id: user.id,
+          display_name: user.username,
+          role: user.adminPermission,
+          managed_team_id: null,
+        }
+      : null,
+  };
 });
 
 export async function requireStaff(roles?: StaffRole[]) {
   const session = await getStaffSession();
-  if (!session.supabase || !session.user) redirect('/login?next=/admin');
+  if (!session.supabase || !session.user) {
+    redirect('/login?next=/admin');
+  }
+  if (
+    (session.user.role !== 'staff' && session.user.role !== 'admin') ||
+    !session.user.adminPermission
+  ) redirect('/?error=forbidden');
 
-  const role = String(session.profile?.role ?? 'member') as StaffRole;
-  const isStaff = ['team_manager', 'editor', 'statistician', 'admin', 'super_admin'].includes(role);
-  if (!isStaff || (roles && !roles.includes(role))) {
+  const permission = session.user.adminPermission;
+  if (
+    roles?.length &&
+    !roles.some((role) => permissionRank[permission] >= permissionRank[legacyPermission(role)])
+  ) {
     redirect('/admin?error=forbidden');
   }
 
-  return { supabase: session.supabase, user: session.user, profile: session.profile, role };
+  return {
+    supabase: session.supabase,
+    user: session.user,
+    profile: session.profile,
+    role: permission as StaffRole,
+  };
+}
+
+export async function requireAdminPermission(minimum: AdminPermission = 'editor') {
+  const session = await requireStaff([minimum]);
+  return { ...session, permission: session.user.adminPermission as AdminPermission };
 }
