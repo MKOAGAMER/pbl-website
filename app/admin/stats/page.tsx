@@ -62,10 +62,9 @@ export default async function AdminStatsPage() {
       <div className="mt-7 border-b border-[var(--line)] pb-7">
         <p className="eyebrow">Staff workflow</p>
         <h1 className="display-type mt-4 text-5xl sm:text-6xl">AI-Assisted Stat Entry</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">อัปโหลดภาพสถิติจบเกมให้ Claude ช่วยอ่าน จากนั้นจับคู่ผู้เล่น ตรวจทุกค่า และแก้ไขได้ก่อนยืนยัน ระบบจะยังไม่แตะสถิติจริงจนกว่า staff กดบันทึก</p>
+        <p className="mt-4 max-w-3xl text-sm leading-6 text-[var(--ink-soft)]">อัปโหลดภาพสถิติจบเกมให้ Gemini ช่วยอ่าน จากนั้นจับคู่ผู้เล่น ตรวจทุกค่า และแก้ไขได้ก่อนยืนยัน ระบบจะยังไม่แตะสถิติจริงจนกว่า staff กดบันทึก</p>
       </div>
       <StatImportWorkbench games={games} players={players} imports={imports} />
     </main>
   );
 }
-

@@ -36,9 +36,9 @@ export default async function LoginPage({ searchParams }: Props) {
     <section className="site-shell grid min-h-[calc(100vh-4.5rem)] items-center gap-10 py-14 lg:grid-cols-[0.9fr_1.1fr]">
       <div>
         <p className="eyebrow">PBAL identity</p>
-        <h1 className="display-type mt-5 text-balance text-5xl sm:text-6xl">One Roblox account. The right league access.</h1>
+        <h1 className="display-type mt-5 text-balance text-5xl sm:text-6xl">Sign in. Start as a Free Agent.</h1>
         <p className="mt-6 max-w-lg text-pretty text-base leading-7 text-[var(--ink-soft)]">
-          PBAL reads your Roblox username, avatar and MKOA community membership. Staff and Admin access is assigned separately by a Super Admin.
+          Every Roblox account becomes a PBAL Player automatically. You remain a Free Agent until league Staff places you on an official team.
         </p>
         <div className="mt-8 grid max-w-lg gap-3 sm:grid-cols-2">
           <Info icon={Users} text={`MKOA community ${MKOA_COMMUNITY_ID}`} />

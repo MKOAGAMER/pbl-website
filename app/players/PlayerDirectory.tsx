@@ -31,7 +31,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
     const normalizedQuery = query.trim().toLowerCase();
 
     return players
-      .filter((player) => teamId === 'all' || player.teamId === teamId)
+      .filter((player) => teamId === 'all' || (teamId === 'free-agent' ? !player.teamId : player.teamId === teamId))
       .filter((player) => position === 'all' || player.position === position)
       .filter((player) => {
         if (!normalizedQuery) return true;
@@ -77,6 +77,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <FilterSelect label="Team" value={teamId} onChange={setTeamId}>
             <option value="all">All teams</option>
+            <option value="free-agent">Free Agents</option>
             {teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
           </FilterSelect>
           <FilterSelect label="Position" value={position} onChange={setPosition}>
@@ -114,7 +115,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
             title={players.length === 0 ? 'No players published' : 'No players match those filters'}
             description={
               players.length === 0
-                ? 'Player profiles will appear here after league staff publish the active rosters.'
+                ? 'Player profiles will appear here after the first Roblox login.'
                 : 'Try a different name, team or position.'
             }
           />

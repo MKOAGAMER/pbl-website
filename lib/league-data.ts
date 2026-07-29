@@ -313,7 +313,6 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
   }
 
   if (!url || !key) {
-    if (!isProduction) return demoSiteData;
     console.error('[pbl-data:public-load] Supabase environment variables are missing.');
     return unavailableSiteData;
   }
@@ -410,7 +409,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       console.error('[pbl-data:public-load] One or more required Supabase queries failed.', {
         failedQueryCount: requiredResults.filter(failed).length,
       });
-      return isProduction ? unavailableSiteData : demoSiteData;
+      return unavailableSiteData;
     }
 
     const seasons = rows(seasonsResult).map(mapSeason);
@@ -441,12 +440,15 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       : rows(linksResult).map(mapLink);
 
     if (!season) {
+      const freeAgents = rows(playersResult)
+        .filter((row) => booleanValue(row.is_active, true))
+        .map((row) => mapPlayer(row));
       return {
         source: 'supabase',
         season: pendingSeason,
         seasons: [pendingSeason],
         teams: [],
-        players: [],
+        players: freeAgents,
         games: [],
         news,
         accolades: [],
@@ -482,9 +484,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       (row) => String(row.season_id) === season.id && String(row.status) === 'active',
     );
     const players = rows(playersResult)
-      .filter((row) =>
-        rosterRows.some((rosterRow) => String(rosterRow.player_id) === String(row.id)),
-      )
+      .filter((row) => booleanValue(row.is_active, true))
       .map((row) =>
         mapPlayer(
           row,
@@ -520,7 +520,7 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       '[pbl-data:public-load] Unexpected Supabase read failure.',
       error instanceof Error ? error.message : 'Unknown error',
     );
-    return isProduction ? unavailableSiteData : demoSiteData;
+    return unavailableSiteData;
   }
 });
 

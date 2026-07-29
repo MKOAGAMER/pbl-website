@@ -17,6 +17,9 @@ type UserRow = {
   role: PbalUser['role'];
   group_member: boolean;
   admin_permission: PbalUser['adminPermission'];
+  discord_id: number | string | null;
+  discord_username: string | null;
+  discord_avatar_url: string | null;
 };
 
 export function hashSessionToken(token: string) {
@@ -36,6 +39,9 @@ function toUser(row: UserRow): PbalUser {
     role: row.role,
     groupMember: row.group_member,
     adminPermission: row.admin_permission,
+    discordId: row.discord_id === null ? null : String(row.discord_id),
+    discordUsername: row.discord_username,
+    discordAvatarUrl: row.discord_avatar_url,
   };
 }
 
@@ -60,7 +66,7 @@ export const getCurrentUser = cache(async (): Promise<PbalUser | null> => {
 
   const { data: user } = await supabase
     .from('users')
-    .select('id, roblox_id, username, avatar_url, role, group_member, admin_permission')
+    .select('id, roblox_id, username, avatar_url, role, group_member, admin_permission, discord_id, discord_username, discord_avatar_url')
     .eq('id', session.user_id)
     .maybeSingle<UserRow>();
 
@@ -81,4 +87,3 @@ export async function revokeCurrentSession() {
 
   cookieStore.delete(SESSION_COOKIE);
 }
-

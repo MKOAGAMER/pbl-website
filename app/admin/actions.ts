@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdminPermission } from '@/lib/admin-auth';
+import { getRobloxUserByUsername } from '@/lib/roblox-users';
+import { getMkoaGroupPermission } from '@/lib/roblox-auth';
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const themeSchema = z.object({
@@ -76,36 +78,62 @@ export async function updateSiteConfig(formData: FormData) {
   redirect('/admin?saved=config');
 }
 
-export async function updateUserAccess(formData: FormData) {
+export async function updateRobloxUserAccess(formData: FormData) {
   const { supabase } = await requireAdminPermission('super_admin');
   const parsed = z.object({
-    userId: z.string().uuid(),
-    role: z.enum(['guest', 'player', 'staff', 'admin']),
+    username: z.string().trim().regex(/^[A-Za-z0-9_]{3,20}$/),
+    role: z.enum(['player', 'staff', 'admin']),
     permission: z.enum(['', 'editor', 'staff', 'super_admin']),
   }).safeParse({
-    userId: formData.get('user_id'),
+    username: formData.get('roblox_username'),
     role: formData.get('role'),
     permission: formData.get('admin_permission'),
   });
   if (!parsed.success) redirect('/admin?error=invalid-access');
+  const privileged = parsed.data.role === 'staff' || parsed.data.role === 'admin';
+  if (privileged !== Boolean(parsed.data.permission)) redirect('/admin?error=invalid-access');
 
-  const isPrivileged = parsed.data.role === 'staff' || parsed.data.role === 'admin';
-  if (isPrivileged !== Boolean(parsed.data.permission)) {
-    redirect('/admin?error=invalid-access');
+  const roblox = await getRobloxUserByUsername(parsed.data.username);
+  if (!roblox) redirect('/admin?error=roblox-user-not-found');
+  const groupMember = Boolean(await getMkoaGroupPermission(roblox.id));
+  const { data: leagueUser, error: userError } = await supabase.from('users').upsert({
+    roblox_id: roblox.id,
+    username: roblox.username,
+    avatar_url: roblox.avatarUrl,
+    role: parsed.data.role,
+    group_member: groupMember,
+    admin_permission: parsed.data.permission || null,
+  }, { onConflict: 'roblox_id' }).select('id').single<{ id: string }>();
+  if (userError || !leagueUser) {
+    console.error('[user-access]', userError?.message);
+    redirect('/admin?error=access-save');
   }
 
-  const { error } = await supabase
-    .from('users')
-    .update({
-      role: parsed.data.role,
-      admin_permission: parsed.data.permission || null,
-    })
-    .eq('id', parsed.data.userId);
-  if (error) {
-    console.error('Unable to update PBAL access', error);
+  const playerIdentity = {
+    user_id: leagueUser.id,
+    roblox_username: roblox.username,
+    roblox_user_id: roblox.id,
+    avatar_url: roblox.avatarUrl,
+    is_active: true,
+  };
+  const { data: existingPlayer } = await supabase.from('players').select('id').eq('roblox_user_id', roblox.id).maybeSingle<{ id: string }>();
+  const playerWrite = existingPlayer
+    ? await supabase.from('players').update(playerIdentity).eq('id', existingPlayer.id)
+    : await supabase.from('players').insert({
+        ...playerIdentity,
+        name: roblox.username,
+        first_name: roblox.username,
+        last_name: '',
+        slug: `roblox-${roblox.id}`,
+        position: 'UTIL',
+        team_id: null,
+      });
+  if (playerWrite.error) {
+    console.error('[player-access]', playerWrite.error.message);
     redirect('/admin?error=access-save');
   }
 
   revalidatePath('/admin');
+  revalidatePath('/players');
   redirect('/admin?saved=access');
 }

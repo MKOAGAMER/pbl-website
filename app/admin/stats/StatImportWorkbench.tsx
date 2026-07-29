@@ -71,7 +71,7 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
       setActiveId(payload.importId);
       setRows(payload.rows);
       setWarnings(payload.warnings ?? []);
-      setMessage('Claude อ่านภาพแล้ว กรุณาตรวจและแก้ทุกแถวก่อนบันทึก');
+      setMessage('Gemini อ่านภาพแล้ว กรุณาตรวจและแก้ทุกแถวก่อนบันทึก');
       router.refresh();
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : 'วิเคราะห์ภาพไม่สำเร็จ');
@@ -147,7 +147,7 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
           <label className="mt-4 block cursor-pointer rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--page)] p-5 text-center transition hover:border-[var(--orange)]">
             <FileImage className="mx-auto h-7 w-7 text-[var(--orange-soft)]" /><span className="mt-3 block text-sm font-black">{file?.name ?? 'เลือก screenshot สถิติ'}</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">JPEG, PNG, WebP หรือ GIF · สูงสุด 10 MB</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={chooseFile} className="sr-only" />
           </label>
-          <button type="submit" disabled={!file || !gameId || Boolean(busy)} className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] text-xs font-black uppercase tracking-[0.1em] text-black disabled:opacity-50"><Bot className="h-4 w-4" />{busy === 'upload' ? 'Claude กำลังอ่านภาพ...' : 'วิเคราะห์ภาพด้วย Claude'}</button>
+          <button type="submit" disabled={!file || !gameId || Boolean(busy)} className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] text-xs font-black uppercase tracking-[0.1em] text-black disabled:opacity-50"><Bot className="h-4 w-4" />{busy === 'upload' ? 'Gemini กำลังอ่านภาพ...' : 'วิเคราะห์ภาพด้วย Gemini'}</button>
           <p className="mt-4 text-xs leading-5 text-[var(--ink-faint)]">ภาพจะถูกเก็บใน Supabase Storage แบบ private และผูกกับ game record เพื่อใช้ตรวจสอบย้อนหลัง</p>
         </form>
 

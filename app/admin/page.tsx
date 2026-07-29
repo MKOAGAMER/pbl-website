@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeftRight, Cloud, Database, ScanLine, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeftRight, Bot, Cloud, Database, Gamepad2, MessageCircle, ScanLine, UsersRound } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/lib/site-config';
 import { ConfigEditor } from './ConfigEditor';
 import { MediaLibrary, type MediaAsset } from './MediaLibrary';
-import { UserAccessManager, type AccessUser } from './UserAccessManager';
+import { UserAccessManager } from './UserAccessManager';
+import { isRobloxAuthConfigured } from '@/lib/roblox-auth';
+import { isDiscordAuthConfigured } from '@/lib/discord-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,12 +32,6 @@ export default async function AdminPage({ searchParams }: Props) {
     .select('id, secure_url, original_filename, width, height, bytes, created_at')
     .order('created_at', { ascending: false })
     .limit(60);
-  const { data: accessUsers } = permission === 'super_admin'
-    ? await supabase
-        .from('users')
-        .select('id, username, avatar_url, role, group_member, admin_permission')
-        .order('username')
-    : { data: [] };
 
   return (
     <section className="site-shell py-10 sm:py-14">
@@ -79,13 +75,18 @@ export default async function AdminPage({ searchParams }: Props) {
         </p>
       )}
 
-      <div className="mb-7 grid gap-3 sm:grid-cols-3">
+      <div className="mb-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatusCard icon={Database} label="Configuration" value="Supabase" />
-        <StatusCard icon={SlidersHorizontal} label="Live updates" value="Realtime" />
-        <StatusCard icon={ShieldCheck} label="Access" value={permission.replace('_', ' ')} />
+        <StatusCard icon={Gamepad2} label="Roblox OAuth" value={isRobloxAuthConfigured() ? 'Ready' : 'Setup needed'} />
+        <StatusCard icon={MessageCircle} label="Discord App" value={isDiscordAuthConfigured() ? 'Ready' : 'Setup needed'} />
+        <StatusCard icon={Bot} label="Gemini AI" value={process.env.GEMINI_API_KEY?.trim() ? 'Ready' : 'Setup needed'} />
       </div>
 
-      {permission !== 'editor' && <div className="mb-7 grid gap-3 sm:grid-cols-2">
+      {permission !== 'editor' && <div className="mb-7 grid gap-3 lg:grid-cols-3">
+        <Link href="/admin/league" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><UsersRound className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">League operations</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Seasons, teams, rosters and games</span></span>
+        </Link>
         <Link href="/admin/trades" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ArrowLeftRight className="h-5 w-5" /></span>
           <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Trade review</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Approve or reject player movement</span></span>
@@ -116,7 +117,7 @@ export default async function AdminPage({ searchParams }: Props) {
       </div>
       {permission === 'super_admin' && (
         <div className="mt-7">
-          <UserAccessManager users={(accessUsers ?? []) as AccessUser[]} />
+          <UserAccessManager />
         </div>
       )}
     </section>

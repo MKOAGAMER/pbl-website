@@ -16,7 +16,7 @@ export default async function PlayersPage() {
       <PageIntro
         eyebrow="Player directory"
         title="Find your favorite player."
-        description={`Search every profile registered for ${data.season.name}, filter by team or position and compare the numbers shaping the season.`}
+        description="Every Roblox login creates a Player profile. New players remain Free Agents until Staff assigns them to a team."
       />
       <PlayerDirectory players={data.players} teams={data.teams} />
     </>

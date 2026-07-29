@@ -9,6 +9,9 @@ export type PbalUser = {
   role: UserRole;
   groupMember: boolean;
   adminPermission: AdminPermission | null;
+  discordId: string | null;
+  discordUsername: string | null;
+  discordAvatarUrl: string | null;
 };
 
 export type ThemeConfig = {
@@ -55,4 +58,3 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   links: [],
   addons: {},
 };
-

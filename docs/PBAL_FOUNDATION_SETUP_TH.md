@@ -8,8 +8,9 @@
 2. `supabase/migrations/202607290001_pbal_foundation.sql`
 3. `supabase/migrations/202607290002_live_scoreboard.sql`
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
-5. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
-6. `supabase/seed.sql` ใช้เฉพาะ Preview/Staging
+5. `supabase/migrations/202607290004_player_identity_discord.sql`
+6. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
+7. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 
 Migration ลำดับที่ 4 เพิ่ม:
 
@@ -38,8 +39,13 @@ CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 
-ANTHROPIC_API_KEY=...
-CLAUDE_MODEL=claude-sonnet-4-6
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_FALLBACK_MODEL=gemini-3.6-flash
+
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 SUPABASE_WEBHOOK_SECRET=ข้อความสุ่มที่ยาวและเดายาก
@@ -71,7 +77,7 @@ where roblox_id = 123456789;
 สิทธิ์ในระบบ:
 
 - Editor: site config และ media
-- Staff: รวมสิทธิ์ Editor พร้อมตรวจ trade และยืนยันสถิติ
+- Staff: รวมสิทธิ์ Editor พร้อมสร้างฤดูกาล/ทีม จัด roster ตรวจ trade และยืนยันสถิติ
 - Super Admin: รวมทุกสิทธิ์และจัด role/permission ของผู้ใช้อื่น
 
 ## 5. ทดสอบ Trading
@@ -83,7 +89,7 @@ where roblox_id = 123456789;
 
 ## 6. ทดสอบ AI Stat Entry
 
-1. ใส่ `ANTHROPIC_API_KEY`
+1. ใส่ `GEMINI_API_KEY` โดยระบบจะลอง `GEMINI_MODEL` ก่อน และใช้ `GEMINI_FALLBACK_MODEL` เมื่อ Google ไม่เปิดโมเดลเดิมให้ API project
 2. ตรวจว่าเกมมีสถานะ `final`
 3. Staff เปิด `/admin/stats` เลือกเกมและอัปโหลด screenshot
 4. ตรวจการจับคู่ผู้เล่นและแก้ตัวเลขทุกแถว
@@ -93,7 +99,9 @@ where roblox_id = 123456789;
 
 ## 7. Discord
 
-ทำตาม [คู่มือตั้ง Discord Webhook](DISCORD_WEBHOOK_SETUP_TH.md) เพื่อเชื่อม event `news_posts` และ `games` จาก Supabase
+สร้าง Discord Application, เพิ่ม redirect URI `/api/auth/discord/callback` และใส่ `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI` เพื่อให้ผู้เล่นเชื่อมบัญชีที่ `/account`
+
+ทำตาม [คู่มือตั้ง Discord Webhook](DISCORD_WEBHOOK_SETUP_TH.md) เพิ่มเติม เพื่อเชื่อม event `news_posts` และ `games` จาก Supabase
 
 ## 8. Deploy
 
@@ -101,6 +109,8 @@ where roblox_id = 123456789;
 
 1. `GET /api/health`
 2. Login/logout และ role ทั้งหมด
-3. Trade request → staff approval
-4. Stat screenshot → review → confirm
-5. Publish ข่าวและเปลี่ยนเกมเป็น final แล้วตรวจ Discord
+3. Roblox login → Player/Free Agent → Staff จัด roster
+4. เชื่อม Discord ที่ `/account`
+5. Trade request → staff approval
+6. Stat screenshot → review → confirm
+7. Publish ข่าวและเปลี่ยนเกมเป็น final แล้วตรวจ Discord

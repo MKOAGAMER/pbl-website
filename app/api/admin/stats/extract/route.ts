@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getApiAdminContext } from '@/lib/admin-auth';
-import { extractBasketballStats } from '@/lib/claude-vision';
+import { extractBasketballStats } from '@/lib/gemini-vision';
 import type { EditableStatRow } from '@/lib/stat-import';
 import { isSameOriginRequest } from '@/lib/request-security';
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'เก็บภาพต้นฉบับไม่สำเร็จ ตรวจสอบว่า migration และ bucket ถูกสร้างแล้ว' }, { status: 500 });
   }
 
-  const model = process.env.CLAUDE_MODEL?.trim() || 'claude-sonnet-4-6';
+  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
   const { error: importError } = await admin.supabase.from('stat_imports').insert({
     id: importId,
     game_id: gameId,

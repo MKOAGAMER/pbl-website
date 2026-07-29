@@ -5,10 +5,10 @@
 ## ระบบหลัก
 
 - หน้า Public: โปรแกรมและผลแข่ง ตารางคะแนน ทีม ผู้เล่น สถิติ ข่าว เพลย์ออฟ รางวัล และ Trade Center
-- Auth: Roblox OAuth 2.0 Authorization Code + PKCE และ session แบบ HttpOnly
-- สิทธิ์: Guest / Player / Staff / Admin และ Editor / Staff / Super Admin
+- Auth: Roblox OAuth 2.0 Authorization Code + PKCE, Discord Application account linking และ session แบบ HttpOnly
+- สิทธิ์: ทุก Roblox login เริ่มเป็น Player/Free Agent; Staff/Admin จัดลีกผ่าน Editor / Staff / Super Admin
 - Trading: ผู้ใช้ยื่นคำขอ, staff อนุมัติ/ปฏิเสธ, อัปเดต roster แบบ transaction และค้นประวัติตามทีม/ผู้เล่น/วันที่
-- AI Stats: staff อัปโหลด screenshot, Claude Vision อ่านตาราง, staff ตรวจ/แก้ทุกแถวก่อนยืนยัน, เก็บภาพต้นฉบับแบบ private ใน Supabase Storage
+- AI Stats: staff อัปโหลด screenshot, Gemini อ่านตารางแบบ structured output พร้อม fallback เมื่อ 2.5 Flash ไม่เปิดให้ API project, staff ตรวจ/แก้ทุกแถวก่อนยืนยัน
 - Discord: รับ Supabase Database Webhooks แล้วประกาศข่าวใหม่และผลแข่ง final ผ่าน Incoming Webhook
 
 ## เริ่มพัฒนา
@@ -29,7 +29,8 @@ npm run dev
 2. `supabase/migrations/202607290001_pbal_foundation.sql`
 3. `supabase/migrations/202607290002_live_scoreboard.sql`
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
-5. `supabase/storage.sql` สำหรับ public asset buckets เดิม
+5. `supabase/migrations/202607290004_player_identity_discord.sql`
+6. `supabase/storage.sql` สำหรับ public asset buckets เดิม
 
 Migration ล่าสุดสร้าง workflow อนุมัติ trade, ตาราง audit `stat_imports`, private bucket `stat-screenshots` และ RPC สำหรับยืนยันสถิติเป็น transaction
 
@@ -41,4 +42,4 @@ npm run typecheck
 npm run build
 ```
 
-ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `ANTHROPIC_API_KEY`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`
+ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `GEMINI_API_KEY`, `DISCORD_CLIENT_SECRET`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`

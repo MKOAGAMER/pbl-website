@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     const token = await exchangeRobloxCode({ code, codeVerifier: verifier, origin: url.origin });
     const roblox = await getRobloxUserInfo(token.access_token);
     const username = roblox.preferred_username ?? roblox.nickname ?? roblox.name;
-    if (!/^\w{3,20}$/.test(username ?? '') || !/^\d+$/.test(roblox.sub)) {
+    if (!username || !/^\w{3,20}$/.test(username) || !/^\d+$/.test(roblox.sub)) {
       return failed(url.origin, 'invalid-profile');
     }
 
@@ -74,9 +74,7 @@ export async function GET(request: Request) {
       ? existing.role
       : groupPermission === 'group_holder' || groupPermission === 'admin'
         ? 'admin'
-        : groupPermission === 'member'
-          ? 'player'
-          : 'guest';
+        : 'player';
     // Both PBAL leadership ranks are full web administrators. Group rank is
     // authoritative for these ranks so an earlier login cannot leave Admin
     // without the Staff controls.
@@ -104,6 +102,42 @@ export async function GET(request: Request) {
       .select('id')
       .single<{ id: string }>();
     if (userError || !user) throw userError ?? new Error('Unable to create PBAL user.');
+
+    // A Roblox login always creates or refreshes the public player identity.
+    // No roster row is created here, so the player starts as a Free Agent and
+    // only Staff can place them on a team.
+    const playerIdentity = {
+      user_id: user.id,
+      roblox_username: username,
+      roblox_user_id: roblox.sub,
+      avatar_url: roblox.picture ?? null,
+      is_active: true,
+    };
+    const { data: playerByRobloxId } = await supabase
+      .from('players')
+      .select('id')
+      .eq('roblox_user_id', roblox.sub)
+      .maybeSingle<{ id: string }>();
+    const { data: playerByUsername } = playerByRobloxId
+      ? { data: null }
+      : await supabase
+          .from('players')
+          .select('id')
+          .ilike('roblox_username', username)
+          .maybeSingle<{ id: string }>();
+    const existingPlayerId = playerByRobloxId?.id ?? playerByUsername?.id;
+    const playerWrite = existingPlayerId
+      ? await supabase.from('players').update(playerIdentity).eq('id', existingPlayerId)
+      : await supabase.from('players').insert({
+          ...playerIdentity,
+          name: username,
+          first_name: username,
+          last_name: '',
+          slug: `roblox-${roblox.sub}`,
+          position: 'UTIL',
+          team_id: null,
+        });
+    if (playerWrite.error) throw playerWrite.error;
 
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + SESSION_DURATION_SECONDS * 1000);
