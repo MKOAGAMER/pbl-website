@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!isSiteDataHealthy(data)) return [];
 
   const now = new Date();
-  const staticRoutes = ['', '/games', '/standings', '/rankings', '/teams', '/players', '/stats', '/news', '/accolades', '/staff', '/links', '/search', '/playoffs', '/partners', '/privacy', '/terms'];
+  const staticRoutes = ['', '/games', '/standings', '/rankings', '/teams', '/players', '/stats', '/trades', '/news', '/accolades', '/staff', '/links', '/search', '/playoffs', '/partners', '/privacy', '/terms'];
 
   return [
     ...staticRoutes.map((path) => ({ url: `${baseUrl}${path}`, lastModified: now, changeFrequency: path === '' || path === '/games' ? ('daily' as const) : ('weekly' as const) })),

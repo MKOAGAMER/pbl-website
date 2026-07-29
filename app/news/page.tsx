@@ -22,7 +22,7 @@ export default async function NewsPage() {
       <PageIntro
         eyebrow="PBL newsroom"
         title="Stories beyond the scoreboard."
-        description="Official announcements, match previews, weekly awards and the people shaping the Practical Basketball League."
+        description="Official announcements, match previews, weekly awards and the people shaping the Practical Basketball Asia League."
       />
       <div className="site-shell py-12 sm:py-16">
         {categories.length > 0 && (
@@ -50,4 +50,3 @@ export default async function NewsPage() {
     </>
   );
 }
-

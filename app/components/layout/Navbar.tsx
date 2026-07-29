@@ -11,6 +11,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 const internalLinks = [
   { href: '/', key: 'home' }, { href: '/games', key: 'live' }, { href: '/standings', key: 'standings' },
   { href: '/teams', key: 'teams' }, { href: '/players', key: 'players' }, { href: '/stats', key: 'stats' },
+  { href: '/trades', key: 'trades' },
   { href: '/rankings', key: 'rankings' }, { href: '/accolades', key: 'accolades' }, { href: '/playoffs', key: 'playoffs' },
   { href: '/news', key: 'news' }, { href: '/partners', key: 'partners' }, { href: '/staff', key: 'staff' },
   { href: '/links', key: 'community' }, { href: '/privacy', key: 'privacy' }, { href: '/terms', key: 'terms' },
@@ -33,7 +34,7 @@ export function Navbar() {
       <div className="site-shell flex min-h-[4.5rem] items-center gap-3 py-2">
         <Link href="/" className="group flex shrink-0 items-center gap-2" onClick={() => setOpen(false)}>
           <span className="race-mark grid h-10 w-10 place-items-center text-xs font-black italic tracking-[-0.08em] text-black">PBAL</span>
-          <span className="hidden leading-none xl:block"><span className="block text-[0.55rem] font-black uppercase tracking-[0.22em] text-[var(--orange-soft)]">Roblox Basketball</span><span className="block text-sm font-black uppercase italic">Race Control</span></span>
+          <span className="hidden leading-none xl:block"><span className="block text-[0.55rem] font-black uppercase tracking-[0.22em] text-[var(--orange-soft)]">Practical Basketball</span><span className="block text-sm font-black uppercase italic">Asia League</span></span>
         </Link>
 
         <nav className="hide-scrollbar hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto xl:flex" aria-label="Main navigation">

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Cloud, Database, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeftRight, Cloud, Database, ScanLine, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/lib/site-config';
 import { ConfigEditor } from './ConfigEditor';
@@ -84,6 +84,17 @@ export default async function AdminPage({ searchParams }: Props) {
         <StatusCard icon={SlidersHorizontal} label="Live updates" value="Realtime" />
         <StatusCard icon={ShieldCheck} label="Access" value={permission.replace('_', ' ')} />
       </div>
+
+      {permission !== 'editor' && <div className="mb-7 grid gap-3 sm:grid-cols-2">
+        <Link href="/admin/trades" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ArrowLeftRight className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Trade review</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Approve or reject player movement</span></span>
+        </Link>
+        <Link href="/admin/stats" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ScanLine className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">AI stat entry</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Extract, review and confirm box scores</span></span>
+        </Link>
+      </div>}
 
       <div className="grid gap-7 xl:grid-cols-[1.3fr_0.7fr]">
         <ConfigEditor config={config} />

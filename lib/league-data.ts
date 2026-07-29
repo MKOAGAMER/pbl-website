@@ -140,7 +140,7 @@ function mapTeam(row: Row, seasonTeam?: Row, standing?: Row): Team {
     logoUrl: stringValue(row.logo_url) || null,
     description: stringValue(
       row.description,
-      `${name} competes in the Practical Basketball League.`,
+      `${name} competes in the Practical Basketball Asia League.`,
     ),
   };
 }
@@ -194,7 +194,7 @@ function mapPlayer(row: Row, statsRow?: Row, roster?: Row): Player {
     position: stringValue(roster?.position, stringValue(row.position, 'G')),
     teamId: stringValue(roster?.team_id, stringValue(row.team_id)),
     avatarUrl: stringValue(row.avatar_url) || null,
-    bio: stringValue(row.bio, `${displayName} competes in the Practical Basketball League.`),
+    bio: stringValue(row.bio, `${displayName} competes in the Practical Basketball Asia League.`),
     isActive: booleanValue(row.is_active, booleanValue(row.active, true)),
     stats: mapStats(statsRow),
   };

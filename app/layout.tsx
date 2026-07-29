@@ -26,25 +26,25 @@ export const revalidate = 60;
 const baseMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'PBAL — Practical Basketball League',
+    default: 'PBAL — Practical Basketball Asia League',
     template: '%s | PBAL',
   },
   description:
-    'The official home of the Practical Basketball League — schedules, results, standings, player stats and league news.',
-  applicationName: 'PBAL — Practical Basketball League',
+    'The official home of the Practical Basketball Asia League — schedules, results, standings, player stats, trades and league news.',
+  applicationName: 'PBAL — Practical Basketball Asia League',
   keywords: ['PBAL', 'PBL', 'basketball league', 'Roblox basketball', 'league standings', 'player stats'],
   openGraph: {
-    title: 'PBAL — Practical Basketball League',
+    title: 'PBAL — Practical Basketball Asia League',
     description: 'Live scores, standings, player profiles and every PBAL matchup.',
     siteName: 'PBAL',
     type: 'website',
-    images: [{ url: '/og.png', width: 1659, height: 948, alt: 'PBAL basketball at full speed' }],
+    images: [{ url: '/og-basketball.png', width: 1734, height: 907, alt: 'Practical Basketball Asia League' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PBAL — Practical Basketball League',
+    title: 'PBAL — Practical Basketball Asia League',
     description: 'Live scores, standings, player profiles and every PBAL matchup.',
-    images: ['/og.png'],
+    images: ['/og-basketball.png'],
   },
 };
 

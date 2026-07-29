@@ -59,11 +59,11 @@ export const mockArticles: Article[] = [
   },
   {
     id: 'art2',
-    title: 'Practical Basketball League Announces 2026 Schedule',
+    title: 'Practical Basketball Asia League Announces 2026 Schedule',
     slug: 'practical-basketball-league-announces-2026-schedule',
     excerpt: 'The PBL has officially released the complete 2026 regular season schedule featuring 82 games per team, new rivalry matchups, and expanded national TV coverage.',
     content: `
-      <p>The Practical Basketball League unveiled its 2026 regular season schedule today, featuring 82 games per team across a 26-week season.</p>
+      <p>The Practical Basketball Asia League unveiled its 2026 regular season schedule today, featuring 82 games per team across a 26-week season.</p>
 
       <h2>Key Highlights</h2>
       <ul>

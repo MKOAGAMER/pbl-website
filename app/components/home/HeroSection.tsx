@@ -26,7 +26,7 @@ export function HeroSection() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full min-h-[70vh] px-4 sm:px-6 lg:px-8 text-center">
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-6 drop-shadow-2xl">
-          Practical Basketball League
+          Practical Basketball Asia League
         </h1>
         <p className="text-xl sm:text-2xl text-gray-100 max-w-3xl drop-shadow-lg">
           Experience the most competitive basketball league. Watch highlights, follow your favorite teams,

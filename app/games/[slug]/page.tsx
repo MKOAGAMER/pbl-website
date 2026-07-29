@@ -333,7 +333,7 @@ function buildGameSummary(
     if (awayScore === homeScore) return `${awayTeam.name} and ${homeTeam.name} finished level at ${awayScore}-${homeScore}.`;
     const winner = awayScore > homeScore ? awayTeam : homeTeam;
     const loser = winner.id === awayTeam.id ? homeTeam : awayTeam;
-    return `${winner.name} closed out a ${Math.max(awayScore, homeScore)}-${Math.min(awayScore, homeScore)} win over ${loser.name}. Follow the standings to see how the result changes the conference race.`;
+    return `${winner.name} closed out a ${Math.max(awayScore, homeScore)}-${Math.min(awayScore, homeScore)} win over ${loser.name}. Follow the standings to see how the result changes the conference table.`;
   }
   if (status === 'postponed') return 'This matchup has been postponed. League staff will publish a new tip-off time when it is confirmed.';
   if (status === 'cancelled') return 'This matchup has been cancelled. Check the full schedule for the latest league updates.';

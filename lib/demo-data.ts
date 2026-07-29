@@ -326,9 +326,9 @@ export const demoNews: NewsPost[] = [
   {
     id: 'news-1',
     slug: 'season-2026-midseason-report',
-    title: 'Midseason report: the title race is wide open',
+    title: 'Midseason report: the standings remain wide open',
     excerpt: 'Eight teams, four weeks remaining and no easy path to the PBL Finals.',
-    content: 'The 2026 season has reached its turning point. Phuket Waves currently lead the West, while Bangkok Blaze and Chiang Mai Cloud continue to trade wins in the East. With four weeks remaining, every possession now affects playoff seeding.\n\nThe next slate features two major tests: Blaze versus Cloud and Waves versus Pulse. Both games will be streamed live through the official league channels.',
+    content: 'The 2026 season has reached its turning point. Phuket Waves currently lead the West, while Bangkok Blaze and Chiang Mai Cloud continue to exchange wins in the East. With four weeks remaining, every possession now affects playoff seeding.\n\nThe next slate features two major tests: Blaze versus Cloud and Waves versus Pulse. Both games will be streamed live through the official league channels.',
     category: 'League',
     publishedAt: '2026-07-27T09:00:00.000Z',
     authorName: 'PBL Media',
@@ -451,4 +451,3 @@ export const demoSiteData: SiteData = {
   staff: demoStaff,
   links: demoLinks,
 };
-

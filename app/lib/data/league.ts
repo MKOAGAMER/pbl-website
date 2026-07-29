@@ -42,7 +42,7 @@ export const mockSeasons: Season[] = [
 export const mockLeagues: League[] = [
   {
     id: 'pbl',
-    name: 'Practical Basketball League',
+    name: 'Practical Basketball Asia League',
     abbreviation: 'PBL',
     logo: '/logo.png',
     primaryColor: '#00A8E8',

@@ -1,15 +1,15 @@
-# PBAL Website Foundation
+# PBAL — Practical Basketball Asia League
 
-โครงพื้นฐานเว็บลีกบาสเกตบอล Roblox PBAL บน Next.js 16 + Supabase โดยรอบนี้เน้นระบบหลังบ้านก่อน ยังไม่รวม Trading UI หรือ AI stat entry
+เว็บไซต์ลีกบาสเกตบอลบน Next.js 16 + Supabase พร้อม Roblox OAuth, ระบบทีม/ผู้เล่น/เกม/สถิติ, Trade Center, AI-assisted stat entry และ Discord notifications
 
-## สิ่งที่มีในโครงนี้
+## ระบบหลัก
 
-- Supabase schema สำหรับ `users`, `site_config`, `teams`, `players`, `games`, `player_game_stats`, view `stats`, `trades`, `media_assets` และ session
-- Roblox OAuth 2.0 Authorization Code + PKCE โดยแลก token และอ่าน user info เฉพาะฝั่ง server
-- ตรวจ membership ของ Roblox community MKOA (`9515965`) และจัด role เป็น Guest/Player
-- Role หลัก Guest / Player / Staff / Admin และสิทธิ์หลังบ้าน Editor / Staff / Super Admin
-- `/admin` สำหรับสี/ธีม, staff list, links, addons, Cloudinary media และจัดสิทธิ์ผู้ใช้
-- `site_config` ผ่าน Supabase Realtime ทำให้หน้าเว็บที่เปิดอยู่รับสีใหม่ได้โดยไม่ deploy
+- หน้า Public: โปรแกรมและผลแข่ง ตารางคะแนน ทีม ผู้เล่น สถิติ ข่าว เพลย์ออฟ รางวัล และ Trade Center
+- Auth: Roblox OAuth 2.0 Authorization Code + PKCE และ session แบบ HttpOnly
+- สิทธิ์: Guest / Player / Staff / Admin และ Editor / Staff / Super Admin
+- Trading: ผู้ใช้ยื่นคำขอ, staff อนุมัติ/ปฏิเสธ, อัปเดต roster แบบ transaction และค้นประวัติตามทีม/ผู้เล่น/วันที่
+- AI Stats: staff อัปโหลด screenshot, Claude Vision อ่านตาราง, staff ตรวจ/แก้ทุกแถวก่อนยืนยัน, เก็บภาพต้นฉบับแบบ private ใน Supabase Storage
+- Discord: รับ Supabase Database Webhooks แล้วประกาศข่าวใหม่และผลแข่ง final ผ่าน Incoming Webhook
 
 ## เริ่มพัฒนา
 
@@ -19,9 +19,21 @@ copy .env.example .env.local
 npm run dev
 ```
 
-เปิด `http://localhost:3000` และอ่าน [คู่มือติดตั้ง PBAL](docs/PBAL_FOUNDATION_SETUP_TH.md) ก่อนทดสอบ login
+อ่าน [คู่มือติดตั้ง PBAL](docs/PBAL_FOUNDATION_SETUP_TH.md) และ [คู่มือตั้ง Discord](docs/DISCORD_WEBHOOK_SETUP_TH.md) ก่อนทดสอบ workflow ที่เชื่อมบริการจริง
 
-ตรวจคุณภาพก่อน deploy:
+## Supabase migrations
+
+รันตามลำดับ:
+
+1. `supabase/migrations/202607280001_initial_league_schema.sql`
+2. `supabase/migrations/202607290001_pbal_foundation.sql`
+3. `supabase/migrations/202607290002_live_scoreboard.sql`
+4. `supabase/migrations/202607290003_trading_ai_stats.sql`
+5. `supabase/storage.sql` สำหรับ public asset buckets เดิม
+
+Migration ล่าสุดสร้าง workflow อนุมัติ trade, ตาราง audit `stat_imports`, private bucket `stat-screenshots` และ RPC สำหรับยืนยันสถิติเป็น transaction
+
+## ตรวจคุณภาพ
 
 ```bash
 npm run lint
@@ -29,15 +41,4 @@ npm run typecheck
 npm run build
 ```
 
-## ไฟล์หลัก
-
-- `supabase/migrations/202607280001_initial_league_schema.sql` — schema ลีกเดิม
-- `supabase/migrations/202607290001_pbal_foundation.sql` — Roblox auth, users, config, trades, stats view และ media
-- `supabase/migrations/202607290002_live_scoreboard.sql` — เปิด Supabase Realtime สำหรับตาราง `games`
-- `app/api/auth/roblox/route.ts` — เริ่ม OAuth + PKCE
-- `app/api/auth/roblox/callback/route.ts` — server-only token exchange
-- `app/admin/page.tsx` — admin dashboard ขั้นต้น
-- `app/playoffs/page.tsx`, `app/standings/page.tsx`, `app/search/page.tsx` — หน้าลีกหลักแบบ responsive
-- `i18n/` และ `messages/` — next-intl พร้อมคำแปล TH/EN ที่เขียนเอง
-
-ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET` หรือ `CLOUDINARY_API_SECRET` ด้วย prefix `NEXT_PUBLIC_`
+ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `ANTHROPIC_API_KEY`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`

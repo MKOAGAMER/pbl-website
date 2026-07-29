@@ -1,27 +1,27 @@
-# คู่มือติดตั้ง PBAL Foundation
+# คู่มือติดตั้ง PBAL
 
 ## 1. Supabase
 
-รัน migration ตามลำดับใน Supabase SQL Editor หรือ Supabase CLI:
+รัน migration ตามลำดับใน Supabase SQL Editor หรือ CLI:
 
 1. `supabase/migrations/202607280001_initial_league_schema.sql`
 2. `supabase/migrations/202607290001_pbal_foundation.sql`
-3. `supabase/migrations/202607290002_live_scoreboard.sql` เพื่อให้ live scoreboard รับการเปลี่ยนแปลงของ `games` ได้ทันที
-4. `supabase/storage.sql` เฉพาะกรณีที่ยังใช้ Supabase Storage จากระบบเดิม
-5. `supabase/seed.sql` ใช้กับ Preview/Staging เท่านั้น
+3. `supabase/migrations/202607290002_live_scoreboard.sql`
+4. `supabase/migrations/202607290003_trading_ai_stats.sql`
+5. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
+6. `supabase/seed.sql` ใช้เฉพาะ Preview/Staging
 
-Migration ชุดที่สองจะเพิ่ม:
+Migration ลำดับที่ 4 เพิ่ม:
 
-- `users` และ `auth_sessions` สำหรับ Roblox identity/session
-- `site_config` singleton row ชื่อ `main` พร้อม Supabase Realtime
-- `trades` (ยังไม่มี Trading UI)
-- `media_assets` สำหรับ metadata ของ Cloudinary
-- `ping_ms` ใน `player_game_stats`
-- view `stats` ที่คืน Pts, Fgm/Fga/Fg%, 3pm/3pa/3p%, Ftm/Fta/Ft%, Ast, Stl, Bk, Orb, Drb, Reb, Tov, Fls, +/-, Ping
+- workflow ตรวจและอนุมัติ `trades`
+- RPC `approve_trade_request` ซึ่งอัปเดต roster และทีมปัจจุบันใน transaction เดียว
+- `stat_imports` สำหรับเก็บสถานะ ผล AI และหลักฐานการตรวจ
+- private Storage bucket `stat-screenshots`
+- RPC `confirm_stat_import` สำหรับ upsert สถิติที่ staff ตรวจแล้ว
 
 ## 2. Environment variables
 
-คัดลอก `.env.example` เป็น `.env.local` และใส่ค่าจริง:
+คัดลอก `.env.example` เป็น `.env.local` แล้วใส่ค่าจริง:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://PROJECT.supabase.co
@@ -32,30 +32,35 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ROBLOX_CLIENT_ID=...
 ROBLOX_CLIENT_SECRET=...
 ROBLOX_REDIRECT_URI=http://localhost:3000/api/auth/roblox/callback
+ROBLOX_GROUP_ID=9515965
 
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
+
+ANTHROPIC_API_KEY=...
+CLAUDE_MODEL=claude-sonnet-4-6
+
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+SUPABASE_WEBHOOK_SECRET=ข้อความสุ่มที่ยาวและเดายาก
 ```
 
-ค่า service role และ secrets ทั้งหมดต้องอยู่ฝั่ง server เท่านั้น ห้ามใช้ prefix `NEXT_PUBLIC_`
+ทุกค่าที่เป็น secret ต้องอยู่ฝั่ง server เท่านั้น
 
-## 3. Roblox OAuth 2.0
+## 3. Roblox OAuth
 
-สร้าง OAuth 2.0 App ใน Roblox Creator Dashboard แล้วตั้งค่า:
+สร้าง OAuth 2.0 App ใน Roblox Creator Dashboard:
 
 - Grant: Authorization Code
 - Scopes: `openid profile`
 - Local redirect URI: `http://localhost:3000/api/auth/roblox/callback`
 - Production redirect URI: `https://YOUR_DOMAIN/api/auth/roblox/callback`
 
-Redirect URI ต้องตรงกับ `ROBLOX_REDIRECT_URI` ทุกตัวอักษร Flow นี้ใช้ PKCE, state, HttpOnly cookies และแลก authorization code ใน Route Handler ฝั่ง server เท่านั้น
-
-หลัง login ระบบเรียก Roblox user info เพื่อเก็บ `roblox_id`, username และ avatar จากนั้นตรวจ community MKOA id `9515965` ผ่าน Roblox Groups API ผู้ที่เป็นสมาชิกจะได้ Player; ผู้ที่ไม่เป็นสมาชิกจะได้ Guest โดย Staff/Admin เดิมจะไม่ถูกลดสิทธิ์จากการเช็คกลุ่ม
+Redirect URI ต้องตรงกับ `ROBLOX_REDIRECT_URI` ทุกตัวอักษร ระบบใช้ PKCE, state, HttpOnly cookies และแลก authorization code เฉพาะฝั่ง server
 
 ## 4. ตั้ง Super Admin คนแรก
 
-ให้บัญชีนั้น login ด้วย Roblox หนึ่งครั้งก่อน แล้วรัน SQL โดยเปลี่ยน Roblox ID:
+ให้บัญชี login ด้วย Roblox ก่อนหนึ่งครั้ง แล้วเปลี่ยน Roblox ID ในคำสั่งนี้:
 
 ```sql
 update public.users
@@ -63,28 +68,39 @@ set role = 'admin', admin_permission = 'super_admin'
 where roblox_id = 123456789;
 ```
 
-จากนั้นเข้า `/admin` เพื่อจัด role และ permission ให้บัญชีอื่น ระบบฐานข้อมูลป้องกันการลบหรือลดสิทธิ์ Super Admin คนสุดท้าย
+สิทธิ์ในระบบ:
 
-การแบ่งสิทธิ์:
+- Editor: site config และ media
+- Staff: รวมสิทธิ์ Editor พร้อมตรวจ trade และยืนยันสถิติ
+- Super Admin: รวมทุกสิทธิ์และจัด role/permission ของผู้ใช้อื่น
 
-- Editor: แก้ site config และจัดการ media
-- Staff: รวมสิทธิ์ Editor และเตรียมไว้สำหรับงานลีก operational
-- Super Admin: รวมทุกสิทธิ์และจัด role/permission ของผู้ใช้
+## 5. ทดสอบ Trading
 
-## 5. Cloudinary
+1. ผู้ใช้ที่ login เปิด `/trades` และส่งคำขอ
+2. Staff เปิด `/admin/trades`
+3. กดอนุมัติ แล้วตรวจว่า roster, player current team และประวัติ Trade Center เปลี่ยนพร้อมกัน
+4. หาก jersey number ชนกับทีมปลายทาง ฐานข้อมูลจะไม่อนุมัติจนกว่าจะจัดหมายเลข roster ให้ไม่ซ้ำ
 
-สร้าง Cloudinary account/environment แล้วใส่ cloud name, API key และ API secret หน้า `/admin` จะ upload รูปแบบ signed request ผ่าน server และลบทั้งไฟล์บน Cloudinary กับ metadata ใน Supabase
+## 6. ทดสอบ AI Stat Entry
 
-## 6. Deploy บน Vercel
+1. ใส่ `ANTHROPIC_API_KEY`
+2. ตรวจว่าเกมมีสถานะ `final`
+3. Staff เปิด `/admin/stats` เลือกเกมและอัปโหลด screenshot
+4. ตรวจการจับคู่ผู้เล่นและแก้ตัวเลขทุกแถว
+5. ระบบจะไม่บันทึก `player_game_stats` จนกด **ยืนยันและบันทึก DB**
+6. เปิด `/stats` และหน้าเกมเพื่อตรวจค่าล่าสุด
+7. ใช้ปุ่ม **ภาพ** ใน audit trail เพื่อตรวจไฟล์ต้นฉบับผ่าน signed URL อายุสั้น
 
-เพิ่ม environment variables ชุดเดียวกันใน Vercel แยก Production/Preview/Development และเพิ่ม production callback URL ใน Roblox OAuth app ก่อน deploy
+## 7. Discord
 
-หลัง deploy ให้ทดสอบ:
+ทำตาม [คู่มือตั้ง Discord Webhook](DISCORD_WEBHOOK_SETUP_TH.md) เพื่อเชื่อม event `news_posts` และ `games` จาก Supabase
+
+## 8. Deploy
+
+เพิ่ม environment variables ชุดเดียวกันในระบบ deploy แยกตาม Production/Preview/Development และเพิ่ม production callback URL ใน Roblox OAuth App จากนั้นทดสอบ:
 
 1. `GET /api/health`
-2. login ผ่าน `/login`
-3. username/avatar และ MKOA status ถูกต้อง
-4. Guest/Player เข้า `/admin` ไม่ได้
-5. Editor/Staff/Super Admin บันทึก config ได้
-6. browser ที่เปิดหน้าเว็บอยู่เปลี่ยนสีตาม Realtime โดยไม่ deploy
-7. upload และ delete รูปใน `/admin`
+2. Login/logout และ role ทั้งหมด
+3. Trade request → staff approval
+4. Stat screenshot → review → confirm
+5. Publish ข่าวและเปลี่ยนเกมเป็น final แล้วตรวจ Discord
