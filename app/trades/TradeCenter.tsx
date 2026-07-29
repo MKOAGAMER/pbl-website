@@ -24,11 +24,11 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
     if (!franchiseTeamId || requestKind === 'transfer') return players;
     return requestKind === 'release'
       ? players.filter((player) => player.teamId === franchiseTeamId)
-      : players.filter((player) => player.teamId && player.teamId !== franchiseTeamId);
+      : players.filter((player) => player.teamId !== franchiseTeamId);
   }, [franchiseTeamId, players, requestKind]);
   const [playerId, setPlayerId] = useState(() => (
     franchiseTeamId
-      ? players.find((player) => player.teamId && player.teamId !== franchiseTeamId)?.id ?? ''
+      ? players.find((player) => player.teamId !== franchiseTeamId)?.id ?? ''
       : players[0]?.id ?? ''
   ));
   const selectedPlayer = eligiblePlayers.find((player) => player.id === playerId);
@@ -121,7 +121,7 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
                     setRequestKind(kind);
                     const nextPlayers = kind === 'release'
                       ? players.filter((player) => player.teamId === franchiseTeamId)
-                      : players.filter((player) => player.teamId && player.teamId !== franchiseTeamId);
+                      : players.filter((player) => player.teamId !== franchiseTeamId);
                     setPlayerId(nextPlayers[0]?.id ?? '');
                     setToTeamId('');
                   }} className="admin-input mt-2">

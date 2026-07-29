@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, Search, SearchX, Shield } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
-import type { Conference, Team } from '@/lib/league-types';
+import type { Conference, Player, Team } from '@/lib/league-types';
 import { winPercentage } from '@/lib/utils';
 
 type ConferenceFilter = 'All' | Conference;
@@ -13,9 +14,10 @@ type SortMode = 'record' | 'name';
 
 interface TeamDirectoryProps {
   teams: Team[];
+  players: Player[];
 }
 
-export function TeamDirectory({ teams }: TeamDirectoryProps) {
+export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
   const [query, setQuery] = useState('');
   const [conference, setConference] = useState<ConferenceFilter>('All');
   const [sort, setSort] = useState<SortMode>('record');
@@ -27,7 +29,10 @@ export function TeamDirectory({ teams }: TeamDirectoryProps) {
       .filter((team) => conference === 'All' || team.conference === conference)
       .filter((team) => {
         if (!normalizedQuery) return true;
-        return [team.name, team.shortName, team.city, team.abbreviation]
+        const rosterNames = players
+          .filter((player) => player.teamId === team.id)
+          .map((player) => `${player.displayName} ${player.robloxUsername}`);
+        return [team.name, team.shortName, team.city, team.abbreviation, ...rosterNames]
           .some((value) => value.toLowerCase().includes(normalizedQuery));
       })
       .sort((a, b) => {
@@ -36,7 +41,19 @@ export function TeamDirectory({ teams }: TeamDirectoryProps) {
           || b.wins - a.wins
           || a.name.localeCompare(b.name);
       });
-  }, [conference, query, sort, teams]);
+  }, [conference, players, query, sort, teams]);
+
+  const rosterByTeam = useMemo(() => {
+    const rosterMap = new Map<string, Player[]>();
+    players.forEach((player) => {
+      if (!player.teamId) return;
+      const roster = rosterMap.get(player.teamId) ?? [];
+      roster.push(player);
+      rosterMap.set(player.teamId, roster);
+    });
+    rosterMap.forEach((roster) => roster.sort((a, b) => a.jerseyNumber - b.jerseyNumber || a.displayName.localeCompare(b.displayName)));
+    return rosterMap;
+  }, [players]);
 
   const resetFilters = () => {
     setQuery('');
@@ -123,6 +140,7 @@ export function TeamDirectory({ teams }: TeamDirectoryProps) {
           {filteredTeams.map((team) => {
             const totalGames = team.wins + team.losses;
             const winPct = winPercentage(team.wins, team.losses);
+            const roster = rosterByTeam.get(team.id) ?? [];
 
             return (
               <Link
@@ -151,7 +169,27 @@ export function TeamDirectory({ teams }: TeamDirectoryProps) {
                   <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--ink-soft)]">{team.description}</p>
                 </div>
 
-                <div className="mt-7 grid grid-cols-3 gap-3 border-t border-[var(--line)] pt-5">
+                <div className="mt-6 border-t border-[var(--line)] pt-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[0.6rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">Active roster</p>
+                    <span className="number-tabular text-[0.62rem] font-black text-[var(--ink-soft)]">{roster.length} players</span>
+                  </div>
+                  {roster.length ? (
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                      {roster.slice(0, 6).map((player) => (
+                        <span key={player.id} className="flex min-w-0 items-center gap-2">
+                          <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" className="!h-6 !w-6 !rounded-md !text-[0.45rem]" primaryColor={team.primaryColor} secondaryColor={team.secondaryColor} />
+                          <span className="truncate text-xs font-bold">{player.displayName}</span>
+                        </span>
+                      ))}
+                      {roster.length > 6 && <span className="text-xs font-bold text-[var(--orange-soft)]">+{roster.length - 6} more</span>}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[var(--ink-faint)]">No roster players assigned</p>
+                  )}
+                </div>
+
+                <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[var(--line)] pt-5">
                   <TeamMetric label="Record" value={`${team.wins}-${team.losses}`} />
                   <TeamMetric label="Win pct" value={totalGames ? winPct.toFixed(3).replace(/^0/, '') : '.000'} />
                   <span className="flex items-end justify-end pb-1 text-[var(--orange-soft)]">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Activity,
+  Award,
   ArrowLeft,
   ArrowRight,
   CalendarX2,
@@ -9,6 +10,7 @@ import {
   Gauge,
   ShieldOff,
   Target,
+  Trophy,
   UserRound,
   Users,
 } from 'lucide-react';
@@ -69,6 +71,7 @@ export default async function PlayerDetailPage({ params }: Props) {
     .filter((item) => item.teamId === player.teamId && item.id !== player.id)
     .sort((a, b) => b.stats.pointsPerGame - a.stats.pointsPerGame)
     .slice(0, 4);
+  const playerAccolades = data.accolades.filter((item) => item.playerId === player.id);
   const teamGames = team
     ? data.games
       .filter(
@@ -183,6 +186,32 @@ export default async function PlayerDetailPage({ params }: Props) {
             </dl>
           </section>
         </div>
+
+        {playerAccolades.length > 0 && (
+          <section className="mt-14 sm:mt-16">
+            <SectionHeading
+              eyebrow="Recognition"
+              title="Medals & achievements"
+              description={`Official honors awarded to ${player.displayName}.`}
+              href="/accolades"
+              linkLabel="League archive"
+            />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {playerAccolades.map((item) => (
+                <article key={item.id} className="relative isolate overflow-hidden rounded-[1.35rem] border border-[var(--line)] bg-[var(--surface)] p-5">
+                  <span className="absolute -right-5 -top-5 -z-10 h-24 w-24 rounded-full bg-[var(--orange)]/10 blur-2xl" />
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]">{item.type === 'championship' ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}</span>
+                    <span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.season}</span>
+                  </div>
+                  <p className="mt-5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">{item.category}</p>
+                  <h3 className="mt-2 text-lg font-black tracking-[-0.03em]">{item.title}</h3>
+                  {item.description && <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{item.description}</p>}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <PlayerSeasonHistoryTable entries={seasonHistory} />
 

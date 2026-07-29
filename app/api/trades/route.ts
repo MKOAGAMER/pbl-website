@@ -42,7 +42,9 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (roster?.team_id) fromTeamId = roster.team_id;
   }
-  if (!fromTeamId) return NextResponse.json({ error: 'ผู้เล่นยังไม่มีทีมต้นทางในฤดูกาลนี้' }, { status: 409 });
+  if (!fromTeamId && parsed.data.requestKind !== 'acquire') {
+    return NextResponse.json({ error: 'Free Agent สามารถยื่นได้เฉพาะคำขอซื้อเข้าทีม' }, { status: 409 });
+  }
   if (fromTeamId === parsed.data.toTeamId) return NextResponse.json({ error: 'ทีมต้นทางและปลายทางต้องไม่ใช่ทีมเดียวกัน' }, { status: 400 });
 
   if (user.role === 'franchise_owner') {
@@ -71,7 +73,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase.from('trades').insert({
     player_id: parsed.data.playerId,
-    from_team_id: fromTeamId,
+    from_team_id: fromTeamId || null,
     to_team_id: parsed.data.toTeamId,
     trade_date: new Date().toISOString().slice(0, 10),
     status: 'pending',

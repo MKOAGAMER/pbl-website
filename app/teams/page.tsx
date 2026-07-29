@@ -18,7 +18,7 @@ export default async function TeamsPage() {
         title="Every team. One league."
         description={`Meet the ${data.teams.length} clubs competing in ${data.season.name}. Filter by conference, compare records and open a team page for its full roster and schedule.`}
       />
-      <TeamDirectory teams={data.teams} />
+      <TeamDirectory teams={data.teams} players={data.players} />
     </>
   );
 }

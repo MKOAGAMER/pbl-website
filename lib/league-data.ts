@@ -265,6 +265,16 @@ function mapAccolade(row: Row): Accolade {
     stringValue(row.recipient, playerName || stringValue(team?.name, 'To be announced')),
   );
   const category = stringValue(row.category, stringValue(row.type));
+  const normalizedCategory = category.toLowerCase();
+  const type: Accolade['type'] = normalizedCategory.includes('record')
+    ? 'record'
+    : normalizedCategory.includes('champion')
+      ? 'championship'
+      : normalizedCategory.includes('medal')
+        ? 'medal'
+        : normalizedCategory.includes('achievement')
+          ? 'achievement'
+          : 'award';
   return {
     id: stringValue(row.id, slugify(`${stringValue(row.title)}-${recipient}`)),
     season: stringValue(
@@ -273,9 +283,14 @@ function mapAccolade(row: Row): Accolade {
     ),
     title: stringValue(row.title, 'League Award'),
     recipient,
+    playerId: stringValue(row.player_id) || null,
+    playerSlug: stringValue(player?.slug) || null,
     teamId: stringValue(row.team_id) || null,
+    recipientAvatarUrl: stringValue(player?.avatar_url) || null,
+    awardedOn: stringValue(row.awarded_on) || null,
+    category,
     description: stringValue(row.description),
-    type: category.toLowerCase().includes('record') ? 'record' : 'award',
+    type,
   };
 }
 
@@ -367,7 +382,8 @@ async function loadSiteData(): Promise<SiteData> {
         .order('published_at', { ascending: false }),
       supabase
         .from('accolades')
-        .select('id, season_id, player_id, team_id, title, category, description, awarded_on, players(first_name, last_name), teams(name), seasons(name)')
+        .select('id, season_id, player_id, team_id, title, category, description, awarded_on, players(first_name, last_name, slug, avatar_url), teams(name), seasons(name)')
+        .eq('is_public', true)
         .order('awarded_on', { ascending: false, nullsFirst: false }),
       supabase
         .from('staff_members')

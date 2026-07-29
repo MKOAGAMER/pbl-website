@@ -113,9 +113,14 @@ export interface Accolade {
   season: string;
   title: string;
   recipient: string;
+  playerId?: string | null;
+  playerSlug?: string | null;
   teamId?: string | null;
+  recipientAvatarUrl?: string | null;
+  awardedOn?: string | null;
+  category: string;
   description: string;
-  type: 'award' | 'record';
+  type: 'achievement' | 'medal' | 'championship' | 'award' | 'record';
 }
 
 export interface StaffMember {

@@ -25,9 +25,11 @@ export async function saveTournament(formData: FormData) {
     logoUrl: optionalUrl, startsAt: optionalDateTime, endsAt: optionalDateTime, venue: z.string().trim().max(160),
     championTeamId: optionalId, isPublic: z.boolean(),
   }).safeParse({
-    id: formData.get('id'), name: formData.get('name'), seasonId: formData.get('season_id'), format: formData.get('format'), status: formData.get('status'),
+    // New tournaments do not render hidden id/champion fields. Normalize the
+    // missing FormData entries to the empty value accepted by optionalId.
+    id: formData.get('id') ?? '', name: formData.get('name'), seasonId: formData.get('season_id') ?? '', format: formData.get('format'), status: formData.get('status'),
     description: formData.get('description'), logoUrl: formData.get('logo_url'), startsAt: formData.get('starts_at'), endsAt: formData.get('ends_at'),
-    venue: formData.get('venue'), championTeamId: formData.get('champion_team_id'), isPublic: formData.get('is_public') === 'on',
+    venue: formData.get('venue'), championTeamId: formData.get('champion_team_id') ?? '', isPublic: formData.get('is_public') === 'on',
   });
   if (!parsed.success || (parsed.data.startsAt && parsed.data.endsAt && parsed.data.endsAt < parsed.data.startsAt)) redirect('/admin/tournaments?error=invalid-tournament');
   if (parsed.data.championTeamId) {

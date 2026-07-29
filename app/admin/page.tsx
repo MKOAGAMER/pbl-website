@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeftRight, Bot, Cloud, Database, Gamepad2, MessageCircle, Newspaper, ScanLine, Trophy, UserSearch, UsersRound } from 'lucide-react';
+import { ArrowLeftRight, Award, Bot, Cloud, Database, Gamepad2, MessageCircle, Newspaper, ScanLine, Trophy, UserSearch, UsersRound } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/lib/site-config';
 import { ConfigEditor } from './ConfigEditor';
@@ -98,6 +98,10 @@ export default async function AdminPage({ searchParams }: Props) {
         <Link href="/admin/tournaments" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Trophy className="h-5 w-5" /></span>
           <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Tournament control</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Events, teams, seeds, brackets and results</span></span>
+        </Link>
+        <Link href="/admin/accolades" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Award className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Medals & achievements</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Give recognition to any player or team</span></span>
         </Link>
         <Link href="/admin/trades" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ArrowLeftRight className="h-5 w-5" /></span>
