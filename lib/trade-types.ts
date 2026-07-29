@@ -17,6 +17,7 @@ export type TradeRecord = {
   requestKind: TradeRequestKind;
   notes: string;
   reviewNote: string;
+  requestedBy: string;
   requestedAt: string;
   reviewedAt: string | null;
   isOwnRequest: boolean;

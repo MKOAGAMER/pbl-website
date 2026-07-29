@@ -82,7 +82,10 @@ export default async function AccountPage({ searchParams }: Props) {
             )}
           </section>
         </div>
-        <ProfileAboutForm initialBio={typeof playerProfile?.bio === 'string' ? playerProfile.bio : ''} />
+        <ProfileAboutForm
+          initialBio={typeof playerProfile?.bio === 'string' ? playerProfile.bio : ''}
+          profileSlug={typeof playerProfile?.slug === 'string' ? playerProfile.slug : null}
+        />
       </div>
     </main>
   );

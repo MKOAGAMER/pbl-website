@@ -72,6 +72,7 @@ export default async function TradesPage() {
       requestKind: (text(row.request_kind) || 'transfer') as TradeRequestKind,
       notes: text(row.notes),
       reviewNote: text(row.review_note),
+      requestedBy: row.created_by === user?.id ? user?.username ?? 'You' : 'League staff',
       requestedAt: text(row.created_at),
       reviewedAt: text(row.reviewed_at) || null,
       isOwnRequest: row.created_by === user?.id,

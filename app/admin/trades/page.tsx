@@ -21,14 +21,15 @@ export default async function TradeReviewPage() {
     requireAdminPermission('staff'),
     getSiteData(),
   ]);
-  const [tradesResult, playersResult, teamsResult] = await Promise.all([
+  const [tradesResult, playersResult, teamsResult, usersResult] = await Promise.all([
     supabase
       .from('trades')
-      .select('id, player_id, from_team_id, to_team_id, trade_date, status, request_kind, notes, review_note, created_at, reviewed_at')
+      .select('id, player_id, from_team_id, to_team_id, trade_date, status, request_kind, notes, review_note, created_by, created_at, reviewed_at')
       .order('created_at', { ascending: false })
       .limit(200),
     supabase.from('players').select('id, name, first_name, last_name, slug'),
     supabase.from('teams').select('id, name, abbreviation'),
+    supabase.from('users').select('id, username'),
   ]);
   const playerById = new Map(siteData.players.map((player) => [player.id, { name: player.displayName, slug: player.slug }]));
   ((playersResult.data ?? []) as Row[]).forEach((row) => {
@@ -37,6 +38,7 @@ export default async function TradeReviewPage() {
   });
   const teamById = new Map(siteData.teams.map((team) => [team.id, { name: team.name, abbreviation: team.abbreviation }]));
   ((teamsResult.data ?? []) as Row[]).forEach((row) => teamById.set(asText(row.id), { name: asText(row.name) || 'Unknown team', abbreviation: asText(row.abbreviation) || '—' }));
+  const userById = new Map(((usersResult.data ?? []) as Row[]).map((row) => [asText(row.id), asText(row.username)]));
   const trades: TradeRecord[] = ((tradesResult.data ?? []) as Row[]).map((row) => {
     const player = playerById.get(asText(row.player_id));
     const fromTeam = teamById.get(asText(row.from_team_id));
@@ -57,6 +59,7 @@ export default async function TradeReviewPage() {
       requestKind: (asText(row.request_kind) || 'transfer') as TradeRequestKind,
       notes: asText(row.notes),
       reviewNote: asText(row.review_note),
+      requestedBy: userById.get(asText(row.created_by)) || 'Unknown requester',
       requestedAt: asText(row.created_at),
       reviewedAt: asText(row.reviewed_at) || null,
       isOwnRequest: false,

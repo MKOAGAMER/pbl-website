@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, ImagePlus, Trash2 } from 'lucide-react';
+import { Check, Copy, ImagePlus, LoaderCircle, Trash2, UploadCloud } from 'lucide-react';
+import { uploadAdminImage } from './media-upload';
 
 export type MediaAsset = {
   id: string;
@@ -18,24 +19,27 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState('');
 
   async function upload(file: File) {
     setBusy(true);
+    setProgress(0);
     setError('');
-    const body = new FormData();
-    body.set('file', file);
-    const response = await fetch('/api/admin/media', { method: 'POST', body });
-    const result = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) return setError(result.error ?? 'Upload failed.');
-    if (inputRef.current) inputRef.current.value = '';
-    router.refresh();
+    try {
+      await uploadAdminImage(file, 'news-images', setProgress);
+      if (inputRef.current) inputRef.current.value = '';
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Upload failed.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function remove(id: string) {
-    if (!window.confirm('Delete this image from Cloudinary?')) return;
+    if (!window.confirm('Delete this image permanently?')) return;
     setBusy(true);
     setError('');
     const response = await fetch(`/api/admin/media/${id}`, { method: 'DELETE' });
@@ -55,12 +59,15 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
     <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5">
       <div className="flex items-start gap-3">
         <ImagePlus className="mt-0.5 h-5 w-5 text-[var(--orange-soft)]" />
-        <div><h2 className="font-black">Media library</h2><p className="mt-1 text-sm text-[var(--ink-soft)]">Cloudinary images, up to 8 MB.</p></div>
+        <div><h2 className="font-black">Media library</h2><p className="mt-1 text-sm text-[var(--ink-soft)]">รูปภาพที่อัปโหลดจากเครื่อง สูงสุด 8 MB</p></div>
       </div>
-      <label className="mt-5 grid cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--line-strong)] px-4 py-6 text-center text-xs font-black uppercase tracking-[0.1em] hover:border-[var(--orange)]">
-        {busy ? 'Working…' : 'Upload image'}
+      <label className="mt-5 grid cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--page)] px-4 py-7 text-center hover:border-[var(--orange)]">
+        {busy ? <LoaderCircle className="h-6 w-6 animate-spin text-[var(--orange-soft)]" /> : <UploadCloud className="h-6 w-6 text-[var(--orange-soft)]" />}
+        <span className="mt-2 text-xs font-black uppercase tracking-[0.1em]">{busy ? `Uploading ${progress}%` : 'Choose image from computer'}</span>
+        <span className="mt-1 text-[0.68rem] font-normal text-[var(--ink-faint)]">JPG, PNG or WebP</span>
         <input ref={inputRef} type="file" accept="image/*" disabled={busy} className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); }} />
       </label>
+      {busy && <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-[var(--surface-soft)]"><span className="block h-full rounded-full bg-[var(--orange)] transition-[width]" style={{ width: `${progress}%` }} /></span>}
       {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
       <div className="mt-5 grid grid-cols-2 gap-3">
         {assets.map((asset) => (

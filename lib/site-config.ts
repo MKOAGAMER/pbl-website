@@ -1,10 +1,11 @@
 import 'server-only';
 
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { createAdminClient } from './supabase-admin';
 import { DEFAULT_SITE_CONFIG, type SiteConfig } from './pbal-types';
 
-export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
+async function loadSiteConfig(): Promise<SiteConfig> {
   const supabase = createAdminClient();
   if (!supabase) return DEFAULT_SITE_CONFIG;
 
@@ -23,5 +24,11 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
     addons: data.addons as SiteConfig['addons'],
     updatedAt: data.updated_at,
   };
+}
+
+const getCachedSiteConfig = unstable_cache(loadSiteConfig, ['pbal-site-config-v1'], {
+  tags: ['pbal-site-config'],
+  revalidate: 60,
 });
 
+export const getSiteConfig = cache(getCachedSiteConfig);

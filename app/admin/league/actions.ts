@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdminPermission } from '@/lib/admin-auth';
@@ -28,6 +28,7 @@ function slugify(value: string) {
 }
 
 function refreshLeague() {
+  updateTag('pbal-site-data');
   revalidatePath('/', 'layout');
   revalidatePath('/admin/league');
   revalidatePath('/teams');

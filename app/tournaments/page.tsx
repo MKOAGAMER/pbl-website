@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CalendarDays, MapPin, Radio, Trophy, UsersRound } from 'lucide-react';
+import { ArrowRight, CalendarDays, MapPin, Radio, Trophy, UsersRound } from 'lucide-react';
 import { getSiteData } from '@/lib/league-data';
 import { getPublicTournaments } from '@/lib/tournament-data';
 import type { Team } from '@/lib/league-types';
@@ -15,6 +15,9 @@ const dateLabel = (value: string | null) => value ? new Intl.DateTimeFormat('en-
 export default async function TournamentsPage() {
   const [tournaments, data] = await Promise.all([getPublicTournaments(), getSiteData()]);
   const teamById = new Map(data.teams.map((team) => [team.id, team]));
+  const activeCount = tournaments.filter((tournament) => tournament.status === 'active').length;
+  const upcomingCount = tournaments.filter((tournament) => tournament.status === 'registration' || tournament.status === 'draft').length;
+  const completedCount = tournaments.filter((tournament) => tournament.status === 'completed').length;
 
   return <main className="site-shell py-12 sm:py-20">
     <header className="max-w-4xl border-b border-[var(--line)] pb-10">
@@ -23,10 +26,26 @@ export default async function TournamentsPage() {
       <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">ติดตามรายชื่อทีม สายการแข่งขัน ตารางแข่ง ผลคะแนน และแชมป์ของทัวร์นาเมนต์อย่างเป็นทางการ</p>
     </header>
 
-    <div className="mt-12 space-y-16">
+    <section className="mt-10 grid gap-3 sm:grid-cols-3" aria-label="Tournament overview">
+      <TournamentMetric value={activeCount} label="Live events" accent="text-red-300" />
+      <TournamentMetric value={upcomingCount} label="Upcoming" accent="text-[var(--orange-soft)]" />
+      <TournamentMetric value={completedCount} label="Completed" accent="text-emerald-300" />
+    </section>
+
+    {tournaments.length > 1 && <nav className="mt-14" aria-label="Browse tournaments">
+      <p className="mb-4 text-xs font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">Browse tournaments</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {tournaments.map((tournament) => <Link key={tournament.id} href={`#${tournament.slug}`} className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 transition hover:border-[var(--orange)]">
+          <span className="min-w-0"><span className="block truncate text-sm font-black group-hover:text-[var(--orange-soft)]">{tournament.name}</span><span className="mt-1 block text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--ink-faint)]">{tournament.status} · {tournament.teams.length} teams</span></span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-[var(--orange-soft)] transition-transform group-hover:translate-x-1" />
+        </Link>)}
+      </div>
+    </nav>}
+
+    <div className="mt-16 space-y-20">
       {tournaments.map((tournament) => {
         const champion = tournament.championTeamId ? teamById.get(tournament.championTeamId) : undefined;
-        return <article id={tournament.slug} key={tournament.id} className="scroll-mt-24 overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)]">
+        return <article id={tournament.slug} key={tournament.id} className="content-auto scroll-mt-24 overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_28px_90px_rgba(0,0,0,0.18)]">
           <div className="grid gap-8 border-b border-[var(--line)] p-6 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2 text-[0.65rem] font-black uppercase tracking-[0.11em]"><span className="rounded-full bg-[var(--orange)] px-3 py-1.5 text-black">{tournament.status}</span><span className="text-[var(--ink-faint)]">{formatLabel(tournament.format)}</span></div>
@@ -54,6 +73,8 @@ export default async function TournamentsPage() {
     </div>
   </main>;
 }
+
+function TournamentMetric({ value, label, accent }: { value: number; label: string; accent: string }) { return <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"><span className={`race-display block text-4xl ${accent}`}>{value}</span><span className="mt-2 block text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{label}</span></div>; }
 
 function TournamentTeamRow({ team, seed, group }: { team?: Team; seed: number | null; group: string | null }) { return <div className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3"><span className="race-display w-8 text-center text-xl text-[var(--ink-faint)]">{seed ?? '—'}</span>{team ? <><TeamLogo team={team} size="sm" /><Link href={`/teams/${team.slug}`} className="min-w-0 flex-1 truncate text-sm font-black hover:text-[var(--orange-soft)]">{team.name}</Link></> : <span className="flex-1 text-sm text-[var(--ink-faint)]">Team unavailable</span>}{group && <span className="rounded-full border border-[var(--line)] px-2 py-1 text-[0.58rem] font-black uppercase text-[var(--ink-faint)]">{group}</span>}</div>; }
 function MatchTeam({ team, score, winner }: { team?: Team; score: number | null; winner: boolean }) { return <div className={`flex items-center gap-3 ${winner ? 'text-[var(--orange-soft)]' : ''}`}>{team ? <><TeamLogo team={team} size="sm" /><span className="min-w-0 flex-1 truncate text-sm font-black">{team.name}</span></> : <span className="flex-1 text-sm font-black text-[var(--ink-faint)]">TBD</span>}<span className="race-display text-3xl">{score ?? '—'}</span></div>; }

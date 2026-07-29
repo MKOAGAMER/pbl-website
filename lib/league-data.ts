@@ -1,5 +1,8 @@
+import 'server-only';
+
 import { cache } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
+import { createAdminClient } from './supabase-admin';
 import type {
   Accolade,
   Conference,
@@ -181,11 +184,13 @@ function mapPlayer(row: Row, statsRow?: Row, roster?: Row): Player {
         stringValue(row.username, 'Unknown Player'),
     ),
   );
-  const primaryPosition = stringValue(roster?.position, stringValue(row.position, 'UTIL'));
   const storedPositions = Array.isArray(row.positions)
     ? row.positions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     : [];
-  const positions = [...new Set([primaryPosition, ...storedPositions])].slice(0, 3);
+  // Profile positions are authoritative because staff can explicitly order up
+  // to three of them. The roster position remains a fallback for legacy rows.
+  const primaryPosition = storedPositions[0] ?? stringValue(row.position, stringValue(roster?.position, 'UTIL'));
+  const positions = (storedPositions.length ? [...new Set(storedPositions)] : [primaryPosition]).slice(0, 3);
   return {
     id: stringValue(row.id, slugify(displayName)),
     slug: stringValue(row.slug, slugify(displayName)),
@@ -305,19 +310,14 @@ function mapLink(row: Row): LeagueLink {
   };
 }
 
-export const getSiteData = cache(async (): Promise<SiteData> => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.error('[pbl-data:public-load] Supabase environment variables are missing.');
+async function loadSiteData(): Promise<SiteData> {
+  const supabase = createAdminClient();
+  if (!supabase) {
+    console.error('[pbl-data:public-load] Supabase server environment variables are missing.');
     return unavailableSiteData;
   }
 
   try {
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
     const [
       seasonsResult,
       teamsResult,
@@ -490,7 +490,14 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
     );
     return unavailableSiteData;
   }
+}
+
+const getCachedSiteData = unstable_cache(loadSiteData, ['pbal-public-league-data-v2'], {
+  tags: ['pbal-site-data'],
+  revalidate: 60,
 });
+
+export const getSiteData = cache(getCachedSiteData);
 
 export const getTeamBySlug = cache(async (slug: string) => {
   const data = await getSiteData();
@@ -508,13 +515,8 @@ export const getNewsBySlug = cache(async (slug: string) => {
 });
 
 export const getGameBoxScore = cache(async (gameId: string): Promise<GameStatLine[]> => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
-
-  const supabase = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createAdminClient();
+  if (!supabase) return [];
   const { data, error } = await supabase
     .from('player_game_stats')
     .select('player_id, team_id, minutes, points, rebounds, assists, steals, blocks, turnovers, field_goals_made, field_goals_attempted, three_pointers_made, three_pointers_attempted, free_throws_made, free_throws_attempted, players(first_name, last_name, slug)')

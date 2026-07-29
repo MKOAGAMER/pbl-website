@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowUpRight, ChevronRight, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { SiteData } from '@/lib/league-types';
@@ -21,14 +20,14 @@ export function RaceHome({ data }: { data: SiteData }) {
         <div className="race-grid absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />
         <div className="absolute -right-[15%] top-0 h-full w-[52%] bg-[linear-gradient(115deg,transparent_25%,var(--orange)_25%,var(--orange)_30%,transparent_30%)] opacity-10" />
         <div className="site-shell relative grid min-h-[calc(100vh-4.5rem)] gap-10 py-16 lg:grid-cols-[1.08fr_.92fr] lg:items-center lg:py-24">
-          <motion.div initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65, ease: [0.2, .8, .2, 1] }}>
+          <div className="hero-enter">
             <p className="race-eyebrow">{t('kicker')}</p>
             <h1 className="race-display mt-7 max-w-4xl text-[clamp(4.25rem,10vw,9.5rem)]"><span className="block">{t('titleLead')}</span><span className="block text-[var(--orange)]">{t('titleAccent')}</span></h1>
             <p className="mt-8 max-w-xl text-base leading-7 text-[var(--ink-soft)] sm:text-lg">{t('body')}</p>
             <div className="mt-9 flex flex-wrap gap-3"><Link href={leagueIsEmpty ? '/login' : '/games'} className="inline-flex h-12 items-center gap-2 bg-[var(--orange)] px-6 text-xs font-black uppercase italic tracking-[.12em] text-black transition hover:translate-x-1">{leagueIsEmpty ? 'Join as a Player' : t('watchLive')} <ChevronRight className="h-4 w-4" /></Link><Link href="/players" className="inline-flex h-12 items-center gap-2 border border-[var(--line-strong)] bg-black/20 px-6 text-xs font-black uppercase italic tracking-[.12em] transition hover:border-[var(--orange)]">View Players</Link></div>
             <div className="mt-14 grid max-w-xl grid-cols-3 divide-x divide-[var(--line)] border-y border-[var(--line)]"><Telemetry label="TEAMS" value={data.teams.length} /><Telemetry label="PLAYERS" value={data.players.length} /><Telemetry label="GAMES" value={data.games.length} /></div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .7, delay: .1 }}><LiveScoreboard games={data.games} teams={data.teams} /></motion.div>
+          </div>
+          <div className="hero-enter hero-enter-delayed"><LiveScoreboard games={data.games} teams={data.teams} /></div>
         </div>
       </section>
 

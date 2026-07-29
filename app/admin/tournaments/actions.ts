@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdminPermission } from '@/lib/admin-auth';
@@ -13,7 +13,7 @@ const optionalPositiveInt = z.union([z.literal(''), z.coerce.number().int().posi
 const optionalScore = z.union([z.literal(''), z.coerce.number().int().min(0)]);
 
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
-function refreshTournaments() { revalidatePath('/tournaments'); revalidatePath('/admin/tournaments'); revalidatePath('/sitemap.xml'); }
+function refreshTournaments() { updateTag('pbal-tournaments'); revalidatePath('/tournaments'); revalidatePath('/admin/tournaments'); revalidatePath('/sitemap.xml'); }
 function ictDateTimeToIso(value: string) { return new Date(`${value}${value.length === 16 ? ':00' : ''}+07:00`).toISOString(); }
 
 export async function saveTournament(formData: FormData) {

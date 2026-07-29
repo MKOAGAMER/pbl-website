@@ -1,4 +1,4 @@
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getApiAdminContext } from '@/lib/admin-auth';
@@ -46,6 +46,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (error || !data) return NextResponse.json({ error: error?.message || 'คำขอนี้ถูกตรวจสอบไปแล้ว' }, { status: 409 });
   }
 
+  revalidateTag('pbal-site-data', { expire: 0 });
   revalidatePath('/trades');
   revalidatePath('/players');
   revalidatePath('/teams');

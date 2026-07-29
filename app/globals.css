@@ -184,6 +184,24 @@ a {
   background: linear-gradient(90deg, var(--orange), transparent 80%);
 }
 
+.hero-enter {
+  animation: hero-enter 620ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.hero-enter-delayed {
+  animation-delay: 90ms;
+}
+
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 620px;
+}
+
 .scroll-reveal {
   animation: race-reveal 700ms cubic-bezier(.2,.8,.2,1) both;
   animation-timeline: view();
@@ -286,6 +304,44 @@ a {
 .admin-record[open] > summary {
   border-bottom: 1px solid var(--line);
   padding-bottom: 0.8rem;
+}
+
+.admin-workspace-section {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: var(--page);
+}
+
+.admin-workspace-section > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1.25rem;
+  transition: background-color 160ms ease;
+}
+
+.admin-workspace-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-workspace-section > summary:hover {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.admin-workspace-section[open] > summary {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.admin-workspace-section-body {
+  padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .admin-workspace-section > summary,
+  .admin-workspace-section-body {
+    padding: 1.5rem;
+  }
 }
 
 .text-balance {

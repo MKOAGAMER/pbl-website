@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, UserRoundCog } from 'lucide-react';
+import { Check, Search, UserRoundCog } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { ImageUploadField } from '../ImageUploadField';
 import { SubmitButton } from '../SubmitButton';
@@ -54,22 +54,91 @@ export function PlayerProfileManager() {
       {message && <p role="status" className="mt-4 text-sm text-[var(--ink-faint)]">{message}</p>}
     </section>
 
-    {players.map((player) => {
-      const positions = player.positions?.length ? player.positions : [player.position || 'UTIL'];
-      return <section key={player.id} className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
-        <div className="mb-6 border-b border-[var(--line)] pb-5"><p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--orange-soft)]">@{player.roblox_username || 'unknown'}</p><h2 className="mt-2 text-2xl font-black">{player.name}</h2></div>
-        <form action={updatePlayerProfile} className="grid gap-5 md:grid-cols-2">
-          <input type="hidden" name="player_id" value={player.id} /><input type="hidden" name="roblox_username" value={player.roblox_username ?? ''} />
-          <Field label="Display name"><input name="display_name" defaultValue={player.name} required className="admin-input" /></Field>
-          <label className="flex items-center gap-2 self-end pb-3 text-sm font-bold text-[var(--ink-soft)]"><input type="checkbox" name="is_active" defaultChecked={player.is_active} /> Publish player</label>
-          <fieldset className="md:col-span-2"><legend className="mb-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Positions — เลือกได้สูงสุด 3 ตำแหน่ง ลำดับแรกเป็นตำแหน่งหลัก</legend><div className="grid grid-cols-4 gap-2 sm:grid-cols-8">{positionOptions.map((position) => <label key={position} className="flex items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--page)] px-3 py-3 text-xs font-black"><input type="checkbox" name="positions" value={position} defaultChecked={positions.includes(position)} /> {position}</label>)}</div></fieldset>
-          <Field label="About / Biography" wide><textarea name="bio" defaultValue={player.bio ?? ''} rows={7} maxLength={1500} className="admin-input py-3" /></Field>
-          <ImageUploadField name="avatar_url" label="Player profile image" bucket="player-photos" initialValue={player.avatar_url} help="เลือกไฟล์จากเครื่อง หรือกด Sync Roblox image" />
-          <div className="flex flex-wrap gap-3 md:col-span-2"><SubmitButton>Save player profile</SubmitButton><button type="submit" formAction={syncPlayerAvatar} className="min-h-11 rounded-xl border border-[var(--line)] px-5 text-xs font-black uppercase tracking-[0.08em]">Sync Roblox image</button></div>
-        </form>
-      </section>;
-    })}
+    {players.map((player) => <PlayerProfileCard key={player.id} player={player} />)}
   </div>;
+}
+
+function PlayerProfileCard({ player }: { player: PlayerResult }) {
+  const initialPositions = player.positions?.length ? player.positions : [player.position || 'UTIL'];
+  const [selectedPositions, setSelectedPositions] = useState(initialPositions.slice(0, 3));
+
+  function togglePosition(position: string) {
+    setSelectedPositions((current) => {
+      if (current.includes(position)) {
+        return current.length === 1 ? current : current.filter((item) => item !== position);
+      }
+      return current.length < 3 ? [...current, position] : current;
+    });
+  }
+
+  return (
+    <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
+      <div className="mb-7 flex flex-col gap-3 border-b border-[var(--line)] pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--orange-soft)]">@{player.roblox_username || 'unknown'}</p>
+          <h2 className="mt-2 text-2xl font-black">{player.name}</h2>
+        </div>
+        <p className="text-xs text-[var(--ink-faint)]">แก้เฉพาะโปรไฟล์ที่ค้นหา · ไม่โหลดรายชื่อทั้งหมด</p>
+      </div>
+
+      <form action={updatePlayerProfile} className="grid gap-7 md:grid-cols-2">
+        <input type="hidden" name="player_id" value={player.id} />
+        <input type="hidden" name="roblox_username" value={player.roblox_username ?? ''} />
+        {selectedPositions.map((position) => <input key={position} type="hidden" name="positions" value={position} />)}
+
+        <Field label="Display name">
+          <input name="display_name" defaultValue={player.name} required className="admin-input" />
+        </Field>
+        <label className="flex min-h-11 items-center gap-3 self-end rounded-xl border border-[var(--line)] bg-[var(--page)] px-4 text-sm font-bold text-[var(--ink-soft)]">
+          <input type="checkbox" name="is_active" defaultChecked={player.is_active} /> Publish player
+        </label>
+
+        <fieldset className="rounded-2xl border border-[var(--line)] bg-[var(--page)] p-4 md:col-span-2 sm:p-5">
+          <legend className="px-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Playing positions</legend>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {selectedPositions.map((position, index) => (
+              <span key={position} className={`rounded-full px-3 py-1.5 text-[0.68rem] font-black uppercase ${index === 0 ? 'bg-[var(--orange)] text-black' : 'bg-[var(--surface-soft)] text-[var(--ink-soft)]'}`}>
+                {index === 0 ? 'Primary' : `Option ${index + 1}`} · {position}
+              </span>
+            ))}
+            <span className="ml-auto text-xs text-[var(--ink-faint)]">{selectedPositions.length}/3 selected</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+            {positionOptions.map((position) => {
+              const selected = selectedPositions.includes(position);
+              const disabled = !selected && selectedPositions.length >= 3;
+              return (
+                <button
+                  key={position}
+                  type="button"
+                  disabled={disabled}
+                  aria-pressed={selected}
+                  onClick={() => togglePosition(position)}
+                  className={`flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-black transition ${
+                    selected
+                      ? 'border-[var(--orange)] bg-[var(--orange)]/10 text-[var(--orange-soft)]'
+                      : 'border-[var(--line)] bg-[var(--surface)] text-[var(--ink-soft)] hover:border-[var(--line-strong)] disabled:cursor-not-allowed disabled:opacity-35'
+                  }`}
+                >
+                  {selected && <Check className="h-3.5 w-3.5" />} {position}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs leading-5 text-[var(--ink-faint)]">ตำแหน่งแรกที่เลือกเป็นตำแหน่งหลัก หากต้องการเปลี่ยนให้ยกเลิกแล้วเลือกใหม่ตามลำดับ</p>
+        </fieldset>
+
+        <Field label="About / Biography" wide>
+          <textarea name="bio" defaultValue={player.bio ?? ''} rows={7} maxLength={1500} className="admin-input py-3" />
+        </Field>
+        <ImageUploadField name="avatar_url" label="Player profile image" bucket="player-photos" initialValue={player.avatar_url} help="เลือกไฟล์จากเครื่อง หรือกด Sync Roblox image" />
+        <div className="flex flex-wrap gap-3 border-t border-[var(--line)] pt-6 md:col-span-2">
+          <SubmitButton>Save player profile</SubmitButton>
+          <button type="submit" formAction={syncPlayerAvatar} className="min-h-11 rounded-xl border border-[var(--line)] px-5 text-xs font-black uppercase tracking-[0.08em] transition hover:border-[var(--orange)]">Sync Roblox image</button>
+        </div>
+      </form>
+    </section>
+  );
 }
 
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) { return <label className={wide ? 'md:col-span-2' : ''}><span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">{label}</span>{children}</label>; }

@@ -4,7 +4,6 @@ import './globals.css';
 import { Providers } from './providers';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { getSiteData, isSiteDataHealthy } from '@/lib/league-data';
 import { getSiteUrl } from '@/lib/site-url';
 import { getSiteConfig } from '@/lib/site-config';
 import type { CSSProperties } from 'react';
@@ -23,7 +22,7 @@ const siteUrl = getSiteUrl();
 // Admin mutations also call revalidatePath for immediate updates.
 export const revalidate = 60;
 
-const baseMetadata: Metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: 'PBAL — Practical Basketball Asia League',
@@ -48,19 +47,8 @@ const baseMetadata: Metadata = {
   },
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const data = await getSiteData();
-
-  return {
-    ...baseMetadata,
-    robots: isSiteDataHealthy(data)
-      ? undefined
-      : { index: false, follow: false, nocache: true },
-  };
-}
-
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [data, siteConfig, locale, messages] = await Promise.all([getSiteData(), getSiteConfig(), getLocale(), getMessages()]);
+  const [siteConfig, locale, messages] = await Promise.all([getSiteConfig(), getLocale(), getMessages()]);
   const themeStyle = {
     '--orange': siteConfig.theme.primary,
     '--orange-soft': siteConfig.theme.primary,
@@ -84,11 +72,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Providers siteConfig={siteConfig}>
           <Navbar />
           <StaffControlStrip />
-          {data.source === 'unavailable' && (
-            <div className="border-b border-red-400/20 bg-red-400/10 px-4 py-2.5 text-center text-xs font-bold text-red-100" role="status">
-              League data is temporarily unavailable. This site is showing an empty state, never placeholder results.
-            </div>
-          )}
           <main id="main-content" className="min-h-[70vh]">
             {children}
           </main>

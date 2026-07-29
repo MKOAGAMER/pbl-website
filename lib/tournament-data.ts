@@ -1,17 +1,17 @@
+import 'server-only';
+
 import { cache } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 import type { Tournament, TournamentMatch, TournamentTeam } from './tournament-types';
+import { createAdminClient } from './supabase-admin';
 
 type Row = Record<string, unknown>;
 const stringOrNull = (value: unknown) => typeof value === 'string' && value ? value : null;
 const numberOrNull = (value: unknown) => typeof value === 'number' ? value : null;
 
-export const getPublicTournaments = cache(async (): Promise<Tournament[]> => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
-
-  const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+async function loadPublicTournaments(): Promise<Tournament[]> {
+  const supabase = createAdminClient();
+  if (!supabase) return [];
   const [tournamentResult, teamResult, matchResult] = await Promise.all([
     supabase.from('tournaments').select('*').eq('is_public', true).order('starts_at', { ascending: false }),
     supabase.from('tournament_teams').select('*').order('seed', { ascending: true }),
@@ -38,4 +38,11 @@ export const getPublicTournaments = cache(async (): Promise<Tournament[]> => {
       awayScore: numberOrNull(item.away_score), winnerTeamId: stringOrNull(item.winner_team_id), streamUrl: stringOrNull(item.stream_url), notes: stringOrNull(item.notes),
     })),
   }));
+}
+
+const getCachedPublicTournaments = unstable_cache(loadPublicTournaments, ['pbal-public-tournaments-v1'], {
+  tags: ['pbal-tournaments'],
+  revalidate: 60,
 });
+
+export const getPublicTournaments = cache(getCachedPublicTournaments);

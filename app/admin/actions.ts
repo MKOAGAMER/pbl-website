@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { requireAdminPermission } from '@/lib/admin-auth';
@@ -74,6 +74,7 @@ export async function updateSiteConfig(formData: FormData) {
     redirect('/admin?error=config-save');
   }
 
+  updateTag('pbal-site-config');
   revalidatePath('/', 'layout');
   redirect('/admin?saved=config');
 }
@@ -138,6 +139,7 @@ export async function updateRobloxUserAccess(formData: FormData) {
     redirect('/admin?error=access-save');
   }
 
+  updateTag('pbal-site-data');
   revalidatePath('/admin');
   revalidatePath('/players');
   redirect('/admin?saved=access');

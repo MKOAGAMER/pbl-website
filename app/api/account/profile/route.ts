@@ -1,4 +1,4 @@
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/lib/session';
@@ -20,6 +20,7 @@ export async function PATCH(request: Request) {
   const { error } = await supabase.from('players').update({ bio: parsed.data.bio || null, updated_at: new Date().toISOString() }).eq('id', player.id);
   if (error) return NextResponse.json({ error: 'บันทึก About ไม่สำเร็จ' }, { status: 500 });
 
+  revalidateTag('pbal-site-data', { expire: 0 });
   revalidatePath('/account');
   revalidatePath('/players');
   revalidatePath(`/players/${player.slug}`);
