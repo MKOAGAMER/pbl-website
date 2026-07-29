@@ -5,7 +5,11 @@ import { createHash, randomBytes } from 'node:crypto';
 const ROBLOX_AUTHORIZE_URL = 'https://apis.roblox.com/oauth/v1/authorize';
 const ROBLOX_TOKEN_URL = 'https://apis.roblox.com/oauth/v1/token';
 const ROBLOX_USERINFO_URL = 'https://apis.roblox.com/oauth/v1/userinfo';
-export const MKOA_COMMUNITY_ID = 9515965;
+// Keep the legacy export for callers/UI, but allow production to configure the
+// actual PBAL Roblox group without a code change.
+export const MKOA_COMMUNITY_ID = Number(process.env.ROBLOX_GROUP_ID || process.env.MKOA_COMMUNITY_ID || 9515965);
+
+export type MkoaGroupPermission = 'member' | 'admin' | 'group_holder';
 
 export type RobloxUserInfo = {
   sub: string;
@@ -107,7 +111,7 @@ export async function getRobloxUserInfo(accessToken: string) {
   return (await response.json()) as RobloxUserInfo;
 }
 
-export async function isMkoaGroupMember(robloxId: string) {
+export async function getMkoaGroupPermission(robloxId: string): Promise<MkoaGroupPermission | null> {
   let cursor = '';
   for (let page = 0; page < 10; page += 1) {
     const url = new URL(
@@ -120,16 +124,26 @@ export async function isMkoaGroupMember(robloxId: string) {
       cache: 'no-store',
       signal: AbortSignal.timeout(8000),
     });
-    if (!response.ok) return false;
+    if (!response.ok) return null;
     const payload = (await response.json()) as {
-      data?: Array<{ group?: { id?: number | string } }>;
+      data?: Array<{ group?: { id?: number | string }; role?: { name?: string } }>;
       nextPageCursor?: string | null;
     };
-    if (payload.data?.some((membership) => Number(membership.group?.id) === MKOA_COMMUNITY_ID)) {
-      return true;
+    const membership = payload.data?.find(
+      (item) => Number(item.group?.id) === MKOA_COMMUNITY_ID,
+    );
+    if (membership) {
+      const roleName = membership.role?.name?.trim().toLowerCase().replace(/\s+/g, ' ');
+      if (roleName === 'pbal | group holder') return 'group_holder';
+      if (roleName === 'pbal | admin') return 'admin';
+      return 'member';
     }
-    if (!payload.nextPageCursor) return false;
+    if (!payload.nextPageCursor) return null;
     cursor = payload.nextPageCursor;
   }
-  return false;
+  return null;
+}
+
+export async function isMkoaGroupMember(robloxId: string) {
+  return Boolean(await getMkoaGroupPermission(robloxId));
 }

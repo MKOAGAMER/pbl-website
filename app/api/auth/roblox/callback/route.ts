@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase-admin';
 import {
   exchangeRobloxCode,
   getRobloxUserInfo,
-  isMkoaGroupMember,
+  getMkoaGroupPermission,
 } from '@/lib/roblox-auth';
 import {
   generateSessionToken,
@@ -60,7 +60,8 @@ export async function GET(request: Request) {
       return failed(url.origin, 'invalid-profile');
     }
 
-    const groupMember = await isMkoaGroupMember(roblox.sub);
+    const groupPermission = await getMkoaGroupPermission(roblox.sub);
+    const groupMember = Boolean(groupPermission);
     const { data: existing } = await supabase
       .from('users')
       .select('role, admin_permission')
@@ -68,12 +69,23 @@ export async function GET(request: Request) {
       .maybeSingle<{ role: UserRole; admin_permission: AdminPermission | null }>();
 
     const privileged = existing?.role === 'staff' || existing?.role === 'admin';
+    // Existing manual grants remain authoritative; otherwise map MKOA ranks.
     const role: UserRole = privileged
       ? existing.role
-      : groupMember
-        ? 'player'
-        : 'guest';
-    const adminPermission = privileged ? existing.admin_permission : null;
+      : groupPermission === 'group_holder' || groupPermission === 'admin'
+        ? 'admin'
+        : groupPermission === 'member'
+          ? 'player'
+          : 'guest';
+    // Both PBAL leadership ranks are full web administrators. Group rank is
+    // authoritative for these ranks so an earlier login cannot leave Admin
+    // without the Staff controls.
+    const adminPermission: AdminPermission | null =
+      groupPermission === 'group_holder' || groupPermission === 'admin'
+        ? 'super_admin'
+        : privileged
+          ? existing.admin_permission
+          : null;
 
     const { data: user, error: userError } = await supabase
       .from('users')
@@ -117,4 +129,3 @@ export async function GET(request: Request) {
     return failed(url.origin, 'oauth-callback');
   }
 }
-
