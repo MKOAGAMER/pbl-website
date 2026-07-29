@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Player, Team } from '@/lib/league-types';
-import { initials } from '@/lib/utils';
 import { TeamLogo } from './TeamLogo';
+import { PlayerAvatar } from './PlayerAvatar';
 
 interface StatLeaderCardProps {
   player: Player;
@@ -14,8 +14,9 @@ interface StatLeaderCardProps {
 export function StatLeaderCard({ player, team, rank, label, value }: StatLeaderCardProps) {
   return (
     <Link href={`/players/${player.slug}`} className="lift grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3.5">
-      <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--surface-soft)] text-xs font-black text-[var(--ink-soft)]">
-        {rank === 1 ? initials(player.displayName) : `#${rank}`}
+      <span className="relative">
+        <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" className="!h-10 !w-10" primaryColor={team.primaryColor} secondaryColor={team.secondaryColor} />
+        <span className="absolute -bottom-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--surface-raised)] px-1 text-[0.5rem] font-black">{rank}</span>
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-black">{player.displayName}</span>
@@ -31,4 +32,3 @@ export function StatLeaderCard({ player, team, rank, label, value }: StatLeaderC
     </Link>
   );
 }
-

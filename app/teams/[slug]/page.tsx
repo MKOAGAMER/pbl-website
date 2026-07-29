@@ -16,8 +16,9 @@ import { GameCard } from '@/app/components/ui/GameCard';
 import { SectionHeading } from '@/app/components/ui/SectionHeading';
 import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { getSiteData, getTeamBySlug } from '@/lib/league-data';
-import { initials, winPercentage } from '@/lib/utils';
+import { winPercentage } from '@/lib/utils';
 import { getTeamSeasonHistory } from '@/lib/league-history';
 import { TeamSeasonHistoryTable } from '@/app/components/ui/SeasonHistory';
 
@@ -151,12 +152,7 @@ export default async function TeamDetailPage({ params }: Props) {
                 >
                   <span className="number-tabular text-lg font-black text-[var(--ink-faint)]">#{player.jerseyNumber}</span>
                   <span className="flex min-w-0 items-center gap-3">
-                    <span
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xs font-black text-white"
-                      style={{ background: `linear-gradient(145deg, ${team.primaryColor}, ${team.secondaryColor})` }}
-                    >
-                      {initials(player.displayName)}
-                    </span>
+                    <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" className="!h-10 !w-10" primaryColor={team.primaryColor} secondaryColor={team.secondaryColor} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-black transition group-hover:text-[var(--orange-soft)]">{player.displayName}</span>
                       <span className="mt-0.5 block truncate text-xs text-[var(--ink-faint)]">@{player.robloxUsername}</span>

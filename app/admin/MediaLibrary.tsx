@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Trash2 } from 'lucide-react';
+import { Check, Copy, ImagePlus, Trash2 } from 'lucide-react';
 
 export type MediaAsset = {
   id: string;
@@ -19,6 +19,7 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState('');
 
   async function upload(file: File) {
     setBusy(true);
@@ -44,6 +45,12 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
     router.refresh();
   }
 
+  async function copyUrl(id: string, url: string) {
+    await navigator.clipboard.writeText(url);
+    setCopied(id);
+    window.setTimeout(() => setCopied(''), 1500);
+  }
+
   return (
     <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5">
       <div className="flex items-start gap-3">
@@ -60,6 +67,7 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
           <figure key={asset.id} className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--page)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={asset.secure_url} alt={asset.original_filename ?? 'PBAL media'} className="aspect-square w-full object-cover" loading="lazy" />
+            <button type="button" onClick={() => void copyUrl(asset.id, asset.secure_url)} aria-label={`Copy URL for ${asset.original_filename ?? 'image'}`} className="absolute left-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-black/75 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100">{copied === asset.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
             <button type="button" disabled={busy} onClick={() => void remove(asset.id)} aria-label={`Delete ${asset.original_filename ?? 'image'}`} className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-black/75 text-red-200 opacity-0 transition group-hover:opacity-100 focus:opacity-100"><Trash2 className="h-4 w-4" /></button>
           </figure>
         ))}
@@ -68,4 +76,3 @@ export function MediaLibrary({ assets }: { assets: MediaAsset[] }) {
     </section>
   );
 }
-

@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Link2, Palette, Plus, Settings2, Trash2, Users } from 'lucide-react';
-import type { LinkConfigItem, SiteConfig, StaffConfigItem } from '@/lib/pbal-types';
+import { Palette, Settings2 } from 'lucide-react';
+import type { SiteConfig } from '@/lib/pbal-types';
 import { updateSiteConfig } from './actions';
 import { SubmitButton } from './SubmitButton';
 
 export function ConfigEditor({ config }: { config: SiteConfig }) {
-  const [staff, setStaff] = useState<StaffConfigItem[]>(config.staff);
-  const [links, setLinks] = useState<LinkConfigItem[]>(config.links);
   const [addonsText, setAddonsText] = useState(JSON.stringify(config.addons, null, 2));
   const [addonsError, setAddonsError] = useState('');
 
@@ -37,8 +35,8 @@ export function ConfigEditor({ config }: { config: SiteConfig }) {
       }}
       className="space-y-7"
     >
-      <input type="hidden" name="staff_json" value={JSON.stringify(staff)} />
-      <input type="hidden" name="links_json" value={JSON.stringify(links)} />
+      <input type="hidden" name="staff_json" value={JSON.stringify(config.staff)} />
+      <input type="hidden" name="links_json" value={JSON.stringify(config.links)} />
       <input type="hidden" name="addons_json" value={JSON.stringify(config.addons)} />
 
       <Panel icon={Palette} title="Theme" description="These colors become global CSS variables on every open page.">
@@ -55,36 +53,6 @@ export function ConfigEditor({ config }: { config: SiteConfig }) {
           <ColorField name="theme_background" label="Background" value={config.theme.background} />
           <ColorField name="theme_surface" label="Surface" value={config.theme.surface} />
           <ColorField name="theme_foreground" label="Foreground" value={config.theme.foreground} />
-        </div>
-      </Panel>
-
-      <Panel icon={Users} title="Staff list" description="Public staff data managed independently from login permissions.">
-        <div className="space-y-3">
-          {staff.map((item, index) => (
-            <div key={index} className="grid gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3 md:grid-cols-2">
-              <input aria-label="Staff name" placeholder="Name" value={item.name} onChange={(e) => setStaffValue(setStaff, index, 'name', e.target.value)} className="admin-input" />
-              <input aria-label="Staff title" placeholder="Role / title" value={item.title} onChange={(e) => setStaffValue(setStaff, index, 'title', e.target.value)} className="admin-input" />
-              <input aria-label="Roblox username" placeholder="Roblox username" value={item.robloxUsername ?? ''} onChange={(e) => setStaffValue(setStaff, index, 'robloxUsername', e.target.value)} className="admin-input" />
-              <div className="flex gap-2">
-                <input aria-label="Staff avatar URL" type="url" placeholder="Avatar URL" value={item.avatarUrl ?? ''} onChange={(e) => setStaffValue(setStaff, index, 'avatarUrl', e.target.value)} className="admin-input" />
-                <RemoveButton onClick={() => setStaff((items) => items.filter((_, itemIndex) => itemIndex !== index))} label="Remove staff member" />
-              </div>
-            </div>
-          ))}
-          <AddButton onClick={() => setStaff((items) => [...items, { name: '', title: '' }])}>Add staff member</AddButton>
-        </div>
-      </Panel>
-
-      <Panel icon={Link2} title="Links" description="Community, Discord, Roblox and broadcast destinations.">
-        <div className="space-y-3">
-          {links.map((item, index) => (
-            <div key={index} className="flex gap-2 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3">
-              <input aria-label="Link label" placeholder="Label" value={item.label} onChange={(e) => setLinkValue(setLinks, index, 'label', e.target.value)} className="admin-input max-w-48" />
-              <input aria-label="Link URL" type="url" placeholder="https://..." value={item.url} onChange={(e) => setLinkValue(setLinks, index, 'url', e.target.value)} className="admin-input" />
-              <RemoveButton onClick={() => setLinks((items) => items.filter((_, itemIndex) => itemIndex !== index))} label="Remove link" />
-            </div>
-          ))}
-          <AddButton onClick={() => setLinks((items) => [...items, { label: '', url: '' }])}>Add link</AddButton>
         </div>
       </Panel>
 
@@ -131,21 +99,5 @@ function ColorField({ name, label, value }: { name: string; label: string; value
       </span>
     </Field>
   );
-}
-
-function AddButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" onClick={onClick} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-xs font-black"><Plus className="h-4 w-4" />{children}</button>;
-}
-
-function RemoveButton({ onClick, label }: { onClick: () => void; label: string }) {
-  return <button type="button" onClick={onClick} aria-label={label} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-red-400/20 text-red-300"><Trash2 className="h-4 w-4" /></button>;
-}
-
-function setStaffValue(setter: React.Dispatch<React.SetStateAction<StaffConfigItem[]>>, index: number, key: keyof StaffConfigItem, value: string) {
-  setter((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value || undefined } : item));
-}
-
-function setLinkValue(setter: React.Dispatch<React.SetStateAction<LinkConfigItem[]>>, index: number, key: keyof LinkConfigItem, value: string) {
-  setter((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item));
 }
 

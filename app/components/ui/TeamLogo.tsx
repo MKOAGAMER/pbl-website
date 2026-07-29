@@ -1,5 +1,6 @@
 import type { Team } from '@/lib/league-types';
 import { cn } from '@/lib/utils';
+import { Shield } from 'lucide-react';
 
 interface TeamLogoProps {
   team: Team;
@@ -43,7 +44,7 @@ export function TeamLogo({ team, size = 'md', className }: TeamLogoProps) {
       )}
       <span className="absolute -right-3 -top-4 h-10 w-10 rounded-full border border-white/25" />
       <span className="absolute -bottom-5 -left-4 h-12 w-12 rounded-full bg-black/15" />
-      {!team.logoUrl && <span className="relative">{team.abbreviation}</span>}
+      {!team.logoUrl && <Shield className="relative h-1/2 w-1/2" aria-hidden="true" />}
     </span>
   );
 }

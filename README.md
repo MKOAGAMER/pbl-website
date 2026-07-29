@@ -30,9 +30,10 @@ npm run dev
 3. `supabase/migrations/202607290002_live_scoreboard.sql`
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
 5. `supabase/migrations/202607290004_player_identity_discord.sql`
-6. `supabase/storage.sql` สำหรับ public asset buckets เดิม
+6. `supabase/migrations/202607290005_staff_control.sql`
+7. `supabase/storage.sql` สำหรับ public asset buckets เดิม
 
-Migration ล่าสุดสร้าง workflow อนุมัติ trade, ตาราง audit `stat_imports`, private bucket `stat-screenshots` และ RPC สำหรับยืนยันสถิติเป็น transaction
+Migration ล่าสุดย้าย staff/links เดิมเข้าสู่ Content Studio และ backfill รูป Roblox ให้ player profile ที่มีอยู่แล้ว
 
 ## ตรวจคุณภาพ
 

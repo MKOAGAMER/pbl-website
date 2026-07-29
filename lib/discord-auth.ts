@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { getSiteUrl } from './site-url';
+
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
 const DISCORD_TOKEN_URL = 'https://discord.com/api/v10/oauth2/token';
 const DISCORD_ME_URL = 'https://discord.com/api/v10/users/@me';
@@ -30,8 +32,15 @@ export function isDiscordAuthConfigured() {
 }
 
 export function getDiscordRedirectUri(origin: string) {
-  return process.env.DISCORD_REDIRECT_URI?.trim()
-    || `${origin.replace(/\/+$/, '')}/api/auth/discord/callback`;
+  const configured = process.env.DISCORD_REDIRECT_URI?.trim();
+  if (configured) return configured;
+
+  const requestOrigin = origin.replace(/\/+$/, '');
+  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin);
+  const baseUrl = process.env.NODE_ENV !== 'production' && isLocal
+    ? requestOrigin
+    : getSiteUrl();
+  return `${baseUrl.replace(/\/+$/, '')}/api/auth/discord/callback`;
 }
 
 export function buildDiscordAuthorizeUrl(origin: string, state: string) {

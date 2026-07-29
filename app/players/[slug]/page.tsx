@@ -18,9 +18,9 @@ import { GameCard } from '@/app/components/ui/GameCard';
 import { SectionHeading } from '@/app/components/ui/SectionHeading';
 import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { getPlayerBySlug, getSiteData } from '@/lib/league-data';
 import type { PlayerStats } from '@/lib/league-types';
-import { initials } from '@/lib/utils';
 import { getPlayerSeasonHistory } from '@/lib/league-history';
 import { PlayerSeasonHistoryTable } from '@/app/components/ui/SeasonHistory';
 
@@ -108,15 +108,7 @@ export default async function PlayerDetailPage({ params }: Props) {
 
           <div className="mt-9 grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-center">
             <div className="relative w-fit">
-              <span
-                className="relative grid h-28 w-28 place-items-center overflow-hidden rounded-[2rem] border border-white/20 text-3xl font-black text-white shadow-2xl sm:h-36 sm:w-36 sm:rounded-[2.35rem] sm:text-4xl"
-                style={{ background: `linear-gradient(145deg, ${primaryColor}, ${secondaryColor})` }}
-              >
-                {player.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={player.avatarUrl} alt={player.displayName} referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
-                ) : initials(player.displayName)}
-              </span>
+              <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="xl" primaryColor={primaryColor} secondaryColor={secondaryColor} className="shadow-2xl" />
               <span className="number-tabular absolute -bottom-2 -right-2 grid h-11 min-w-11 place-items-center rounded-xl border-4 border-[var(--page)] bg-[var(--surface-raised)] px-2 text-sm font-black">
                 #{player.jerseyNumber}
               </span>
@@ -255,12 +247,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                 {teammates.map((teammate) => (
                   <Link key={teammate.id} href={`/players/${teammate.slug}`} className="lift group rounded-[1.3rem] border border-[var(--line)] bg-[var(--surface)] p-4">
                     <span className="flex items-center gap-3">
-                      <span
-                        className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xs font-black text-white"
-                        style={{ background: `linear-gradient(145deg, ${team.primaryColor}, ${team.secondaryColor})` }}
-                      >
-                        {initials(teammate.displayName)}
-                      </span>
+                      <PlayerAvatar src={teammate.avatarUrl} name={teammate.displayName} size="sm" className="!h-11 !w-11" primaryColor={team.primaryColor} secondaryColor={team.secondaryColor} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-black transition group-hover:text-[var(--orange-soft)]">{teammate.displayName}</span>
                         <span className="mt-1 block text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--ink-faint)]">#{teammate.jerseyNumber} - {teammate.position}</span>

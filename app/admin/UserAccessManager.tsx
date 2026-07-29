@@ -4,6 +4,7 @@ import { Search, ShieldCheck, UserCog, Verified } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { updateRobloxUserAccess } from './actions';
 import { SubmitButton } from './SubmitButton';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 
 type SearchUser = {
   id: string;
@@ -63,10 +64,7 @@ export function UserAccessManager() {
           <form key={user.id} action={updateRobloxUserAccess} className="grid items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3 lg:grid-cols-[1fr_10rem_12rem_auto]">
             <input type="hidden" name="roblox_username" value={user.username} />
             <div className="flex min-w-0 items-center gap-3">
-              {user.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-xl object-cover" />
-              ) : <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--surface-soft)] font-black">{user.username[0]}</span>}
+              <PlayerAvatar src={user.avatarUrl} name={user.username} size="sm" className="!h-11 !w-11" />
               <div className="min-w-0"><p className="flex items-center gap-1.5 truncate text-sm font-black">{user.username}{user.verified && <Verified className="h-3.5 w-3.5 text-sky-300" />}</p><p className="mt-0.5 truncate text-xs text-[var(--ink-faint)]">{user.displayName} · {user.registered ? 'PBAL account' : 'Not registered yet'}</p></div>
             </div>
             <select name="role" defaultValue={user.role} className="admin-input" aria-label={`Role for ${user.username}`}>

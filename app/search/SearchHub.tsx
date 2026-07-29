@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Player, Team } from '@/lib/league-types';
 import { TeamLogo } from '../components/ui/TeamLogo';
+import { PlayerAvatar } from '../components/ui/PlayerAvatar';
 
 export function SearchHub({ players, teams }: { players: Player[]; teams: Team[] }) {
   const t = useTranslations('Search');
@@ -32,7 +33,7 @@ export function SearchHub({ players, teams }: { players: Player[]; teams: Team[]
         <Results title={t('players')} icon={UserRound}>
           {results.players.map((player) => {
             const team = teams.find((item) => item.id === player.teamId);
-            return <Link key={player.id} href={`/players/${player.slug}`} className="flex items-center gap-3 border-b border-[var(--line)] p-3 last:border-0 hover:bg-white/[.03]"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--surface-soft)] font-black">{player.displayName.slice(0, 1)}</span><span className="min-w-0"><span className="block truncate font-black uppercase italic">{player.displayName}</span><span className="text-xs text-[var(--ink-faint)]">@{player.robloxUsername} · {team?.abbreviation}</span></span></Link>;
+            return <Link key={player.id} href={`/players/${player.slug}`} className="flex items-center gap-3 border-b border-[var(--line)] p-3 last:border-0 hover:bg-white/[.03]"><PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" className="!h-10 !w-10" primaryColor={team?.primaryColor} secondaryColor={team?.secondaryColor} /><span className="min-w-0"><span className="block truncate font-black uppercase italic">{player.displayName}</span><span className="text-xs text-[var(--ink-faint)]">@{player.robloxUsername} · {team?.abbreviation}</span></span></Link>;
           })}
         </Results>
         <Results title={t('teams')} icon={Shield}>

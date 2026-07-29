@@ -13,6 +13,7 @@ import {
 } from '@/lib/session';
 import { safeInternalPath } from '@/lib/navigation';
 import type { AdminPermission, UserRole } from '@/lib/pbal-types';
+import { getRobloxUserByUsername } from '@/lib/roblox-users';
 
 export const runtime = 'nodejs';
 
@@ -60,6 +61,9 @@ export async function GET(request: Request) {
       return failed(url.origin, 'invalid-profile');
     }
 
+    const directoryProfile = await getRobloxUserByUsername(username).catch(() => null);
+    const avatarUrl = directoryProfile?.avatarUrl ?? roblox.picture ?? null;
+
     const groupPermission = await getMkoaGroupPermission(roblox.sub);
     const groupMember = Boolean(groupPermission);
     const { data: existing } = await supabase
@@ -91,7 +95,7 @@ export async function GET(request: Request) {
         {
           roblox_id: roblox.sub,
           username,
-          avatar_url: roblox.picture ?? null,
+          avatar_url: avatarUrl,
           group_member: groupMember,
           role,
           admin_permission: adminPermission,
@@ -110,7 +114,7 @@ export async function GET(request: Request) {
       user_id: user.id,
       roblox_username: username,
       roblox_user_id: roblox.sub,
-      avatar_url: roblox.picture ?? null,
+      avatar_url: avatarUrl,
       is_active: true,
     };
     const { data: playerByRobloxId } = await supabase

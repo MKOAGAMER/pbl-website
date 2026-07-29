@@ -1,6 +1,5 @@
 import { cache } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { demoSiteData } from './demo-data';
 import type {
   Accolade,
   Conference,
@@ -303,15 +302,6 @@ function mapLink(row: Row): LeagueLink {
 export const getSiteData = cache(async (): Promise<SiteData> => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const isProduction = process.env.NODE_ENV === 'production';
-  const demoExplicitlyEnabled = process.env.PBL_USE_DEMO_DATA === 'true';
-
-  // Demo data is local-development tooling only. Explicit opt-in forces the
-  // preview without contacting Supabase; production always ignores this flag.
-  if (!isProduction && demoExplicitlyEnabled) {
-    return demoSiteData;
-  }
-
   if (!url || !key) {
     console.error('[pbl-data:public-load] Supabase environment variables are missing.');
     return unavailableSiteData;
@@ -335,7 +325,6 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       accoladesResult,
       staffResult,
       linksResult,
-      siteConfigResult,
     ] = await Promise.all([
       supabase
         .from('seasons')
@@ -383,11 +372,6 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
         .select('id, label, url, kind, description, sort_order, is_active')
         .eq('is_active', true)
         .order('sort_order'),
-      supabase
-        .from('site_config')
-        .select('staff, links')
-        .eq('id', 'main')
-        .maybeSingle(),
     ]);
 
     const requiredResults = [
@@ -403,7 +387,6 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
       accoladesResult,
       staffResult,
       linksResult,
-      siteConfigResult,
     ];
     if (requiredResults.some(failed)) {
       console.error('[pbl-data:public-load] One or more required Supabase queries failed.', {
@@ -415,29 +398,8 @@ export const getSiteData = cache(async (): Promise<SiteData> => {
     const seasons = rows(seasonsResult).map(mapSeason);
     const season = seasons.find((item) => item.isCurrent) ?? seasons[0];
     const news = rows(newsResult).map(mapNews);
-    const runtimeConfig = siteConfigResult.data as
-      | { staff?: unknown; links?: unknown }
-      | null;
-    const configuredStaff = Array.isArray(runtimeConfig?.staff)
-      ? (runtimeConfig.staff as Row[]).map((item) => mapStaff({
-          display_name: item.name,
-          role: item.title,
-          roblox_username: item.robloxUsername,
-          avatar_url: item.avatarUrl,
-        }))
-      : [];
-    const configuredLinks = Array.isArray(runtimeConfig?.links)
-      ? (runtimeConfig.links as Row[]).map((item) => mapLink({
-          label: item.label,
-          url: item.url,
-        }))
-      : [];
-    const staff = Array.isArray(runtimeConfig?.staff)
-      ? configuredStaff
-      : rows(staffResult).map(mapStaff);
-    const links = Array.isArray(runtimeConfig?.links)
-      ? configuredLinks
-      : rows(linksResult).map(mapLink);
+    const staff = rows(staffResult).map(mapStaff);
+    const links = rows(linksResult).map(mapLink);
 
     if (!season) {
       const freeAgents = rows(playersResult)

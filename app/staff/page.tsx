@@ -3,7 +3,7 @@ import { BriefcaseBusiness, UserRound } from 'lucide-react';
 import { getSiteData } from '@/lib/league-data';
 import { PageIntro } from '@/app/components/ui/PageIntro';
 import { EmptyState } from '@/app/components/ui/EmptyState';
-import { initials } from '@/lib/utils';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 
 export const metadata: Metadata = {
   title: 'League Staff',
@@ -32,12 +32,7 @@ export default async function StaffPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {data.staff.filter((member) => member.department === department).map((member) => (
                     <article key={member.id} className="lift flex items-center gap-4 rounded-[1.4rem] border border-[var(--line)] bg-[var(--surface)] p-5">
-                      <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[var(--surface-soft)] text-sm font-black text-[var(--orange-soft)]">
-                        {member.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={member.avatarUrl} alt={member.name} loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
-                        ) : initials(member.name)}
-                      </span>
+                      <PlayerAvatar src={member.avatarUrl} name={member.name} size="md" className="!h-14 !w-14" />
                       <div className="min-w-0">
                         <h3 className="truncate font-black">{member.name}</h3>
                         <p className="mt-1 text-sm text-[var(--ink-soft)]">{member.role}</p>

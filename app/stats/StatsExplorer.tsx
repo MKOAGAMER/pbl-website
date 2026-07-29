@@ -15,8 +15,8 @@ import { useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import type { Player, PlayerStats, Team } from '@/lib/league-types';
-import { initials } from '@/lib/utils';
 
 type MetricKey = keyof Pick<
   PlayerStats,
@@ -248,12 +248,7 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
                   >
                     <span className={`number-tabular text-sm font-black ${index < 3 ? 'text-[var(--orange-soft)]' : 'text-[var(--ink-faint)]'}`}>#{index + 1}</span>
                     <span className="flex min-w-0 items-center gap-3">
-                      <span
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[0.62rem] font-black text-white"
-                        style={{ background: team ? `linear-gradient(145deg, ${team.primaryColor}, ${team.secondaryColor})` : 'linear-gradient(145deg, #ff6b22, #ffb067)' }}
-                      >
-                        {initials(player.displayName)}
-                      </span>
+                      <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="sm" primaryColor={team?.primaryColor} secondaryColor={team?.secondaryColor} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-black transition group-hover:text-[var(--orange-soft)]">{player.displayName}</span>
                         <span className="mt-0.5 block truncate text-[0.62rem] text-[var(--ink-faint)]">{player.position} - @{player.robloxUsername}</span>
@@ -300,12 +295,7 @@ function LeaderSpotlight({
     >
       <span className="absolute -right-6 -top-8 -z-10 text-[7rem] font-black leading-none tracking-[-0.1em] text-white/[0.025]">{rank}</span>
       <div className="flex items-start justify-between gap-4">
-        <span
-          className="grid h-14 w-14 place-items-center rounded-[1.1rem] text-sm font-black text-white"
-          style={{ background: `linear-gradient(145deg, ${primaryColor}, ${secondaryColor})` }}
-        >
-          {initials(player.displayName)}
-        </span>
+        <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="md" className="!h-14 !w-14" primaryColor={primaryColor} secondaryColor={secondaryColor} />
         <span className={`grid h-8 w-8 place-items-center rounded-full text-xs font-black ${rank === 1 ? 'bg-[var(--orange)] text-black' : 'bg-[var(--surface-soft)] text-[var(--ink-soft)]'}`}>#{rank}</span>
       </div>
       <h3 className="mt-5 truncate text-lg font-black tracking-[-0.035em] transition group-hover:text-[var(--orange-soft)]">{player.displayName}</h3>

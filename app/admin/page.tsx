@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeftRight, Bot, Cloud, Database, Gamepad2, MessageCircle, ScanLine, UsersRound } from 'lucide-react';
+import { ArrowLeftRight, Bot, Cloud, Database, Gamepad2, MessageCircle, Newspaper, ScanLine, UsersRound } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/lib/site-config';
 import { ConfigEditor } from './ConfigEditor';
@@ -8,6 +8,7 @@ import { MediaLibrary, type MediaAsset } from './MediaLibrary';
 import { UserAccessManager } from './UserAccessManager';
 import { isRobloxAuthConfigured } from '@/lib/roblox-auth';
 import { isDiscordAuthConfigured } from '@/lib/discord-auth';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,15 +45,7 @@ export default async function AdminPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3">
-          {user.avatarUrl ? (
-            // Roblox supplies this URL after a server-side OAuth exchange.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-xl object-cover" />
-          ) : (
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--surface-soft)] font-black">
-              {user.username.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+          <PlayerAvatar src={user.avatarUrl} name={user.username} size="sm" className="!h-11 !w-11" />
           <div>
             <p className="text-sm font-black">{user.username}</p>
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--orange-soft)]">
@@ -81,6 +74,11 @@ export default async function AdminPage({ searchParams }: Props) {
         <StatusCard icon={MessageCircle} label="Discord App" value={isDiscordAuthConfigured() ? 'Ready' : 'Setup needed'} />
         <StatusCard icon={Bot} label="Gemini AI" value={process.env.GEMINI_API_KEY?.trim() ? 'Ready' : 'Setup needed'} />
       </div>
+
+      <Link href="/admin/content" className="mb-7 flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Newspaper className="h-5 w-5" /></span>
+        <span><span className="block font-black">Content Studio</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">News, public staff profiles, images and league links</span></span>
+      </Link>
 
       {permission !== 'editor' && <div className="mb-7 grid gap-3 lg:grid-cols-3">
         <Link href="/admin/league" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">

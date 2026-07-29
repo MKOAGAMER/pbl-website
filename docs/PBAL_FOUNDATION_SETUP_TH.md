@@ -9,8 +9,9 @@
 3. `supabase/migrations/202607290002_live_scoreboard.sql`
 4. `supabase/migrations/202607290003_trading_ai_stats.sql`
 5. `supabase/migrations/202607290004_player_identity_discord.sql`
-6. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
-7. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
+6. `supabase/migrations/202607290005_staff_control.sql`
+7. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะของระบบเดิม
+8. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 
 Migration ลำดับที่ 4 เพิ่ม:
 
@@ -52,6 +53,8 @@ SUPABASE_WEBHOOK_SECRET=ข้อความสุ่มที่ยาวแ�
 ```
 
 ทุกค่าที่เป็น secret ต้องอยู่ฝั่ง server เท่านั้น
+
+`DISCORD_REDIRECT_URI` ต้องตรงกับ Redirect URL ใน Discord Developer Portal ทุกตัวอักษร เช่น `https://YOUR_DOMAIN/api/auth/discord/callback` หากไม่กำหนด ระบบจะสร้างจาก `NEXT_PUBLIC_SITE_URL` เพื่อไม่ให้ preview/proxy host เปลี่ยน callback โดยไม่ตั้งใจ
 
 ## 3. Roblox OAuth
 

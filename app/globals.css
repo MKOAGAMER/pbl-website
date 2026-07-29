@@ -269,6 +269,25 @@ a {
   color: var(--ink);
 }
 
+.admin-record {
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--page);
+  padding: 0.9rem;
+}
+
+.admin-record > summary {
+  cursor: pointer;
+  list-style-position: inside;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.admin-record[open] > summary {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.8rem;
+}
+
 .text-balance {
   text-wrap: balance;
 }

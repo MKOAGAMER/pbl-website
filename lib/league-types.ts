@@ -135,7 +135,7 @@ export interface LeagueLink {
 }
 
 export interface SiteData {
-  source: 'supabase' | 'demo' | 'unavailable';
+  source: 'supabase' | 'unavailable';
   season: Season;
   seasons: Season[];
   teams: Team[];

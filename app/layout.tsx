@@ -84,11 +84,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <Providers siteConfig={siteConfig}>
           <Navbar />
           <StaffControlStrip />
-          {data.source === 'demo' && (
-            <div className="border-b border-amber-400/20 bg-amber-400/10 px-4 py-2.5 text-center text-xs font-bold text-amber-100">
-              Preview mode · All league data shown below is fictional and will never be used in production.
-            </div>
-          )}
           {data.source === 'unavailable' && (
             <div className="border-b border-red-400/20 bg-red-400/10 px-4 py-2.5 text-center text-xs font-bold text-red-100" role="status">
               League data is temporarily unavailable. This site is showing an empty state, never placeholder results.

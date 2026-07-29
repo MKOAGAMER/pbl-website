@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { ArrowRight, Search, SearchX, UserRound, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
 import type { Player, Team } from '@/lib/league-types';
-import { initials } from '@/lib/utils';
 
 type SortMode = 'name' | 'points' | 'rebounds' | 'assists';
 
@@ -139,12 +139,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
                 />
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-4">
-                    <span
-                      className="grid h-16 w-16 shrink-0 place-items-center rounded-[1.25rem] text-sm font-black text-white shadow-lg"
-                      style={{ background: `linear-gradient(145deg, ${primaryColor}, ${secondaryColor})` }}
-                    >
-                      {initials(player.displayName)}
-                    </span>
+                    <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
                     <span className="min-w-0">
                       <span className="flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.11em] text-[var(--ink-faint)]">
                         #{player.jerseyNumber} <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" /> {player.position}
