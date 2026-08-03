@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
@@ -58,11 +58,12 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
   const [teamId, setTeamId] = useState('all');
   const [minGames, setMinGames] = useState(1);
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
   const metric = metrics.find((item) => item.key === metricKey) ?? metrics[0];
   const teamsById = useMemo(() => new Map(teams.map((team) => [team.id, team])), [teams]);
 
   const leaderboard = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = deferredQuery.trim().toLowerCase();
 
     return players
       .filter((player) => teamId === 'all' || player.teamId === teamId)
@@ -74,7 +75,7 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
           .some((value) => value.toLowerCase().includes(normalizedQuery));
       })
       .sort((a, b) => b.stats[metricKey] - a.stats[metricKey] || a.displayName.localeCompare(b.displayName));
-  }, [metricKey, minGames, players, query, teamId, teamsById]);
+  }, [deferredQuery, metricKey, minGames, players, teamId, teamsById]);
 
   const leader = leaderboard[0];
   const averageValue = leaderboard.length
@@ -111,7 +112,7 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
         </div>
       </section>
 
-      <section className="mt-8 rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5" aria-labelledby="leaderboard-controls-heading">
+      <section className="mt-8 rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5" aria-labelledby="leaderboard-controls-heading" aria-busy={query !== deferredQuery}>
         <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="eyebrow">Choose a category</p>
@@ -244,7 +245,7 @@ export function StatsExplorer({ seasonName, players, teams }: StatsExplorerProps
                   <Link
                     key={player.id}
                     href={`/players/${player.slug}`}
-                    className="group grid grid-cols-[2.5rem_minmax(0,1fr)_4rem_5rem] items-center gap-3 border-b border-[var(--line)] px-4 py-3.5 transition last:border-0 hover:bg-[var(--surface-raised)] sm:grid-cols-[3rem_minmax(0,1fr)_minmax(8rem,0.65fr)_5rem_6rem] sm:px-5"
+                    className="content-auto group grid grid-cols-[2.5rem_minmax(0,1fr)_4rem_5rem] items-center gap-3 border-b border-[var(--line)] px-4 py-3.5 transition last:border-0 hover:bg-[var(--surface-raised)] sm:grid-cols-[3rem_minmax(0,1fr)_minmax(8rem,0.65fr)_5rem_6rem] sm:px-5"
                   >
                     <span className={`number-tabular text-sm font-black ${index < 3 ? 'text-[var(--orange-soft)]' : 'text-[var(--ink-faint)]'}`}>#{index + 1}</span>
                     <span className="flex min-w-0 items-center gap-3">
