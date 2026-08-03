@@ -51,7 +51,9 @@ DISCORD_CLIENT_ID=...
 DISCORD_CLIENT_SECRET=...
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_ANNOUNCEMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_MATCH_RESULT_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_TRADE_WEBHOOK_URL=https://discord.com/api/webhooks/...
 SUPABASE_WEBHOOK_SECRET=ข้อความสุ่มที่ยาวและเดายาก
 ```
 
@@ -107,7 +109,7 @@ where roblox_id = 123456789;
 
 สร้าง Discord Application, เพิ่ม redirect URI `/api/auth/discord/callback` และใส่ `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI` เพื่อให้ผู้เล่นเชื่อมบัญชีที่ `/account`
 
-ทำตาม [คู่มือตั้ง Discord Webhook](DISCORD_WEBHOOK_SETUP_TH.md) เพิ่มเติม เพื่อเชื่อม event `news_posts` และ `games` จาก Supabase
+ทำตาม [คู่มือตั้ง Discord Webhook](DISCORD_WEBHOOK_SETUP_TH.md) เพิ่มเติม เพื่อเชื่อม event `news_posts`, `games` และ `trades` จาก Supabase ไปยัง Discord คนละช่อง
 
 ## 8. Deploy
 
@@ -119,4 +121,4 @@ where roblox_id = 123456789;
 4. เชื่อม Discord ที่ `/account`
 5. Trade request → staff approval
 6. Stat screenshot → review → confirm
-7. Publish ข่าวและเปลี่ยนเกมเป็น final แล้วตรวจ Discord
+7. Publish ข่าว เปลี่ยนเกมเป็น final และอนุมัติ trade แล้วตรวจ Discord ทั้งสามช่อง

@@ -9,7 +9,7 @@
 - สิทธิ์: ทุก Roblox login เริ่มเป็น Player/Free Agent; Staff/Admin จัดลีกผ่าน Editor / Staff / Super Admin
 - Trading: ผู้ใช้ยื่นคำขอ, staff อนุมัติ/ปฏิเสธ, อัปเดต roster แบบ transaction และค้นประวัติตามทีม/ผู้เล่น/วันที่
 - AI Stats: staff อัปโหลด screenshot, Gemini อ่านตารางแบบ structured output พร้อม fallback เมื่อ 2.5 Flash ไม่เปิดให้ API project, staff ตรวจ/แก้ทุกแถวก่อนยืนยัน
-- Discord: รับ Database Webhooks, รองรับ slash commands ผ่าน Discord Interactions และมี Bot API v1 สำหรับบอทที่รันแยก
+- Discord: รับ Database Webhooks และส่งข่าว ผลแข่ง และ trade ไปคนละช่อง รองรับ slash commands ผ่าน Discord Interactions และมี Bot API v1 สำหรับบอทที่รันแยก
 - Discipline: Warning, Match Suspension, Trade Ban, Account Ban และ Blacklist พร้อม enforcement ระดับฐานข้อมูล
 
 ## เริ่มพัฒนา
@@ -47,4 +47,4 @@ npm run typecheck
 npm run build
 ```
 
-ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `GEMINI_API_KEY`, `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `PBAL_BOT_API_SECRET`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`
+ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `GEMINI_API_KEY`, `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `PBAL_BOT_API_SECRET`, ตัวแปร `DISCORD_*_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`

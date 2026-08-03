@@ -12,13 +12,29 @@ type DiscordEmbed = {
   footer?: { text: string };
 };
 
-export async function sendDiscordNotification(embed: DiscordEmbed) {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL?.trim();
-  if (!webhookUrl) throw new Error('DISCORD_WEBHOOK_URL is not configured');
-  if (!/^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\//i.test(webhookUrl)) {
-    throw new Error('DISCORD_WEBHOOK_URL is not a Discord webhook URL');
-  }
+export type DiscordNotificationChannel = 'announcement' | 'match_result' | 'trade';
 
+const webhookEnvironmentVariables: Record<DiscordNotificationChannel, string> = {
+  announcement: 'DISCORD_ANNOUNCEMENT_WEBHOOK_URL',
+  match_result: 'DISCORD_MATCH_RESULT_WEBHOOK_URL',
+  trade: 'DISCORD_TRADE_WEBHOOK_URL',
+};
+
+function getWebhookUrl(channel: DiscordNotificationChannel) {
+  const environmentVariable = webhookEnvironmentVariables[channel];
+  const webhookUrl = process.env[environmentVariable]?.trim()
+    || process.env.DISCORD_WEBHOOK_URL?.trim();
+  if (!webhookUrl) {
+    throw new Error(`${environmentVariable} (or DISCORD_WEBHOOK_URL fallback) is not configured`);
+  }
+  if (!/^https:\/\/(?:canary\.|ptb\.)?discord(?:app)?\.com\/api\/webhooks\//i.test(webhookUrl)) {
+    throw new Error(`${environmentVariable} is not a Discord webhook URL`);
+  }
+  return webhookUrl;
+}
+
+export async function sendDiscordNotification(channel: DiscordNotificationChannel, embed: DiscordEmbed) {
+  const webhookUrl = getWebhookUrl(channel);
   const url = new URL(webhookUrl);
   url.searchParams.set('wait', 'true');
   const response = await fetch(url, {
@@ -37,4 +53,3 @@ export async function sendDiscordNotification(embed: DiscordEmbed) {
     throw new Error(`Discord webhook returned ${response.status}: ${detail}`);
   }
 }
-
