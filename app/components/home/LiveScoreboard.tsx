@@ -73,15 +73,17 @@ export function LiveScoreboard({ games, teams, tournaments }: { games: Game[]; t
     )),
   ], [currentGames, currentTournamentMatches]);
 
-  const game = useMemo(() => {
-    const live = candidates
-      .filter((candidate) => candidate.status === 'live')
-      .sort((a, b) => Number(Boolean(b.type === 'tournament')) - Number(Boolean(a.type === 'tournament')) || dateValue(a.startsAt) - dateValue(b.startsAt));
-    const next = candidates
-      .filter((candidate) => candidate.status === 'scheduled')
-      .sort((a, b) => dateValue(a.startsAt) - dateValue(b.startsAt));
-    return live[0] ?? next[0];
-  }, [candidates]);
+  const visibleGames = useMemo(() => {
+    const statusOrder: Record<ScoreboardCandidate['status'], number> = { live: 0, scheduled: 1, final: 2, postponed: 3, cancelled: 4 };
+    return candidates.filter((candidate) => (
+      teams.some((team) => team.id === candidate.homeTeamId)
+      && teams.some((team) => team.id === candidate.awayTeamId)
+    )).sort((a, b) => (
+      statusOrder[a.status] - statusOrder[b.status]
+      || Number(Boolean(b.type === 'tournament')) - Number(Boolean(a.type === 'tournament'))
+      || dateValue(a.startsAt) - dateValue(b.startsAt)
+    ));
+  }, [candidates, teams]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -152,32 +154,46 @@ export function LiveScoreboard({ games, teams, tournaments }: { games: Game[]; t
     return () => { void supabase.removeChannel(channel); };
   }, [tournaments]);
 
-  if (!game) return <div className="race-panel rounded-[1.5rem] p-7 text-center text-sm text-[var(--ink-soft)]">{t('noLive')}</div>;
-  const away = teams.find((team) => team.id === game.awayTeamId);
-  const home = teams.find((team) => team.id === game.homeTeamId);
-  if (!away || !home) return null;
-  const isLive = game.status === 'live';
-  const isTournament = game.type === 'tournament';
+  if (!visibleGames.length) return <div className="race-panel rounded-[1.5rem] p-7 text-center text-sm text-[var(--ink-soft)]">{t('noLive')}</div>;
 
   return (
-    <Link href={game.href} className="race-panel group block overflow-hidden rounded-[1.6rem] p-5 sm:p-7">
-      <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] pb-4 text-[0.65rem] font-black uppercase italic tracking-[0.13em]">
-        <span className={isLive ? 'flex shrink-0 items-center gap-2 text-red-300' : 'flex shrink-0 items-center gap-2 text-[var(--orange-soft)]'}>
-          {isLive ? <Radio className="h-3.5 w-3.5 animate-pulse" /> : isTournament ? <Trophy className="h-3.5 w-3.5" /> : <TimerReset className="h-3.5 w-3.5" />}
-          {isTournament && <span>Tournament ·</span>} {isLive ? t('liveNow') : t('nextUp')}
-        </span>
-        <span className="truncate text-right text-[var(--ink-faint)]">{game.context}</span>
+    <section aria-label="All matches">
+      <div className="mb-3 flex items-center justify-between px-1 text-[0.65rem] font-black uppercase italic tracking-[0.13em] text-[var(--ink-faint)]">
+        <span>All matches</span>
+        <span>{visibleGames.length} matches</span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-7">
-        <ClubScore team={away} score={game.awayScore} align="left" />
-        <span className="race-display text-2xl text-[var(--orange)]">{isLive ? '–' : t('vs')}</span>
-        <ClubScore team={home} score={game.homeScore} align="right" />
+      <div className="max-h-[44rem] space-y-3 overflow-y-auto pr-1 lg:max-h-[calc(100vh-8rem)]">
+        {visibleGames.map((game) => {
+          const away = teams.find((team) => team.id === game.awayTeamId);
+          const home = teams.find((team) => team.id === game.homeTeamId);
+          if (!away || !home) return null;
+          const isLive = game.status === 'live';
+          const isFinal = game.status === 'final';
+          const isTournament = game.type === 'tournament';
+          const statusLabel = isLive ? t('liveNow') : game.status === 'scheduled' ? t('nextUp') : isFinal ? t('final') : game.status;
+          return (
+            <Link key={`${game.type}-${game.id}`} href={game.href} className="race-panel group block overflow-hidden rounded-[1.4rem] p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] pb-3 text-[0.6rem] font-black uppercase italic tracking-[0.11em]">
+                <span className={isLive ? 'flex shrink-0 items-center gap-2 text-red-300' : 'flex shrink-0 items-center gap-2 text-[var(--orange-soft)]'}>
+                  {isLive ? <Radio className="h-3.5 w-3.5 animate-pulse" /> : isTournament ? <Trophy className="h-3.5 w-3.5" /> : <TimerReset className="h-3.5 w-3.5" />}
+                  {isTournament && <span>Tournament ·</span>} {statusLabel}
+                </span>
+                <span className="truncate text-right text-[var(--ink-faint)]">{game.context}</span>
+              </div>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-5">
+                <ClubScore team={away} score={game.awayScore} align="left" />
+                <span className="race-display text-xl text-[var(--orange)]">{isLive || isFinal ? '–' : t('vs')}</span>
+                <ClubScore team={home} score={game.homeScore} align="right" />
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-3 text-[0.68rem] text-[var(--ink-faint)]">
+                <span>{isLive ? (isTournament ? 'Live tournament scoreboard' : t('liveScoreboard')) : isFinal ? 'Final score' : game.status === 'scheduled' ? formatStart(game.startsAt) : statusLabel}</span>
+                <span className="shrink-0 font-black uppercase italic text-[var(--orange-soft)] group-hover:text-[var(--ink)]">{isTournament ? 'View tournament' : t('viewMatch')} →</span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
-      <div className="flex items-center justify-between gap-4 border-t border-[var(--line)] pt-4 text-xs text-[var(--ink-faint)]">
-        <span>{isLive ? (isTournament ? 'Live tournament scoreboard' : t('liveScoreboard')) : formatStart(game.startsAt)}</span>
-        <span className="shrink-0 font-black uppercase italic text-[var(--orange-soft)] group-hover:text-[var(--ink)]">{isTournament ? 'View tournament' : t('viewMatch')} →</span>
-      </div>
-    </Link>
+    </section>
   );
 }
 
@@ -194,5 +210,5 @@ function formatStart(value: string) {
 }
 
 function ClubScore({ team, score, align }: { team: Team; score: number | null; align: 'left' | 'right' }) {
-  return <div className={`min-w-0 ${align === 'right' ? 'text-right' : ''}`}><div className={`flex items-center gap-3 ${align === 'right' ? 'justify-end' : ''}`}><TeamLogo team={team} size="sm" /><span className="truncate text-sm font-black uppercase italic sm:text-base">{team.abbreviation}</span></div><p className="race-display mt-4 text-5xl sm:text-6xl">{score ?? '—'}</p></div>;
+  return <div className={`min-w-0 ${align === 'right' ? 'text-right' : ''}`}><div className={`flex items-center gap-3 ${align === 'right' ? 'justify-end' : ''}`}><TeamLogo team={team} size="sm" /><span className="truncate text-sm font-black uppercase italic">{team.abbreviation}</span></div><p className="race-display mt-3 text-4xl sm:text-5xl">{score ?? '—'}</p></div>;
 }
