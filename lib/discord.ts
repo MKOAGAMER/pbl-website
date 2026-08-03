@@ -12,12 +12,13 @@ type DiscordEmbed = {
   footer?: { text: string };
 };
 
-export type DiscordNotificationChannel = 'announcement' | 'match_result' | 'trade';
+export type DiscordNotificationChannel = 'announcement' | 'match_result' | 'trade' | 'discipline';
 
 const webhookEnvironmentVariables: Record<DiscordNotificationChannel, string> = {
   announcement: 'DISCORD_ANNOUNCEMENT_WEBHOOK_URL',
   match_result: 'DISCORD_MATCH_RESULT_WEBHOOK_URL',
   trade: 'DISCORD_TRADE_WEBHOOK_URL',
+  discipline: 'DISCORD_DISCIPLINE_WEBHOOK_URL',
 };
 
 function getWebhookUrl(channel: DiscordNotificationChannel) {

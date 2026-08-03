@@ -175,6 +175,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ delivered: true });
     }
 
+    if (payload.table === 'player_disciplinary_actions') {
+      const isPublicDisciplineEvent = payload.record.is_public === true
+        && (payload.type === 'INSERT' || payload.old_record?.is_public !== true);
+      const isPublicRevocation = payload.type === 'UPDATE'
+        && payload.old_record?.is_public === true
+        && Boolean(payload.record.revoked_at)
+        && !payload.old_record.revoked_at;
+      if (!isPublicDisciplineEvent && !isPublicRevocation) return NextResponse.json({ skipped: true });
+      const actionId = stringValue(payload.record.id);
+      if (!actionId) return NextResponse.json({ error: 'Discipline event has no record id' }, { status: 400 });
+      eventKey = `discipline-public:${actionId}:${stringValue(payload.record.updated_at) || 'unknown-time'}`;
+      const { data: claimed, error: claimError } = await supabase.rpc('claim_discord_notification', {
+        p_event_key: eventKey,
+        p_event_type: 'discipline_public',
+        p_record_id: actionId,
+      });
+      if (claimError) throw claimError;
+      if (!claimed) return NextResponse.json({ skipped: true, duplicate: true });
+
+      const playerId = stringValue(payload.record.player_id);
+      const { data: player, error: playerError } = await supabase
+        .from('players')
+        .select('name, slug, avatar_url')
+        .eq('id', playerId)
+        .maybeSingle();
+      if (playerError) throw playerError;
+      const actionType = stringValue(payload.record.action_type).replaceAll('_', ' ');
+      const revoked = Boolean(payload.record.revoked_at);
+      await sendDiscordNotification('discipline', {
+        title: revoked ? '✅ ยกเลิกบทลงโทษผู้เล่น' : '🚨 ประกาศบทลงโทษผู้เล่น',
+        description: `${player?.name ?? 'Unknown player'} · ${actionType || 'disciplinary action'}`,
+        url: player?.slug ? `${getSiteUrl()}/players/${encodeURIComponent(player.slug)}` : `${getSiteUrl()}/blacklist`,
+        thumbnail: player?.avatar_url ? { url: player.avatar_url } : undefined,
+        fields: [
+          { name: 'ผู้เล่น', value: player?.name ?? 'Unknown player', inline: true },
+          { name: 'ประเภท', value: actionType || 'ไม่ระบุ', inline: true },
+          { name: revoked ? 'สถานะ' : 'เหตุผล', value: revoked ? 'ยกเลิกแล้ว' : short(payload.record.public_note) || short(payload.record.reason) || 'ไม่ระบุ', inline: false },
+        ],
+        timestamp: stringValue(payload.record.updated_at) || new Date().toISOString(),
+      });
+      await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
+      return NextResponse.json({ delivered: true });
+    }
+
     return NextResponse.json({ skipped: true });
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : 'Unknown notification error';
