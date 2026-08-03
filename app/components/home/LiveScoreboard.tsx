@@ -29,6 +29,8 @@ type ScoreboardCandidate = {
   context: string;
 };
 
+const MAX_VISIBLE_MATCHES = 4;
+
 function tournamentMatches(tournaments: Tournament[]): TournamentScoreMatch[] {
   return tournaments.flatMap((tournament) => tournament.matches.map((match) => ({
     ...match,
@@ -43,6 +45,7 @@ export function LiveScoreboard({ games, teams, tournaments }: { games: Game[]; t
   const [currentGames, setCurrentGames] = useState(games);
   const [currentTournamentMatches, setCurrentTournamentMatches] = useState(() => tournamentMatches(tournaments));
   const t = useTranslations('Home');
+  const teamIds = useMemo(() => new Set(teams.map((team) => team.id)), [teams]);
 
   const candidates = useMemo<ScoreboardCandidate[]>(() => [
     ...currentGames.map((game) => ({
@@ -73,17 +76,18 @@ export function LiveScoreboard({ games, teams, tournaments }: { games: Game[]; t
     )),
   ], [currentGames, currentTournamentMatches]);
 
-  const visibleGames = useMemo(() => {
+  const scoreboard = useMemo(() => {
     const statusOrder: Record<ScoreboardCandidate['status'], number> = { live: 0, scheduled: 1, final: 2, postponed: 3, cancelled: 4 };
-    return candidates.filter((candidate) => (
-      teams.some((team) => team.id === candidate.homeTeamId)
-      && teams.some((team) => team.id === candidate.awayTeamId)
+    const sorted = candidates.filter((candidate) => (
+      teamIds.has(candidate.homeTeamId) && teamIds.has(candidate.awayTeamId)
     )).sort((a, b) => (
       statusOrder[a.status] - statusOrder[b.status]
       || Number(Boolean(b.type === 'tournament')) - Number(Boolean(a.type === 'tournament'))
-      || dateValue(a.startsAt) - dateValue(b.startsAt)
+      || (a.status === 'final' ? dateValue(b.startsAt) - dateValue(a.startsAt) : dateValue(a.startsAt) - dateValue(b.startsAt))
     ));
-  }, [candidates, teams]);
+    return { total: sorted.length, games: sorted.slice(0, MAX_VISIBLE_MATCHES) };
+  }, [candidates, teamIds]);
+  const visibleGames = scoreboard.games;
 
   useEffect(() => {
     const supabase = createClient();
@@ -160,7 +164,7 @@ export function LiveScoreboard({ games, teams, tournaments }: { games: Game[]; t
     <section aria-label="All matches">
       <div className="mb-3 flex items-center justify-between px-1 text-[0.65rem] font-black uppercase italic tracking-[0.13em] text-[var(--ink-faint)]">
         <span>All matches</span>
-        <span>{visibleGames.length} matches</span>
+        <span>Showing {visibleGames.length} of {scoreboard.total}</span>
       </div>
       <div className="max-h-[44rem] space-y-3 overflow-y-auto pr-1 lg:max-h-[calc(100vh-8rem)]">
         {visibleGames.map((game) => {
