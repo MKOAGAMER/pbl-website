@@ -38,7 +38,8 @@ npm run dev
 10. `supabase/migrations/202608040001_trade_discord_webhook.sql`
 11. `supabase/migrations/202608040002_discipline_discord_webhook.sql`
 12. `supabase/migrations/202608040003_content_match_discord_webhook.sql`
-13. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
+13. `supabase/migrations/202608040004_tournament_match_discord_webhook.sql`
+14. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
 Migration ล่าสุดเพิ่ม Franchise Owner, การซื้อ/ปล่อยผู้เล่นผ่านการอนุมัติของ Staff, About และหลายตำแหน่งของผู้เล่น รวมถึง Tournament Control ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ
 

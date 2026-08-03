@@ -69,7 +69,7 @@ export async function POST(request: Request) {
           ? [{ name: 'หมวดหมู่', value: short(payload.record.category, 100), inline: true }]
           : undefined,
         timestamp: stringValue(payload.record.published_at) || new Date().toISOString(),
-      });
+      }, { content: '@everyone', allowEveryone: true });
       await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
       return NextResponse.json({ delivered: true });
     }
@@ -120,6 +120,53 @@ export async function POST(request: Request) {
           { name: 'ผลการแข่งขัน', value: winner ? `${winner.name} ชนะ` : 'เสมอ', inline: true },
         ],
         timestamp: stringValue(payload.record.updated_at) || new Date().toISOString(),
+      }, { content: '@here', allowEveryone: true });
+      await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
+      return NextResponse.json({ delivered: true });
+    }
+
+    if (payload.table === 'tournament_matches') {
+      const isNewResult = payload.record.status === 'final'
+        && (payload.type === 'INSERT' || payload.old_record?.status !== 'final');
+      if (!isNewResult) return NextResponse.json({ skipped: true });
+      const matchId = stringValue(payload.record.id);
+      if (!matchId) return NextResponse.json({ error: 'Tournament match event has no record id' }, { status: 400 });
+      eventKey = `tournament-match-final:${matchId}:${stringValue(payload.record.updated_at) || 'unknown-time'}`;
+      const { data: claimed, error: claimError } = await supabase.rpc('claim_discord_notification', {
+        p_event_key: eventKey,
+        p_event_type: 'tournament_match_final',
+        p_record_id: matchId,
+      });
+      if (claimError) throw claimError;
+      if (!claimed) return NextResponse.json({ skipped: true, duplicate: true });
+
+      const tournamentId = stringValue(payload.record.tournament_id);
+      const homeTeamId = stringValue(payload.record.home_team_id);
+      const awayTeamId = stringValue(payload.record.away_team_id);
+      const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }] = await Promise.all([
+        supabase.from('tournaments').select('name, is_public').eq('id', tournamentId).maybeSingle(),
+        supabase.from('teams').select('id, name, abbreviation, logo_url').in('id', [homeTeamId, awayTeamId].filter(Boolean)),
+      ]);
+      if (tournamentError) throw tournamentError;
+      if (teamsError) throw teamsError;
+      if (tournament?.is_public === false) return NextResponse.json({ skipped: true, private: true });
+      const home = teams?.find((team) => team.id === homeTeamId);
+      const away = teams?.find((team) => team.id === awayTeamId);
+      const homeScore = Number(payload.record.home_score ?? 0);
+      const awayScore = Number(payload.record.away_score ?? 0);
+      const winnerId = stringValue(payload.record.winner_team_id);
+      const winner = winnerId === homeTeamId ? home : winnerId === awayTeamId ? away : homeScore > awayScore ? home : away;
+      await sendDiscordNotification('match_result', {
+        title: `🏆 ${winner?.name ?? 'Tournament winner'} ชนะ · ${away?.abbreviation ?? 'AWAY'} ${awayScore}–${homeScore} ${home?.abbreviation ?? 'HOME'}`,
+        description: `${tournament?.name ?? 'Tournament'} · ผลการแข่งขันรอบ ${short(payload.record.round_label, 100) || 'ไม่ระบุ'}`,
+        url: `${getSiteUrl()}/tournaments`,
+        thumbnail: winner?.logo_url ? { url: winner.logo_url } : undefined,
+        fields: [
+          { name: away?.name ?? 'Away', value: String(awayScore), inline: true },
+          { name: home?.name ?? 'Home', value: String(homeScore), inline: true },
+          { name: 'ผู้ชนะ', value: winner?.name ?? 'ไม่ระบุ', inline: true },
+        ],
+        timestamp: stringValue(payload.record.updated_at) || new Date().toISOString(),
       });
       await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
       return NextResponse.json({ delivered: true });
@@ -144,7 +191,7 @@ export async function POST(request: Request) {
       const fromTeamId = stringValue(payload.record.from_team_id);
       const toTeamId = stringValue(payload.record.to_team_id);
       const [{ data: player, error: playerError }, { data: teams, error: teamsError }] = await Promise.all([
-        supabase.from('players').select('id, name, slug, avatar_url').eq('id', playerId).maybeSingle(),
+        supabase.from('players').select('id, name, slug, avatar_url, roblox_username, user_id').eq('id', playerId).maybeSingle(),
         supabase.from('teams').select('id, name, abbreviation').in('id', [fromTeamId, toTeamId].filter(Boolean)),
       ]);
       if (playerError) throw playerError;
@@ -158,6 +205,10 @@ export async function POST(request: Request) {
         : tradeKind === 'release'
           ? 'ปล่อยออกจากทีม'
           : 'ย้ายทีม';
+      const { data: linkedTradeUser } = player?.user_id
+        ? await supabase.from('users').select('discord_id').eq('id', player.user_id).maybeSingle()
+        : { data: null };
+      const tradeDiscordId = linkedTradeUser?.discord_id ? String(linkedTradeUser.discord_id) : '';
 
       await sendDiscordNotification('trade', {
         title: `🔄 OFFICIAL TRADE · ${short(playerName, 220)}`,
@@ -170,6 +221,13 @@ export async function POST(request: Request) {
           { name: 'ประเภทรายการ', value: tradeKindLabel, inline: true },
         ],
         timestamp: stringValue(payload.record.reviewed_at) || stringValue(payload.record.updated_at) || new Date().toISOString(),
+      }, {
+        content: tradeDiscordId
+          ? `<@${tradeDiscordId}>`
+          : player?.roblox_username
+            ? `@${player.roblox_username}`
+            : undefined,
+        userIds: tradeDiscordId ? [tradeDiscordId] : [],
       });
       await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
       return NextResponse.json({ delivered: true });
@@ -197,12 +255,16 @@ export async function POST(request: Request) {
       const playerId = stringValue(payload.record.player_id);
       const { data: player, error: playerError } = await supabase
         .from('players')
-        .select('name, slug, avatar_url')
+        .select('name, slug, avatar_url, roblox_username, user_id')
         .eq('id', playerId)
         .maybeSingle();
       if (playerError) throw playerError;
       const actionType = stringValue(payload.record.action_type).replaceAll('_', ' ');
       const revoked = Boolean(payload.record.revoked_at);
+      const { data: linkedDisciplineUser } = player?.user_id
+        ? await supabase.from('users').select('discord_id').eq('id', player.user_id).maybeSingle()
+        : { data: null };
+      const disciplineDiscordId = linkedDisciplineUser?.discord_id ? String(linkedDisciplineUser.discord_id) : '';
       await sendDiscordNotification('discipline', {
         title: revoked ? '✅ ยกเลิกบทลงโทษผู้เล่น' : '🚨 ประกาศบทลงโทษผู้เล่น',
         description: `${player?.name ?? 'Unknown player'} · ${actionType || 'disciplinary action'}`,
@@ -214,6 +276,13 @@ export async function POST(request: Request) {
           { name: revoked ? 'สถานะ' : 'เหตุผล', value: revoked ? 'ยกเลิกแล้ว' : short(payload.record.public_note) || short(payload.record.reason) || 'ไม่ระบุ', inline: false },
         ],
         timestamp: stringValue(payload.record.updated_at) || new Date().toISOString(),
+      }, {
+        content: disciplineDiscordId
+          ? `<@${disciplineDiscordId}>`
+          : player?.roblox_username
+            ? `@${player.roblox_username}`
+            : undefined,
+        userIds: disciplineDiscordId ? [disciplineDiscordId] : [],
       });
       await supabase.from('discord_notification_log').update({ status: 'sent', sent_at: new Date().toISOString(), last_error: null }).eq('event_key', eventKey);
       return NextResponse.json({ delivered: true });

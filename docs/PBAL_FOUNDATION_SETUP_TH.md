@@ -16,7 +16,8 @@
 10. `supabase/migrations/202608040001_trade_discord_webhook.sql`
 11. `supabase/migrations/202608040002_discipline_discord_webhook.sql`
 12. `supabase/migrations/202608040003_content_match_discord_webhook.sql`
-13. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะและระบบอัปโหลดจากเครื่อง
+13. `supabase/migrations/202608040004_tournament_match_discord_webhook.sql`
+14. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะและระบบอัปโหลดจากเครื่อง
 11. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 
 Migration ลำดับที่ 4 เพิ่ม:

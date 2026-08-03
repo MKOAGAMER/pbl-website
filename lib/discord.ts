@@ -13,6 +13,11 @@ type DiscordEmbed = {
 };
 
 export type DiscordNotificationChannel = 'announcement' | 'match_result' | 'trade' | 'discipline';
+type DiscordNotificationOptions = {
+  content?: string;
+  allowEveryone?: boolean;
+  userIds?: string[];
+};
 
 const webhookEnvironmentVariables: Record<DiscordNotificationChannel, string> = {
   announcement: 'DISCORD_ANNOUNCEMENT_WEBHOOK_URL',
@@ -34,7 +39,7 @@ function getWebhookUrl(channel: DiscordNotificationChannel) {
   return webhookUrl;
 }
 
-export async function sendDiscordNotification(channel: DiscordNotificationChannel, embed: DiscordEmbed) {
+export async function sendDiscordNotification(channel: DiscordNotificationChannel, embed: DiscordEmbed, options?: DiscordNotificationOptions) {
   const webhookUrl = getWebhookUrl(channel);
   const url = new URL(webhookUrl);
   url.searchParams.set('wait', 'true');
@@ -43,7 +48,11 @@ export async function sendDiscordNotification(channel: DiscordNotificationChanne
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       username: 'PBAL League Desk',
-      allowed_mentions: { parse: [] },
+      ...(options?.content ? { content: options.content } : {}),
+      allowed_mentions: {
+        parse: options?.allowEveryone ? ['everyone'] : [],
+        users: options?.userIds?.filter((id) => /^\d+$/.test(id)) ?? [],
+      },
       embeds: [{ color: 0xff4b1f, footer: { text: 'Practical Basketball Asia League' }, ...embed }],
     }),
     signal: AbortSignal.timeout(10_000),

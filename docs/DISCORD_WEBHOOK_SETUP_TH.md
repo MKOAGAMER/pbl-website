@@ -4,6 +4,7 @@
 
 - `news_posts` เปลี่ยนสถานะเป็น `published` → ช่องประกาศ
 - `games` เปลี่ยนสถานะเป็น `final` → ช่อง Match Result พร้อมทีมที่ชนะและคะแนน
+- `tournament_matches` เปลี่ยนสถานะเป็น `final` → ช่อง Match Result พร้อมทีมที่ชนะและคะแนน
 - `trades` เปลี่ยนสถานะเป็น `approved` → ช่อง Trade พร้อมผู้เล่น ทีมต้นทาง และทีมปลายทาง
 - `player_disciplinary_actions` ถูกประกาศเป็น public หรือถูกยกเลิกโทษ → ช่อง Discipline
 
@@ -57,6 +58,8 @@ x-pbal-webhook-secret: ค่าเดียวกับ SUPABASE_WEBHOOK_SECRET
 
 ตัวรับจะกรอง event ซ้ำอีกชั้น จึงส่ง Discord เฉพาะตอนข่าวถูก publish, เกมเปลี่ยนเป็น final หรือ trade ได้รับอนุมัติเท่านั้น การแก้ข้อมูลทั่วไปและคำขอ trade ที่ยัง pending/ถูกปฏิเสธจะไม่ส่งข้อความ ระบบบันทึก event ที่ส่งแล้วใน `discord_notification_log` เพื่อป้องกันข้อความซ้ำ และปิด Discord mentions จากข้อความที่ผู้ใช้กรอก
 
+การ mention ถูกกำหนดตามประเภท: ข่าวใช้ `@everyone`, ผลแข่งใช้ `@here`, ส่วน Trade และ Discipline จะ mention Discord account ที่ผูกกับผู้เล่น หากยังไม่ผูกจะแสดง `@RobloxUsername` เป็นข้อความแทน
+
 ## 3. ทดสอบ
 
 1. Publish ข่าวหนึ่งรายการ แล้วตรวจช่องประกาศ
@@ -80,4 +83,4 @@ set webhook_secret = excluded.webhook_secret,
 
 Migration จะยิงเฉพาะตอน `trades.status` เปลี่ยนเป็น `approved` และใช้ `pg_net` แบบ asynchronous จึงไม่ทำให้ transaction การอนุมัติเทรดล้มเหลว หากใช้วิธีนี้ไม่ควรสร้าง Database Webhook ของ `trades` ซ้ำใน Dashboard (ระบบ log ยังช่วยกัน duplicate ได้ แต่จะมี request ซ้ำหนึ่งครั้ง)
 
-Migration `202608040003_content_match_discord_webhook.sql` เพิ่ม trigger สำหรับ `news_posts` และ `games` ด้วย ดังนั้นเมื่อติดตั้ง migration ครบแล้ว ไม่ต้องสร้าง Database Webhook ใน Dashboard สำหรับข่าวหรือผลแข่งอีก ระบบจะส่งเฉพาะข่าวที่ publish ครั้งแรกและเกมที่เปลี่ยนเป็น final ครั้งแรก
+Migration `202608040003_content_match_discord_webhook.sql` เพิ่ม trigger สำหรับ `news_posts` และ `games` และ `202608040004_tournament_match_discord_webhook.sql` เพิ่ม trigger สำหรับ `tournament_matches` ดังนั้นเมื่อติดตั้ง migration ครบแล้ว ไม่ต้องสร้าง Database Webhook ใน Dashboard สำหรับข่าวหรือผลแข่งอีก ระบบจะส่งเฉพาะข่าวที่ publish ครั้งแรกและแมตช์ที่เปลี่ยนเป็น final ครั้งแรก
