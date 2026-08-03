@@ -4,16 +4,19 @@ import Link from 'next/link';
 import { ArrowUpRight, ChevronRight, Trophy } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { SiteData } from '@/lib/league-types';
+import type { Tournament } from '@/lib/tournament-types';
 import { rankTeamsByStanding } from '@/lib/utils';
 import { TeamLogo } from '../ui/TeamLogo';
 import { LiveScoreboard } from './LiveScoreboard';
 
-export function RaceHome({ data }: { data: SiteData }) {
+export function RaceHome({ data, tournaments }: { data: SiteData; tournaments: Tournament[] }) {
   const t = useTranslations('Home');
   const common = useTranslations('Common');
   const rankings = rankTeamsByStanding(data.teams).slice(0, 5);
   const leaders = [...data.players].filter((player) => player.stats.gamesPlayed > 0).sort((a, b) => b.stats.pointsPerGame - a.stats.pointsPerGame).slice(0, 3);
-  const leagueIsEmpty = data.teams.length === 0 && data.games.length === 0;
+  const tournamentMatchCount = tournaments.reduce((total, tournament) => total + tournament.matches.length, 0);
+  const competitionsAreEmpty = data.teams.length === 0 && data.games.length === 0 && tournamentMatchCount === 0;
+  const watchHref = data.games.length > 0 ? '/games' : tournamentMatchCount > 0 ? '/tournaments' : '/login';
   return (
     <>
       <section className="relative isolate overflow-hidden border-b border-[var(--line)]">
@@ -24,10 +27,10 @@ export function RaceHome({ data }: { data: SiteData }) {
             <p className="race-eyebrow">{t('kicker')}</p>
             <h1 className="race-display mt-7 max-w-4xl text-[clamp(4.25rem,10vw,9.5rem)]"><span className="block">{t('titleLead')}</span><span className="block text-[var(--orange)]">{t('titleAccent')}</span></h1>
             <p className="mt-8 max-w-xl text-base leading-7 text-[var(--ink-soft)] sm:text-lg">{t('body')}</p>
-            <div className="mt-9 flex flex-wrap gap-3"><Link href={leagueIsEmpty ? '/login' : '/games'} className="inline-flex h-12 items-center gap-2 bg-[var(--orange)] px-6 text-xs font-black uppercase italic tracking-[.12em] text-black transition hover:translate-x-1">{leagueIsEmpty ? 'Join as a Player' : t('watchLive')} <ChevronRight className="h-4 w-4" /></Link><Link href="/players" className="inline-flex h-12 items-center gap-2 border border-[var(--line-strong)] bg-black/20 px-6 text-xs font-black uppercase italic tracking-[.12em] transition hover:border-[var(--orange)]">View Players</Link></div>
-            <div className="mt-14 grid max-w-xl grid-cols-3 divide-x divide-[var(--line)] border-y border-[var(--line)]"><Telemetry label="TEAMS" value={data.teams.length} /><Telemetry label="PLAYERS" value={data.players.length} /><Telemetry label="GAMES" value={data.games.length} /></div>
+            <div className="mt-9 flex flex-wrap gap-3"><Link href={watchHref} className="inline-flex h-12 items-center gap-2 bg-[var(--orange)] px-6 text-xs font-black uppercase italic tracking-[.12em] text-black transition hover:translate-x-1">{competitionsAreEmpty ? 'Join as a Player' : t('watchLive')} <ChevronRight className="h-4 w-4" /></Link><Link href="/players" className="inline-flex h-12 items-center gap-2 border border-[var(--line-strong)] bg-black/20 px-6 text-xs font-black uppercase italic tracking-[.12em] transition hover:border-[var(--orange)]">View Players</Link></div>
+            <div className="mt-14 grid max-w-xl grid-cols-3 divide-x divide-[var(--line)] border-y border-[var(--line)]"><Telemetry label="TEAMS" value={data.teams.length} /><Telemetry label="PLAYERS" value={data.players.length} /><Telemetry label="GAMES" value={data.games.length + tournamentMatchCount} /></div>
           </div>
-          <div className="hero-enter hero-enter-delayed"><LiveScoreboard games={data.games} teams={data.teams} /></div>
+          <div className="hero-enter hero-enter-delayed"><LiveScoreboard games={data.games} teams={data.teams} tournaments={tournaments} /></div>
         </div>
       </section>
 

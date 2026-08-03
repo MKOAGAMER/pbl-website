@@ -363,7 +363,7 @@ async function loadSiteData(): Promise<SiteData> {
         .select('season_id, team_id, wins, losses'),
       supabase
         .from('players')
-        .select('id, first_name, last_name, slug, roblox_username, position, positions, team_id, avatar_url, bio, is_active')
+        .select('id, first_name, last_name, slug, roblox_username, position, positions, jersey_number, team_id, avatar_url, bio, is_active')
         .order('last_name'),
       supabase
         .from('rosters')

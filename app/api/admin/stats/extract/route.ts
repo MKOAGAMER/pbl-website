@@ -8,7 +8,10 @@ import { isSameOriginRequest } from '@/lib/request-security';
 
 export const runtime = 'nodejs';
 
-const gameIdSchema = z.string().uuid();
+const targetSchema = z.object({
+  targetType: z.enum(['league', 'tournament']),
+  targetId: z.string().uuid(),
+});
 const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 type AllowedMime = (typeof allowedTypes)[number];
 
@@ -18,6 +21,7 @@ type PlayerRow = {
   first_name: string | null;
   last_name: string | null;
   roblox_username: string | null;
+  team_id?: string | null;
 };
 
 function normalizeName(value: string) {
@@ -35,9 +39,12 @@ export async function POST(request: Request) {
   if (!admin) return NextResponse.json({ error: 'ไม่มีสิทธิ์นำเข้าสถิติ' }, { status: 403 });
 
   const formData = await request.formData();
-  const gameIdResult = gameIdSchema.safeParse(formData.get('gameId'));
+  const targetResult = targetSchema.safeParse({
+    targetType: formData.get('targetType'),
+    targetId: formData.get('targetId'),
+  });
   const image = formData.get('image');
-  if (!gameIdResult.success || !(image instanceof File)) {
+  if (!targetResult.success || !(image instanceof File)) {
     return NextResponse.json({ error: 'กรุณาเลือกเกมและไฟล์ภาพ' }, { status: 400 });
   }
   if (!allowedTypes.includes(image.type as AllowedMime)) {
@@ -47,14 +54,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'ไฟล์ภาพต้องมีขนาดไม่เกิน 10 MB' }, { status: 413 });
   }
 
-  const gameId = gameIdResult.data;
-  const { data: game } = await admin.supabase
-    .from('games')
-    .select('id, season_id, home_team_id, away_team_id, status')
-    .eq('id', gameId)
-    .maybeSingle();
-  if (!game || game.status !== 'final') {
-    return NextResponse.json({ error: 'นำเข้าสถิติได้เฉพาะเกมที่ประกาศผล final แล้ว' }, { status: 409 });
+  const { targetType, targetId } = targetResult.data;
+  let seasonId: string | null = null;
+  let homeTeamId = '';
+  let awayTeamId = '';
+
+  if (targetType === 'league') {
+    const { data: game } = await admin.supabase
+      .from('games')
+      .select('id, season_id, home_team_id, away_team_id, status')
+      .eq('id', targetId)
+      .maybeSingle();
+    if (!game || game.status !== 'final') {
+      return NextResponse.json({ error: 'นำเข้าสถิติได้เฉพาะเกมลีกที่ประกาศผล Final แล้ว' }, { status: 409 });
+    }
+    seasonId = game.season_id;
+    homeTeamId = game.home_team_id;
+    awayTeamId = game.away_team_id;
+  } else {
+    const { data: match } = await admin.supabase
+      .from('tournament_matches')
+      .select('id, tournament_id, home_team_id, away_team_id, status')
+      .eq('id', targetId)
+      .maybeSingle();
+    if (!match || !match.home_team_id || !match.away_team_id || ['postponed', 'cancelled'].includes(match.status)) {
+      return NextResponse.json({ error: 'แมตช์ Tournament ต้องมีทั้งสองทีมและไม่ถูกเลื่อนหรือยกเลิก' }, { status: 409 });
+    }
+    const { data: tournament } = await admin.supabase
+      .from('tournaments')
+      .select('season_id')
+      .eq('id', match.tournament_id)
+      .maybeSingle();
+    seasonId = tournament?.season_id ?? null;
+    homeTeamId = match.home_team_id;
+    awayTeamId = match.away_team_id;
   }
 
   const importId = randomUUID();
@@ -64,7 +97,7 @@ export async function POST(request: Request) {
     'image/webp': 'webp',
     'image/gif': 'gif',
   } as Record<AllowedMime, string>)[image.type as AllowedMime];
-  const storagePath = `${gameId}/${importId}.${extension}`;
+  const storagePath = `${targetType}/${targetId}/${importId}.${extension}`;
   const bytes = new Uint8Array(await image.arrayBuffer());
   const { error: uploadError } = await admin.supabase.storage
     .from('stat-screenshots')
@@ -77,7 +110,8 @@ export async function POST(request: Request) {
   const model = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
   const { error: importError } = await admin.supabase.from('stat_imports').insert({
     id: importId,
-    game_id: gameId,
+    game_id: targetType === 'league' ? targetId : null,
+    tournament_match_id: targetType === 'tournament' ? targetId : null,
     storage_path: storagePath,
     original_filename: image.name.slice(0, 255) || `box-score.${extension}`,
     mime_type: image.type,
@@ -96,17 +130,28 @@ export async function POST(request: Request) {
     const extraction = await extractBasketballStats({ bytes, mediaType: image.type as AllowedMime });
     if (extraction.rows.length === 0) throw new Error('ไม่พบแถวผู้เล่นในภาพ');
 
-    const { data: rosterRows } = await admin.supabase
-      .from('rosters')
-      .select('player_id, team_id')
-      .eq('season_id', game.season_id)
-      .in('team_id', [game.home_team_id, game.away_team_id]);
-    const playerIds = [...new Set((rosterRows ?? []).map((row) => row.player_id as string))];
-    const { data: playerRows } = playerIds.length
-      ? await admin.supabase.from('players').select('id, name, first_name, last_name, roblox_username').in('id', playerIds)
-      : { data: [] };
-    const players = (playerRows ?? []) as PlayerRow[];
-    const rosterByPlayer = new Map((rosterRows ?? []).map((row) => [row.player_id as string, row.team_id as string]));
+    let players: PlayerRow[] = [];
+    let teamByPlayer = new Map<string, string>();
+    if (seasonId) {
+      const { data: rosterRows } = await admin.supabase
+        .from('rosters')
+        .select('player_id, team_id')
+        .eq('season_id', seasonId)
+        .in('team_id', [homeTeamId, awayTeamId]);
+      const playerIds = [...new Set((rosterRows ?? []).map((row) => row.player_id as string))];
+      const { data: playerRows } = playerIds.length
+        ? await admin.supabase.from('players').select('id, name, first_name, last_name, roblox_username').in('id', playerIds)
+        : { data: [] };
+      players = (playerRows ?? []) as PlayerRow[];
+      teamByPlayer = new Map((rosterRows ?? []).map((row) => [row.player_id as string, row.team_id as string]));
+    } else {
+      const { data: playerRows } = await admin.supabase
+        .from('players')
+        .select('id, name, first_name, last_name, roblox_username, team_id')
+        .in('team_id', [homeTeamId, awayTeamId]);
+      players = (playerRows ?? []) as PlayerRow[];
+      teamByPlayer = new Map(players.map((player) => [player.id, player.team_id ?? '']));
+    }
 
     const rows: EditableStatRow[] = extraction.rows.map((row) => {
       const normalized = normalizeName(row.Player);
@@ -127,7 +172,7 @@ export async function POST(request: Request) {
       return {
         player: row.Player.trim(),
         playerId: match?.id ?? '',
-        teamId: match ? rosterByPlayer.get(match.id) ?? '' : '',
+        teamId: match ? teamByPlayer.get(match.id) ?? '' : '',
         pts: Math.max(0, Math.round(row.Pts)),
         fgm: Math.max(0, Math.round(row.Fgm)),
         fga: Math.max(0, Math.round(row.Fga)),

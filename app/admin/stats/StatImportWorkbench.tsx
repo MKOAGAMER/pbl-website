@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Bot, CheckCircle2, FileImage, Save, Upload, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { validateBasketballStatRows, type EditableStatRow, type StatEntryGame, type StatEntryPlayer, type StatImportSummary } from '@/lib/stat-import';
+import { validateBasketballStatRows, type EditableStatRow, type StatEntryPlayer, type StatEntryTarget, type StatImportSummary } from '@/lib/stat-import';
 
 type Props = {
-  games: StatEntryGame[];
+  targets: StatEntryTarget[];
   players: StatEntryPlayer[];
   imports: StatImportSummary[];
 };
@@ -25,10 +25,11 @@ const headers: Array<{ key: NumericField; label: string; readOnly?: boolean }> =
   { key: 'tov', label: 'Tov' }, { key: 'fls', label: 'Fls' }, { key: 'plusMinus', label: '+/-' }, { key: 'ping', label: 'Ping' },
 ];
 
-export function StatImportWorkbench({ games, players, imports }: Props) {
+export function StatImportWorkbench({ targets, players, imports }: Props) {
   const router = useRouter();
   const firstDraft = imports.find((item) => item.status === 'review_required');
-  const [gameId, setGameId] = useState(firstDraft?.gameId ?? games[0]?.id ?? '');
+  const firstDraftTargetId = firstDraft?.tournamentMatchId ?? firstDraft?.gameId ?? '';
+  const [targetId, setTargetId] = useState(firstDraftTargetId || targets[0]?.id || '');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [activeId, setActiveId] = useState(firstDraft?.id ?? '');
@@ -36,11 +37,23 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
   const [warnings, setWarnings] = useState<string[]>(firstDraft?.warnings ?? []);
   const [busy, setBusy] = useState<'upload' | 'save' | ''>('');
   const [message, setMessage] = useState('');
-  const activeGame = games.find((game) => game.id === gameId);
+  const activeTarget = targets.find((target) => target.id === targetId);
   const eligiblePlayers = useMemo(() => players.filter((player) => (
-    player.teamId === activeGame?.homeTeamId || player.teamId === activeGame?.awayTeamId
-  )), [activeGame, players]);
-  const validationIssues = useMemo(() => rows.length ? validateBasketballStatRows(rows) : [], [rows]);
+    player.teamId === activeTarget?.homeTeamId || player.teamId === activeTarget?.awayTeamId
+  )), [activeTarget, players]);
+  const generatedScore = useMemo(() => ({
+    home: rows.filter((row) => row.teamId === activeTarget?.homeTeamId).reduce((total, row) => total + row.pts, 0),
+    away: rows.filter((row) => row.teamId === activeTarget?.awayTeamId).reduce((total, row) => total + row.pts, 0),
+  }), [activeTarget, rows]);
+  const validationIssues = useMemo(() => {
+    const issues = rows.length ? validateBasketballStatRows(rows) : [];
+    if (activeTarget?.type === 'tournament' && rows.length) {
+      if (!rows.some((row) => row.teamId === activeTarget.homeTeamId)) issues.push('ทีม Home ต้องมีผู้เล่นอย่างน้อย 1 แถว');
+      if (!rows.some((row) => row.teamId === activeTarget.awayTeamId)) issues.push('ทีม Away ต้องมีผู้เล่นอย่างน้อย 1 แถว');
+      if (generatedScore.home === generatedScore.away) issues.push('คะแนน Tournament รอบ Final ห้ามเสมอกัน');
+    }
+    return issues;
+  }, [activeTarget, generatedScore, rows]);
 
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -55,14 +68,15 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
 
   async function extract(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file || !gameId) {
+    if (!file || !activeTarget) {
       setMessage('กรุณาเลือกเกมและไฟล์ภาพ');
       return;
     }
     setBusy('upload');
     setMessage('');
     const body = new FormData();
-    body.set('gameId', gameId);
+    body.set('targetType', activeTarget.type);
+    body.set('targetId', activeTarget.id);
     body.set('image', file);
     try {
       const response = await fetch('/api/admin/stats/extract', { method: 'POST', body });
@@ -82,12 +96,20 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
 
   function openDraft(item: StatImportSummary) {
     setActiveId(item.id);
-    setGameId(item.gameId);
+    setTargetId(item.tournamentMatchId ?? item.gameId ?? '');
     setRows(item.rows);
     setWarnings(item.warnings);
     setFile(null);
     setPreviewUrl('');
     setMessage(`เปิดแบบร่าง ${item.originalFilename}`);
+  }
+
+  function changeTarget(nextTargetId: string) {
+    setTargetId(nextTargetId);
+    setRows([]);
+    setWarnings([]);
+    setActiveId('');
+    setMessage('');
   }
 
   function updatePlayer(rowIndex: number, playerId: string) {
@@ -107,9 +129,8 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
 
   async function confirmRows() {
     if (!activeId || !rows.length) return;
-    const issues = validateBasketballStatRows(rows);
-    if (issues.length) {
-      setMessage(issues[0]);
+    if (validationIssues.length) {
+      setMessage(validationIssues[0]);
       return;
     }
     setBusy('save');
@@ -122,7 +143,9 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
       });
       const payload = await response.json() as { error?: string; savedRows?: number };
       if (!response.ok) throw new Error(payload.error || 'บันทึกสถิติไม่สำเร็จ');
-      setMessage(`บันทึกสถิติ ${payload.savedRows ?? rows.length} แถวแล้ว หน้า Stats จะใช้ข้อมูลล่าสุดทันที`);
+      setMessage(activeTarget?.type === 'tournament'
+        ? `บันทึกผล Tournament ${generatedScore.away}–${generatedScore.home} และประกาศผู้ชนะแล้ว`
+        : `บันทึกสถิติ ${payload.savedRows ?? rows.length} แถวแล้ว หน้า Stats จะใช้ข้อมูลล่าสุดทันที`);
       setRows([]);
       setWarnings([]);
       setActiveId('');
@@ -141,14 +164,18 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
       <div className="grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
         <form onSubmit={extract} className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
           <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Upload className="h-5 w-5" /></span><div><p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">Step 1</p><h2 className="mt-1 text-xl font-black">อัปโหลดภาพต้นฉบับ</h2></div></div>
-          <label className="mt-6 block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">เกมที่จบแล้ว
-            <select value={gameId} onChange={(event) => setGameId(event.target.value)} className="admin-input mt-2" required><option value="">เลือกเกม</option>{games.map((game) => <option key={game.id} value={game.id}>{game.label}</option>)}</select>
+          <label className="mt-6 block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">เกมหรือแมตช์ Tournament
+            <select value={targetId} onChange={(event) => changeTarget(event.target.value)} className="admin-input mt-2" required>
+              <option value="">เลือกการแข่งขัน</option>
+              {targets.some((target) => target.type === 'tournament') && <optgroup label="Tournament matches">{targets.filter((target) => target.type === 'tournament').map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</optgroup>}
+              {targets.some((target) => target.type === 'league') && <optgroup label="League games (Final)">{targets.filter((target) => target.type === 'league').map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</optgroup>}
+            </select>
           </label>
           <label className="mt-4 block cursor-pointer rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--page)] p-5 text-center transition hover:border-[var(--orange)]">
             <FileImage className="mx-auto h-7 w-7 text-[var(--orange-soft)]" /><span className="mt-3 block text-sm font-black">{file?.name ?? 'เลือก screenshot สถิติ'}</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">JPEG, PNG, WebP หรือ GIF · สูงสุด 10 MB</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={chooseFile} className="sr-only" />
           </label>
-          <button type="submit" disabled={!file || !gameId || Boolean(busy)} className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] text-xs font-black uppercase tracking-[0.1em] text-black disabled:opacity-50"><Bot className="h-4 w-4" />{busy === 'upload' ? 'Gemini กำลังอ่านภาพ...' : 'วิเคราะห์ภาพด้วย Gemini'}</button>
-          <p className="mt-4 text-xs leading-5 text-[var(--ink-faint)]">ภาพจะถูกเก็บใน Supabase Storage แบบ private และผูกกับ game record เพื่อใช้ตรวจสอบย้อนหลัง</p>
+          <button type="submit" disabled={!file || !activeTarget || Boolean(busy)} className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] text-xs font-black uppercase tracking-[0.1em] text-black disabled:opacity-50"><Bot className="h-4 w-4" />{busy === 'upload' ? 'Gemini กำลังอ่านภาพ...' : 'วิเคราะห์ภาพด้วย Gemini'}</button>
+          <p className="mt-4 text-xs leading-5 text-[var(--ink-faint)]">ภาพจะถูกเก็บใน Supabase Storage แบบ private และผูกกับการแข่งขันที่เลือกเพื่อใช้ตรวจสอบย้อนหลัง</p>
         </form>
 
         <section className="min-h-72 overflow-hidden rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-4">
@@ -167,21 +194,22 @@ export function StatImportWorkbench({ games, players, imports }: Props) {
       {rows.length > 0 && (
         <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)]">
           <div className="flex flex-col gap-4 border-b border-[var(--line)] p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">Step 2 · Mandatory review</p><h2 className="mt-2 text-xl font-black">ตรวจและแก้ก่อนบันทึก</h2><p className="mt-2 text-xs text-[var(--ink-faint)]">Fg%, 3p% และ Ft% เก็บไว้ในหลักฐานการตรวจ ส่วนฐานข้อมูลคำนวณเปอร์เซ็นต์จริงจาก made/attempted เพื่อไม่ให้ข้อมูลคลาดเคลื่อน</p></div><a href={`/api/admin/stats/imports/${activeId}/source`} target="_blank" rel="noreferrer" className="text-xs font-black uppercase tracking-[0.1em] text-[var(--orange-soft)]">เปิดภาพต้นฉบับ ↗</a></div>
+          {activeTarget?.type === 'tournament' && <div className="m-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-2xl border border-[var(--orange)]/30 bg-[var(--orange)]/10 p-5 text-center"><div><p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Away</p><p className="race-display mt-2 text-4xl">{generatedScore.away}</p></div><div className="text-xs font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">Generated score</div><div><p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Home</p><p className="race-display mt-2 text-4xl">{generatedScore.home}</p></div></div>}
           {warnings.length > 0 && <div className="m-5 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100"><p className="flex items-center gap-2 font-black"><AlertTriangle className="h-4 w-4" /> จุดที่ควรตรวจซ้ำ</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{warnings.map((warning, index) => <li key={`${warning}-${index}`}>{warning}</li>)}</ul></div>}
           <div className="overflow-x-auto">
             <table className="min-w-[154rem] border-collapse text-xs">
               <thead><tr className="border-y border-[var(--line)] bg-[var(--page)] text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--ink-faint)]"><th className="sticky left-0 z-10 min-w-64 bg-[var(--page)] px-3 py-3 text-left">Player</th><th className="min-w-24 px-2 py-3 text-left">Team</th>{headers.map((header) => <th key={header.key} className="min-w-20 px-2 py-3 text-center">{header.label}</th>)}</tr></thead>
-              <tbody>{rows.map((row, rowIndex) => <tr key={`${activeId}-${rowIndex}`} className="border-b border-[var(--line)] last:border-0"><td className="sticky left-0 z-10 bg-[var(--surface)] p-2"><select value={row.playerId} onChange={(event) => updatePlayer(rowIndex, event.target.value)} className="admin-input !min-h-9 !rounded-lg !text-xs" aria-label={`ผู้เล่นแถว ${rowIndex + 1}`}><option value="">{row.player} · ยังไม่จับคู่</option>{eligiblePlayers.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></td><td className="px-2 py-2 font-black text-[var(--ink-soft)]">{row.teamId === activeGame?.homeTeamId ? 'HOME' : row.teamId === activeGame?.awayTeamId ? 'AWAY' : '—'}</td>{headers.map((header) => <td key={header.key} className="p-2"><input type="number" step={header.key.endsWith('Pct') ? '0.1' : '1'} value={row[header.key]} onChange={(event) => updateNumber(rowIndex, header.key, event.target.value)} className="admin-input !min-h-9 !rounded-lg !px-2 text-center !text-xs number-tabular" aria-label={`${header.label} ของ ${row.player}`} /></td>)}</tr>)}</tbody>
+              <tbody>{rows.map((row, rowIndex) => <tr key={`${activeId}-${rowIndex}`} className="border-b border-[var(--line)] last:border-0"><td className="sticky left-0 z-10 bg-[var(--surface)] p-2"><select value={row.playerId} onChange={(event) => updatePlayer(rowIndex, event.target.value)} className="admin-input !min-h-9 !rounded-lg !text-xs" aria-label={`ผู้เล่นแถว ${rowIndex + 1}`}><option value="">{row.player} · ยังไม่จับคู่</option>{eligiblePlayers.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select></td><td className="px-2 py-2 font-black text-[var(--ink-soft)]">{row.teamId === activeTarget?.homeTeamId ? 'HOME' : row.teamId === activeTarget?.awayTeamId ? 'AWAY' : '—'}</td>{headers.map((header) => <td key={header.key} className="p-2"><input type="number" step={header.key.endsWith('Pct') ? '0.1' : '1'} value={row[header.key]} onChange={(event) => updateNumber(rowIndex, header.key, event.target.value)} className="admin-input !min-h-9 !rounded-lg !px-2 text-center !text-xs number-tabular" aria-label={`${header.label} ของ ${row.player}`} /></td>)}</tr>)}</tbody>
             </table>
           </div>
-          <div className="flex flex-col gap-4 border-t border-[var(--line)] p-5 sm:flex-row sm:items-center sm:justify-between"><div className="text-xs"><p className={`flex items-center gap-2 font-black ${validationIssues.length ? 'text-red-200' : 'text-emerald-200'}`}>{validationIssues.length ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}{validationIssues.length ? `${validationIssues.length} จุดต้องแก้ก่อนบันทึก` : `${rows.length} แถวพร้อมบันทึก`}</p>{validationIssues[0] && <p className="mt-1 text-[var(--ink-faint)]">{validationIssues[0]}</p>}</div><button type="button" onClick={() => void confirmRows()} disabled={Boolean(busy) || validationIssues.length > 0} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-xs font-black uppercase tracking-[0.1em] text-emerald-950 disabled:opacity-40"><Save className="h-4 w-4" />{busy === 'save' ? 'กำลังบันทึก...' : 'ยืนยันและบันทึก DB'}</button></div>
+          <div className="flex flex-col gap-4 border-t border-[var(--line)] p-5 sm:flex-row sm:items-center sm:justify-between"><div className="text-xs"><p className={`flex items-center gap-2 font-black ${validationIssues.length ? 'text-red-200' : 'text-emerald-200'}`}>{validationIssues.length ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}{validationIssues.length ? `${validationIssues.length} จุดต้องแก้ก่อนบันทึก` : `${rows.length} แถวพร้อมบันทึก`}</p>{validationIssues[0] && <p className="mt-1 text-[var(--ink-faint)]">{validationIssues[0]}</p>}</div><button type="button" onClick={() => void confirmRows()} disabled={Boolean(busy) || validationIssues.length > 0} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-xs font-black uppercase tracking-[0.1em] text-emerald-950 disabled:opacity-40"><Save className="h-4 w-4" />{busy === 'save' ? 'กำลังบันทึก...' : activeTarget?.type === 'tournament' ? 'ยืนยันสกอร์ Tournament' : 'ยืนยันและบันทึก DB'}</button></div>
         </section>
       )}
 
       <section>
         <div className="mb-4 flex items-center justify-between"><div><p className="eyebrow">Audit trail</p><h2 className="mt-3 text-2xl font-black">รายการนำเข้าล่าสุด</h2></div><span className="text-xs text-[var(--ink-faint)]">เก็บภาพอ้างอิงทุกครั้ง</span></div>
         <div className="overflow-hidden rounded-[1.4rem] border border-[var(--line)] bg-[var(--surface)]">
-          {imports.length === 0 ? <p className="p-7 text-sm text-[var(--ink-faint)]">ยังไม่มีรายการนำเข้าสถิติ</p> : imports.map((item) => <div key={item.id} className="flex flex-col gap-3 border-b border-[var(--line)] p-4 last:border-0 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-black">{item.originalFilename}</p><p className="mt-1 text-xs text-[var(--ink-faint)]">{games.find((game) => game.id === item.gameId)?.label ?? item.gameId} · {new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.createdAt))}</p>{item.errorMessage && <p className="mt-1 text-xs text-red-300">{item.errorMessage}</p>}</div><div className="flex items-center gap-2"><span className={`rounded-full px-3 py-1 text-[0.58rem] font-black uppercase ${statusClass(item.status)}`}>{item.status.replace('_', ' ')}</span><a href={`/api/admin/stats/imports/${item.id}/source`} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-[0.62rem] font-black uppercase">ภาพ</a>{item.status === 'review_required' && <button type="button" onClick={() => openDraft(item)} className="rounded-lg bg-[var(--orange)] px-3 py-1.5 text-[0.62rem] font-black uppercase text-black">ตรวจต่อ</button>}</div></div>)}
+          {imports.length === 0 ? <p className="p-7 text-sm text-[var(--ink-faint)]">ยังไม่มีรายการนำเข้าสถิติ</p> : imports.map((item) => { const importTargetId = item.tournamentMatchId ?? item.gameId; return <div key={item.id} className="flex flex-col gap-3 border-b border-[var(--line)] p-4 last:border-0 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-black">{item.originalFilename}</p><p className="mt-1 text-xs text-[var(--ink-faint)]">{targets.find((target) => target.id === importTargetId)?.label ?? importTargetId} · {new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.createdAt))}</p>{item.errorMessage && <p className="mt-1 text-xs text-red-300">{item.errorMessage}</p>}</div><div className="flex items-center gap-2"><span className={`rounded-full px-3 py-1 text-[0.58rem] font-black uppercase ${statusClass(item.status)}`}>{item.status.replace('_', ' ')}</span><a href={`/api/admin/stats/imports/${item.id}/source`} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-[0.62rem] font-black uppercase">ภาพ</a>{item.status === 'review_required' && <button type="button" onClick={() => openDraft(item)} className="rounded-lg bg-[var(--orange)] px-3 py-1.5 text-[0.62rem] font-black uppercase text-black">ตรวจต่อ</button>}</div></div>; })}
         </div>
       </section>
     </div>

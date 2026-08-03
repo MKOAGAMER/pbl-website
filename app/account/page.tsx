@@ -30,7 +30,7 @@ export default async function AccountPage({ searchParams }: Props) {
   const discordReady = isDiscordAuthConfigured();
   const supabase = createAdminClient();
   const { data: playerProfile } = supabase
-    ? await supabase.from('players').select('bio, slug').eq('user_id', user.id).maybeSingle()
+    ? await supabase.from('players').select('bio, slug, position, positions, jersey_number').eq('user_id', user.id).maybeSingle()
     : { data: null };
 
   return (
@@ -84,6 +84,10 @@ export default async function AccountPage({ searchParams }: Props) {
         </div>
         <ProfileAboutForm
           initialBio={typeof playerProfile?.bio === 'string' ? playerProfile.bio : ''}
+          initialPositions={Array.isArray(playerProfile?.positions) && playerProfile.positions.length
+            ? playerProfile.positions.filter((item): item is string => typeof item === 'string').slice(0, 3)
+            : [typeof playerProfile?.position === 'string' ? playerProfile.position : 'UTIL']}
+          initialJerseyNumber={typeof playerProfile?.jersey_number === 'number' ? playerProfile.jersey_number : 0}
           profileSlug={typeof playerProfile?.slug === 'string' ? playerProfile.slug : null}
         />
       </div>

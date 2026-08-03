@@ -34,7 +34,8 @@ export type EditableStatRow = z.infer<typeof extractedStatRowSchema>;
 
 export type StatImportSummary = {
   id: string;
-  gameId: string;
+  gameId: string | null;
+  tournamentMatchId: string | null;
   status: 'processing' | 'review_required' | 'confirmed' | 'failed';
   originalFilename: string;
   createdAt: string;
@@ -44,8 +45,9 @@ export type StatImportSummary = {
   rows: EditableStatRow[];
 };
 
-export type StatEntryGame = {
+export type StatEntryTarget = {
   id: string;
+  type: 'league' | 'tournament';
   label: string;
   homeTeamId: string;
   awayTeamId: string;
@@ -106,4 +108,3 @@ export function toDatabaseStatRows(rows: EditableStatRow[]) {
     ping: row.ping,
   }));
 }
-
