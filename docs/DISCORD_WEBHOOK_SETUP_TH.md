@@ -79,3 +79,5 @@ set webhook_secret = excluded.webhook_secret,
 ```
 
 Migration จะยิงเฉพาะตอน `trades.status` เปลี่ยนเป็น `approved` และใช้ `pg_net` แบบ asynchronous จึงไม่ทำให้ transaction การอนุมัติเทรดล้มเหลว หากใช้วิธีนี้ไม่ควรสร้าง Database Webhook ของ `trades` ซ้ำใน Dashboard (ระบบ log ยังช่วยกัน duplicate ได้ แต่จะมี request ซ้ำหนึ่งครั้ง)
+
+Migration `202608040003_content_match_discord_webhook.sql` เพิ่ม trigger สำหรับ `news_posts` และ `games` ด้วย ดังนั้นเมื่อติดตั้ง migration ครบแล้ว ไม่ต้องสร้าง Database Webhook ใน Dashboard สำหรับข่าวหรือผลแข่งอีก ระบบจะส่งเฉพาะข่าวที่ publish ครั้งแรกและเกมที่เปลี่ยนเป็น final ครั้งแรก
