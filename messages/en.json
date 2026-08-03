@@ -1,5 +1,6 @@
 {
   "Nav": {
+    "blacklist": "Blacklist",
     "home": "Home", "live": "Live", "standings": "Standings", "teams": "Teams", "players": "Players", "stats": "Stats", "trades": "Trades", "tournaments": "Tournaments", "schedule": "Schedule", "rankings": "Rankings", "accolades": "Awards", "playoffs": "Playoffs", "news": "News", "partners": "Partners", "staff": "Staff", "community": "Community", "privacy": "Privacy", "terms": "Terms", "discord": "Discord", "game": "Roblox Game", "group": "Roblox Group", "search": "Search", "openMenu": "Open navigation", "closeMenu": "Close navigation"
   },
   "Home": {

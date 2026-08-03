@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeftRight, Award, Bot, Cloud, Database, Gamepad2, MessageCircle, Newspaper, ScanLine, Trophy, UserSearch, UsersRound } from 'lucide-react';
+import { ArrowLeftRight, Award, Bot, Cloud, Database, Gamepad2, MessageCircle, Newspaper, ScanLine, ShieldAlert, Trophy, UserSearch, UsersRound } from 'lucide-react';
 import { requireAdminPermission } from '@/lib/admin-auth';
 import { getSiteConfig } from '@/lib/site-config';
 import { ConfigEditor } from './ConfigEditor';
@@ -106,6 +106,10 @@ export default async function AdminPage({ searchParams }: Props) {
         <Link href="/admin/trades" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ArrowLeftRight className="h-5 w-5" /></span>
           <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Trade review</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Approve or reject player movement</span></span>
+        </Link>
+        <Link href="/admin/discipline" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-red-400/10 text-red-300"><ShieldAlert className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Player discipline</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Warnings, suspensions, bans and blacklist</span></span>
         </Link>
         <Link href="/admin/stats" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><ScanLine className="h-5 w-5" /></span>

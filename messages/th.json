@@ -1,5 +1,6 @@
 {
   "Nav": {
+    "blacklist": "บัญชีดำ",
     "home": "หน้าแรก", "live": "สด", "standings": "ตารางคะแนน", "teams": "ทีม", "players": "ผู้เล่น", "stats": "สถิติ", "trades": "เทรด", "tournaments": "ทัวร์นาเมนต์", "schedule": "โปรแกรม", "rankings": "จัดอันดับ", "accolades": "รางวัล", "playoffs": "เพลย์ออฟ", "news": "ข่าว", "partners": "พาร์ทเนอร์", "staff": "ทีมงาน", "community": "ชุมชน", "privacy": "ความเป็นส่วนตัว", "terms": "ข้อกำหนด", "discord": "Discord", "game": "เกม Roblox", "group": "กลุ่ม Roblox", "search": "ค้นหา", "openMenu": "เปิดเมนู", "closeMenu": "ปิดเมนู"
   },
   "Home": {

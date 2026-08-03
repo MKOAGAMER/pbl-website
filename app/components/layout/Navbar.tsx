@@ -27,6 +27,7 @@ const competitionLinks = [
 
 const leagueLinks = [
   { href: '/news', key: 'news' },
+  { href: '/blacklist', key: 'blacklist' },
   { href: '/partners', key: 'partners' },
   { href: '/staff', key: 'staff' },
   { href: '/links', key: 'community' },

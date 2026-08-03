@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Bot, Settings2, UsersRound } from 'lucide-react';
+import { Bot, Settings2, ShieldAlert, UsersRound } from 'lucide-react';
 import { getCurrentUser } from '@/lib/session';
 
 export async function StaffControlStrip() {
@@ -12,6 +12,7 @@ export async function StaffControlStrip() {
         <Link href="/admin" className="inline-flex items-center gap-2 hover:text-[var(--ink)]"><Settings2 className="h-3.5 w-3.5" />{user.username} · Staff Control</Link>
         {user.adminPermission !== 'editor' && <Link href="/admin/league" className="inline-flex items-center gap-2 hover:text-[var(--ink)]"><UsersRound className="h-3.5 w-3.5" />League operations</Link>}
         {user.adminPermission !== 'editor' && <Link href="/admin/stats" className="inline-flex items-center gap-2 hover:text-[var(--ink)]"><Bot className="h-3.5 w-3.5" />Gemini stats</Link>}
+        {user.adminPermission !== 'editor' && <Link href="/admin/discipline" className="inline-flex items-center gap-2 hover:text-[var(--ink)]"><ShieldAlert className="h-3.5 w-3.5" />Player discipline</Link>}
       </div>
     </aside>
   );

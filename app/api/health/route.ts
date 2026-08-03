@@ -2,6 +2,8 @@ import { getSiteData } from '@/lib/league-data';
 import { createAdminClient } from '@/lib/supabase-admin';
 import { isRobloxAuthConfigured } from '@/lib/roblox-auth';
 import { getCloudinaryConfig } from '@/lib/cloudinary';
+import { isBotApiConfigured } from '@/lib/bot-auth';
+import { isDiscordInteractionsConfigured } from '@/lib/discord-interactions';
 
 export async function GET() {
   const supabase = createAdminClient();
@@ -23,6 +25,8 @@ export async function GET() {
       foundationReady,
       seasonReady,
       robloxAuthReady: isRobloxAuthConfigured(),
+      botApiReady: isBotApiConfigured(),
+      discordInteractionsReady: isDiscordInteractionsConfigured(),
       cloudinaryReady: Boolean(getCloudinaryConfig()),
       dataSource: data.source,
       season: data.season.slug,

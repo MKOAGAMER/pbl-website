@@ -9,7 +9,8 @@
 - สิทธิ์: ทุก Roblox login เริ่มเป็น Player/Free Agent; Staff/Admin จัดลีกผ่าน Editor / Staff / Super Admin
 - Trading: ผู้ใช้ยื่นคำขอ, staff อนุมัติ/ปฏิเสธ, อัปเดต roster แบบ transaction และค้นประวัติตามทีม/ผู้เล่น/วันที่
 - AI Stats: staff อัปโหลด screenshot, Gemini อ่านตารางแบบ structured output พร้อม fallback เมื่อ 2.5 Flash ไม่เปิดให้ API project, staff ตรวจ/แก้ทุกแถวก่อนยืนยัน
-- Discord: รับ Supabase Database Webhooks แล้วประกาศข่าวใหม่และผลแข่ง final ผ่าน Incoming Webhook
+- Discord: รับ Database Webhooks, รองรับ slash commands ผ่าน Discord Interactions และมี Bot API v1 สำหรับบอทที่รันแยก
+- Discipline: Warning, Match Suspension, Trade Ban, Account Ban และ Blacklist พร้อม enforcement ระดับฐานข้อมูล
 
 ## เริ่มพัฒนา
 
@@ -19,7 +20,7 @@ copy .env.example .env.local
 npm run dev
 ```
 
-อ่าน [คู่มือติดตั้ง PBAL](docs/PBAL_FOUNDATION_SETUP_TH.md) และ [คู่มือตั้ง Discord](docs/DISCORD_WEBHOOK_SETUP_TH.md) ก่อนทดสอบ workflow ที่เชื่อมบริการจริง
+อ่าน [คู่มือติดตั้ง PBAL](docs/PBAL_FOUNDATION_SETUP_TH.md), [คู่มือตั้ง Discord Webhook](docs/DISCORD_WEBHOOK_SETUP_TH.md) และ [คู่มือ Discord Bot](docs/DISCORD_BOT_SETUP_TH.md) ก่อนทดสอบ workflow ที่เชื่อมบริการจริง
 
 ## Supabase migrations
 
@@ -33,7 +34,8 @@ npm run dev
 6. `supabase/migrations/202607290005_staff_control.sql`
 7. `supabase/migrations/202607290006_franchise_profiles_tournaments.sql`
 8. `supabase/migrations/202608030001_self_profile_tournament_stat_entry.sql`
-8. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
+9. `supabase/migrations/202608030002_player_discipline_discord_bot.sql`
+10. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
 Migration ล่าสุดเพิ่ม Franchise Owner, การซื้อ/ปล่อยผู้เล่นผ่านการอนุมัติของ Staff, About และหลายตำแหน่งของผู้เล่น รวมถึง Tournament Control ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ
 
@@ -45,4 +47,4 @@ npm run typecheck
 npm run build
 ```
 
-ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `GEMINI_API_KEY`, `DISCORD_CLIENT_SECRET`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`
+ห้าม expose `SUPABASE_SERVICE_ROLE_KEY`, `ROBLOX_CLIENT_SECRET`, `CLOUDINARY_API_SECRET`, `GEMINI_API_KEY`, `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `PBAL_BOT_API_SECRET`, `DISCORD_WEBHOOK_URL` หรือ `SUPABASE_WEBHOOK_SECRET` ด้วย prefix `NEXT_PUBLIC_`

@@ -5,6 +5,7 @@ import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createAdminClient } from './supabase-admin';
 import type { PbalUser } from './pbal-types';
+import { hasActiveDiscipline } from './discipline';
 
 export const SESSION_COOKIE = 'pbal_session';
 export const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7;
@@ -72,7 +73,26 @@ export const getCurrentUser = cache(async (): Promise<PbalUser | null> => {
     .eq('id', session.user_id)
     .maybeSingle<UserRow>();
 
-  return user ? toUser(user) : null;
+  if (!user) return null;
+
+  const { data: player, error: playerError } = await supabase
+    .from('players')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle<{ id: string }>();
+  if (!playerError && player) {
+    try {
+      if (await hasActiveDiscipline(supabase, player.id, ['account_ban', 'blacklist'])) {
+        return null;
+      }
+    } catch (error) {
+      // Keep existing accounts usable during a rolling deployment where the
+      // application may become live immediately before the migration finishes.
+      console.error('[session:discipline-check]', error instanceof Error ? error.message : error);
+    }
+  }
+
+  return toUser(user);
 });
 
 export async function revokeCurrentSession() {
