@@ -1,0 +1,146 @@
+.frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-height: 24rem;
+  align-items: center;
+  justify-content: center;
+  padding: 4.8rem 1.5rem 1.2rem;
+}
+
+.diagram {
+  display: block;
+  width: min(100%, 52rem);
+  max-height: 30rem;
+  overflow: visible;
+  color: #edf2f4;
+  filter: drop-shadow(0 1.4rem 2rem rgba(0, 0, 0, 0.38));
+}
+
+.body,
+.keyboardDeck {
+  fill: rgba(7, 10, 13, 0.82);
+  stroke: currentColor;
+  stroke-width: 3;
+}
+
+.shoulderLine,
+.gripDetail,
+.touchDetail {
+  fill: none;
+  stroke: rgba(237, 242, 244, 0.62);
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.button,
+.dpad,
+.shoulder,
+.key,
+.stickCap {
+  fill: #0b1014;
+  stroke: #edf2f4;
+  stroke-width: 2.4;
+  transition: fill 120ms ease, stroke 120ms ease, filter 120ms ease;
+}
+
+.dpad {
+  stroke-linejoin: round;
+}
+
+.dpadCenter,
+.systemButton,
+.homeButton,
+.touchpad,
+.stickWell {
+  fill: #0b1014;
+  stroke: rgba(237, 242, 244, 0.88);
+  stroke-width: 2;
+}
+
+.touchpad {
+  fill: rgba(16, 22, 27, 0.84);
+}
+
+.stickRing {
+  fill: none;
+  stroke: rgba(237, 242, 244, 0.55);
+  stroke-width: 1.7;
+}
+
+.faceLabel,
+.keyLabel,
+.shoulderLabel,
+.microLabel,
+.deviceLabel {
+  fill: #edf2f4;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  text-anchor: middle;
+  user-select: none;
+}
+
+.shoulderLabel,
+.microLabel {
+  font-size: 12px;
+}
+
+.deviceLabel {
+  fill: rgba(237, 242, 244, 0.42);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+}
+
+.active .button,
+.active.button,
+.active .dpad,
+.active.dpad,
+.active .shoulder,
+.active.shoulder,
+.active .key,
+.active.key,
+.active .stickCap,
+.active.stickCap {
+  fill: #ff6b22;
+  stroke: #ffd1b8;
+  filter: drop-shadow(0 0 11px rgba(255, 107, 34, 0.78));
+}
+
+.wrong .button,
+.wrong.button,
+.wrong .dpad,
+.wrong.dpad,
+.wrong .shoulder,
+.wrong.shoulder,
+.wrong .key,
+.wrong.key,
+.wrong .stickCap,
+.wrong.stickCap {
+  fill: #ff405d;
+  stroke: #ffc0ca;
+  filter: drop-shadow(0 0 11px rgba(255, 64, 93, 0.8));
+}
+
+.active .faceLabel,
+.active .keyLabel,
+.active .shoulderLabel,
+.active .microLabel,
+.wrong .faceLabel,
+.wrong .keyLabel,
+.wrong .shoulderLabel,
+.wrong .microLabel {
+  fill: #120907;
+}
+
+@media (max-width: 620px) {
+  .frame {
+    min-height: 22rem;
+    padding: 7.5rem 0.4rem 0.2rem;
+  }
+
+  .diagram {
+    width: 112%;
+  }
+}

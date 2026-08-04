@@ -1,4 +1,11 @@
 export type ControlSchemeId = 'keyboard_pc' | 'controller_dpad' | 'controller_rightstick';
+export type ControllerStyle = 'xbox' | 'playstation';
+export type InputAction = 'press' | 'hold' | 'release' | 'analog';
+
+export type InputRequirement = {
+  token: string;
+  action: InputAction;
+};
 
 export type BallHand = 'left' | 'right' | 'both';
 

@@ -10,6 +10,7 @@ import type { CSSProperties } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { StaffControlStrip } from './components/layout/StaffControlStrip';
+import { SpotifyPlayer } from './components/layout/SpotifyPlayer';
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -76,6 +77,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             {children}
           </main>
           <Footer />
+          <SpotifyPlayer />
           </Providers>
         </NextIntlClientProvider>
       </body>

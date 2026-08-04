@@ -1,4 +1,4 @@
-import type { ControlMove, ControlScheme, ControlSchemeId, MoveEntry } from './types';
+import type { ControlMove, ControlScheme, ControlSchemeId, ControllerStyle, InputRequirement, MoveEntry } from './types';
 
 const KEYBOARD_TOKEN = /Shift|Space(?:bar)?|\b(?:[A-Z]|[1-4])\b/gi;
 const CONTROLLER_TOKEN = /D-Pad (?:Up|Down|Left|Right)|RS (?:Up|Down|Left|Right)|LS (?:Up|Down|Left|Right)|\b(?:LT|RT|LB|RB|L3|R3|A|B|X|Y)\b/gi;
@@ -36,9 +36,8 @@ function canonicalToken(token: string) {
   return cleaned.toUpperCase();
 }
 
-export function parseMoveTokens(keys: string, schemeId: ControlSchemeId): string[] {
+function normaliseMoveSource(keys: string, schemeId: ControlSchemeId) {
   let source = keys;
-  const repeatLast = /\(twice\)|double tap/i.test(source);
 
   if (schemeId === 'keyboard_pc') {
     source = source
@@ -56,10 +55,35 @@ export function parseMoveTokens(keys: string, schemeId: ControlSchemeId): string
     }
   }
 
-  const matches = source.match(schemeId === 'keyboard_pc' ? KEYBOARD_TOKEN : CONTROLLER_TOKEN) ?? [];
-  const tokens = matches.map(canonicalToken);
-  if (repeatLast && tokens.length > 0) tokens.push(tokens.at(-1)!);
-  return tokens;
+  return source;
+}
+
+export function parseMoveInputs(keys: string, schemeId: ControlSchemeId): InputRequirement[] {
+  const source = normaliseMoveSource(keys, schemeId);
+  const repeatLast = /\(twice\)|double tap/i.test(source);
+  const tokenPattern = schemeId === 'keyboard_pc' ? KEYBOARD_TOKEN : CONTROLLER_TOKEN;
+  const matcher = new RegExp(tokenPattern.source, tokenPattern.flags);
+  const inputs = Array.from(source.matchAll(matcher)).map((match) => {
+    const index = match.index ?? 0;
+    const plusBoundary = source.lastIndexOf('+', index - 1);
+    const commaBoundary = source.lastIndexOf(',', index - 1);
+    const thenBoundary = source.toLowerCase().lastIndexOf('then', index - 1);
+    const boundary = Math.max(plusBoundary, commaBoundary, thenBoundary);
+    const prefix = source.slice(boundary + 1, index).toLowerCase();
+    const token = canonicalToken(match[0]);
+    let action: InputRequirement['action'] = 'press';
+    if (/^(?:LS|RS) /.test(token)) action = 'analog';
+    else if (/release/.test(prefix)) action = 'release';
+    else if (/hold/.test(prefix)) action = 'hold';
+    return { token, action };
+  });
+
+  if (repeatLast && inputs.length > 0) inputs.push({ ...inputs.at(-1)! });
+  return inputs;
+}
+
+export function parseMoveTokens(keys: string, schemeId: ControlSchemeId): string[] {
+  return parseMoveInputs(keys, schemeId).map((input) => input.token);
 }
 
 export function entriesForScheme(scheme: ControlScheme): MoveEntry[] {
@@ -96,6 +120,15 @@ export function deviceButtons(schemeId: ControlSchemeId) {
     `${direction} Up`, `${direction} Left`, `${direction} Down`, `${direction} Right`,
     'A', 'B', 'X', 'Y', 'R3', 'RB', 'RT',
   ];
+}
+
+export function displayControllerToken(token: string, style: ControllerStyle) {
+  if (style === 'xbox') return token;
+  const labels: Record<string, string> = {
+    A: '×', B: '○', X: '□', Y: '△',
+    LB: 'L1', RB: 'R1', LT: 'L2', RT: 'R2',
+  };
+  return labels[token] ?? token;
 }
 
 export function handLabel(hand?: string) {

@@ -17,7 +17,7 @@ const primaryLinks = [
 ] as const;
 
 const competitionLinks = [
-  { href: '/controls', key: 'controlLab', description: '3D controls & practice' },
+  { href: '/controls', key: 'controlLab', description: 'Controls & practice' },
   { href: '/stats', key: 'stats', description: 'Player performance' },
   { href: '/trades', key: 'trades', description: 'Player movement' },
   { href: '/tournaments', key: 'tournaments', description: 'Events & brackets' },

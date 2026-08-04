@@ -1,0 +1,159 @@
+.player {
+  position: fixed;
+  z-index: 55;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(24rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 1rem;
+  background: rgba(10, 13, 16, 0.94);
+  box-shadow: 0 1.3rem 4rem rgba(0, 0, 0, 0.48);
+  color: #f7f8fa;
+  backdrop-filter: blur(18px);
+}
+
+.header {
+  display: flex;
+  min-height: 3.7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.albumButton {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.65rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.albumIcon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: linear-gradient(145deg, #ff7c32, #c83d11);
+  color: #100a07;
+  box-shadow: 0 0 1.2rem rgba(255, 106, 34, 0.24);
+}
+
+.albumIcon svg {
+  width: 1.05rem;
+}
+
+.albumButton > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.albumButton small {
+  color: #ff8a48;
+  font-size: 0.47rem;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+}
+
+.albumButton strong {
+  overflow: hidden;
+  margin-top: 0.15rem;
+  color: #eef0f2;
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.actions a,
+.actions button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  background: transparent;
+  color: #89939b;
+}
+
+.actions a:hover,
+.actions button:hover {
+  border-color: #ff6a22;
+  color: #ff8a48;
+}
+
+.actions svg {
+  width: 0.85rem;
+}
+
+.enableButton {
+  display: flex;
+  width: calc(100% - 1.2rem);
+  margin: 0 0.6rem 0.6rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #ff6a22;
+  padding: 0.68rem;
+  color: #160c07;
+  font-size: 0.62rem;
+  font-weight: 950;
+}
+
+.enableButton svg {
+  width: 0.9rem;
+}
+
+.embedWrap {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: height 220ms ease, opacity 180ms ease;
+}
+
+.expanded .embedWrap {
+  height: 23.8rem;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.embedWrap iframe {
+  display: block;
+  border: 0;
+  border-radius: 0.75rem;
+  padding-inline: 0.5rem;
+}
+
+.embedWrap p {
+  margin: 0.35rem 0.7rem 0.65rem;
+  color: #68737c;
+  font-size: 0.5rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .player {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: calc(100vw - 1rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .embedWrap { transition: none; }
+}

@@ -1,6 +1,6 @@
 {
   "game": "Practical Basketball (Roblox)",
-  "purpose": "Structured reference data for building an interactive 3D control visualizer / button-press simulator website.",
+  "purpose": "Structured reference data for building an interactive control visualizer / button-press simulator website.",
   "how_to_use": "Each control_scheme represents ONE input device/mapping. Each category groups related moves. Each move has a display name, the exact key/button combo (as written by the community moderator who authored the source), optional 'hand' (which hand holds the ball, relevant for mirrored animations), and optional notes with extra context or timing info. Some entries include an 'ambiguous_source' note where the original document itself had a contradiction (bracket vs. description text) - flagged so the AI/dev can pick one interpretation instead of silently guessing.",
   "control_schemes": [
     {

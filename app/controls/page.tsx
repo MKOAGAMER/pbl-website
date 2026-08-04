@@ -5,7 +5,7 @@ import type { ControlData } from './types';
 
 export const metadata: Metadata = {
   title: 'Control Lab',
-  description: 'Interactive 3D controls guide and challenge mode for Practical Basketball.',
+  description: 'Interactive controls diagram and challenge mode for Practical Basketball.',
 };
 
 export default function ControlsPage() {

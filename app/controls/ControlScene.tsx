@@ -1,310 +1,196 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import type { ControlSchemeId } from './types';
+import type { ControlSchemeId, ControllerStyle } from './types';
+import type { GamepadAxes } from './useGamepadInput';
+import styles from './control-scene.module.css';
 
 type Props = {
   schemeId: ControlSchemeId;
   activeTokens: string[];
   wrongToken?: string | null;
   mutedHints?: boolean;
+  controllerStyle: ControllerStyle;
+  analogAxes?: GamepadAxes;
 };
 
-type ControlMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial> & {
-  userData: { token?: string; baseY?: number };
-};
+type StateClass = (...tokens: string[]) => string;
 
-const ORANGE = new THREE.Color('#ff6b22');
-const RED = new THREE.Color('#ff405d');
-const KEY = new THREE.Color('#232a31');
-const FACE = new THREE.Color('#151a20');
+const DPAD = [
+  ['D-Pad Up', 'M 151 132 L 174 132 L 174 104 L 198 104 L 198 132 L 221 132 L 221 157 L 198 157 L 198 184 L 174 184 L 174 157 L 151 157 Z'],
+  ['D-Pad Right', 'M 198 132 L 221 132 L 221 157 L 198 157 Z'],
+  ['D-Pad Down', 'M 174 157 L 198 157 L 198 184 L 174 184 Z'],
+  ['D-Pad Left', 'M 151 132 L 174 132 L 174 157 L 151 157 Z'],
+] as const;
 
-function textTexture(label: string, color = '#f8fafc') {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 128;
-  const context = canvas.getContext('2d')!;
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = color;
-  context.font = `800 ${label.length > 9 ? 25 : label.length > 5 ? 32 : 42}px Arial`;
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(label, 128, 66);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
-  return texture;
-}
+function Stick({ x, y, side, axes, stateClass }: {
+  x: number;
+  y: number;
+  side: 'L' | 'R';
+  axes: GamepadAxes;
+  stateClass: StateClass;
+}) {
+  const dx = (side === 'L' ? axes.lx : axes.rx) * 11;
+  const dy = (side === 'L' ? axes.ly : axes.ry) * 11;
+  const tokens = side === 'L'
+    ? ['L3', 'LS Up', 'LS Down', 'LS Left', 'LS Right']
+    : ['R3', 'RS Up', 'RS Down', 'RS Left', 'RS Right'];
 
-function addLabel(parent: THREE.Object3D, label: string, width: number, y: number, z = 0) {
-  const material = new THREE.MeshBasicMaterial({
-    map: textTexture(label),
-    transparent: true,
-    depthWrite: false,
-  });
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(width * 0.82, 1.4), 0.42), material);
-  plane.rotation.x = -Math.PI / 2;
-  plane.position.set(0, y, z);
-  plane.renderOrder = 3;
-  parent.add(plane);
-}
-
-function registerMesh(registry: Map<string, ControlMesh[]>, token: string, mesh: ControlMesh) {
-  mesh.userData.token = token;
-  mesh.userData.baseY = mesh.position.y;
-  const meshes = registry.get(token) ?? [];
-  meshes.push(mesh);
-  registry.set(token, meshes);
-}
-
-function createKeyboard(registry: Map<string, ControlMesh[]>) {
-  const group = new THREE.Group();
-  group.rotation.x = -0.08;
-  group.rotation.y = -0.08;
-
-  const deck = new THREE.Mesh(
-    new RoundedBoxGeometry(12.9, 0.4, 5.2, 6, 0.18),
-    new THREE.MeshStandardMaterial({ color: '#101419', roughness: 0.72, metalness: 0.25 }),
+  return (
+    <g>
+      <circle className={styles.stickWell} cx={x} cy={y} r="37" />
+      <g transform={`translate(${dx} ${dy})`} className={stateClass(...tokens)}>
+        <circle className={styles.stickCap} cx={x} cy={y} r="27" />
+        <circle className={styles.stickRing} cx={x} cy={y} r="20" />
+        <text className={styles.microLabel} x={x} y={y + 4}>{side}3</text>
+      </g>
+    </g>
   );
-  deck.position.y = -0.04;
-  group.add(deck);
-
-  const rows: Array<{ labels: string[]; x: number; z: number }> = [
-    { labels: ['1', '2', '3', '4'], x: -5.75, z: -1.72 },
-    { labels: ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'], x: -4.4, z: -0.79 },
-    { labels: ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'], x: -3.96, z: 0.15 },
-    { labels: ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M'], x: -3.91, z: 1.09 },
-  ];
-
-  for (const row of rows) {
-    let cursor = row.x;
-    for (const label of row.labels) {
-      const width = label === 'Shift' ? 1.65 : 0.76;
-      const material = new THREE.MeshStandardMaterial({ color: KEY.clone(), roughness: 0.52, metalness: 0.2, emissive: '#000000' });
-      const key = new THREE.Mesh(new RoundedBoxGeometry(width, 0.32, 0.82, 4, 0.09), material) as ControlMesh;
-      key.position.set(cursor + width / 2, 0.35, row.z);
-      key.castShadow = true;
-      addLabel(key, label, width, 0.172);
-      registerMesh(registry, label, key);
-      group.add(key);
-      cursor += width + 0.12;
-    }
-  }
-
-  const spaceMaterial = new THREE.MeshStandardMaterial({ color: KEY.clone(), roughness: 0.52, metalness: 0.2, emissive: '#000000' });
-  const space = new THREE.Mesh(new RoundedBoxGeometry(5.2, 0.32, 0.8, 4, 0.09), spaceMaterial) as ControlMesh;
-  space.position.set(0.15, 0.35, 2.03);
-  space.castShadow = true;
-  addLabel(space, 'SPACE', 2.3, 0.172);
-  registerMesh(registry, 'Space', space);
-  group.add(space);
-
-  return group;
 }
 
-function createGamepad(registry: Map<string, ControlMesh[]>) {
-  const group = new THREE.Group();
-  group.rotation.x = -0.05;
-  group.rotation.y = -0.08;
-
-  const bodyMaterial = new THREE.MeshStandardMaterial({ color: FACE.clone(), roughness: 0.44, metalness: 0.32 });
-  const core = new THREE.Mesh(new RoundedBoxGeometry(7.5, 0.72, 3.7, 8, 0.65), bodyMaterial);
-  core.position.y = 0.05;
-  core.castShadow = true;
-  group.add(core);
-
-  for (const x of [-2.65, 2.65]) {
-    const handle = new THREE.Mesh(new RoundedBoxGeometry(2.15, 0.78, 3.8, 8, 0.7), bodyMaterial.clone());
-    handle.position.set(x, -0.1, 1.22);
-    handle.rotation.x = -0.2;
-    handle.rotation.y = x < 0 ? -0.18 : 0.18;
-    handle.castShadow = true;
-    group.add(handle);
-  }
-
-  const buttonMaterial = (color = '#252d36') => new THREE.MeshStandardMaterial({ color, roughness: 0.38, metalness: 0.28, emissive: '#000000' });
-
-  const roundButton = (token: string, label: string, x: number, z: number, color?: string, radius = 0.34) => {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.24, 32), buttonMaterial(color)) as ControlMesh;
-    mesh.position.set(x, 0.58, z);
-    mesh.castShadow = true;
-    addLabel(mesh, label, radius * 2, 0.13);
-    registerMesh(registry, token, mesh);
-    group.add(mesh);
-  };
-
-  const boxButton = (token: string, label: string, x: number, z: number, width = 0.74, depth = 0.66) => {
-    const mesh = new THREE.Mesh(new RoundedBoxGeometry(width, 0.23, depth, 4, 0.09), buttonMaterial()) as ControlMesh;
-    mesh.position.set(x, 0.56, z);
-    mesh.castShadow = true;
-    addLabel(mesh, label, width, 0.122);
-    registerMesh(registry, token, mesh);
-    group.add(mesh);
-  };
-
-  roundButton('Y', 'Y / △', 2.72, -1.08, '#745f21');
-  roundButton('X', 'X / □', 2.02, -0.38, '#205784');
-  roundButton('B', 'B / ○', 3.42, -0.38, '#7c2630');
-  roundButton('A', 'A / ×', 2.72, 0.32, '#276c50');
-
-  const directionControl = 'D-Pad';
-  const directionPositions: Array<[string, string, number, number]> = [
-    [`${directionControl} Up`, '▲', -2.6, -1.06],
-    [`${directionControl} Left`, '◀', -3.23, -0.43],
-    [`${directionControl} Down`, '▼', -2.6, 0.2],
-    [`${directionControl} Right`, '▶', -1.97, -0.43],
-  ];
-  directionPositions.forEach(([token, label, x, z]) => boxButton(token, label, x, z, 0.68, 0.68));
-
-  const stickPositions: Array<[string, number, number]> = [
-    ['LS', -1.2, 0.78],
-    ['RS', 1.1, 0.86],
-  ];
-  for (const [stick, x, z] of stickPositions) {
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.61, 0.68, 0.28, 32), buttonMaterial('#11161b'));
-    base.position.set(x, 0.54, z);
-    group.add(base);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.48, 0.28, 32), buttonMaterial('#303842')) as ControlMesh;
-    cap.position.set(x, 0.77, z);
-    cap.castShadow = true;
-    addLabel(cap, stick, 0.7, 0.15);
-    registerMesh(registry, stick === 'LS' ? 'L3' : 'R3', cap);
-    for (const direction of ['Up', 'Down', 'Left', 'Right']) registerMesh(registry, `${stick} ${direction}`, cap);
-    group.add(cap);
-  }
-
-  boxButton('LB', 'LB', -2.4, -2.0, 1.32, 0.46);
-  boxButton('RB', 'RB', 2.4, -2.0, 1.32, 0.46);
-  boxButton('LT', 'LT', -3.45, -1.83, 1.18, 0.5);
-  boxButton('RT', 'RT', 3.45, -1.83, 1.18, 0.5);
-
-  return group;
+function FaceButton({ token, label, x, y, stateClass }: {
+  token: string;
+  label: string;
+  x: number;
+  y: number;
+  stateClass: StateClass;
+}) {
+  return (
+    <g className={stateClass(token)}>
+      <circle className={styles.button} cx={x} cy={y} r="21" />
+      <text className={styles.faceLabel} x={x} y={y + 6}>{label}</text>
+    </g>
+  );
 }
 
-export default function ControlScene({ schemeId, activeTokens, wrongToken, mutedHints = false }: Props) {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const registryRef = useRef(new Map<string, ControlMesh[]>());
-  const activeRef = useRef(new Set(activeTokens));
-  const wrongRef = useRef<string | null>(wrongToken ?? null);
-  const mutedRef = useRef(mutedHints);
+function GamepadOutline({ style, axes, stateClass }: {
+  style: ControllerStyle;
+  axes: GamepadAxes;
+  stateClass: StateClass;
+}) {
+  const playstation = style === 'playstation';
+  const leftStick = playstation ? { x: 285, y: 254 } : { x: 185, y: 145 };
+  const dpadOffset = playstation ? { x: 0, y: 0 } : { x: 100, y: 109 };
+  const labels = playstation
+    ? { top: '△', right: '○', bottom: '×', left: '□' }
+    : { top: 'Y', right: 'B', bottom: 'A', left: 'X' };
 
-  useEffect(() => {
-    activeRef.current = new Set(activeTokens);
-    wrongRef.current = wrongToken ?? null;
-    mutedRef.current = mutedHints;
-  }, [activeTokens, mutedHints, wrongToken]);
+  return (
+    <svg className={styles.diagram} viewBox="0 0 760 420" role="img" aria-label={`${playstation ? 'PlayStation' : 'Xbox'} controller input diagram`}>
+      <path className={styles.body} d="M 220 70 C 170 70 134 82 112 126 C 87 175 66 260 70 317 C 73 363 98 390 128 390 C 165 390 188 348 207 296 L 226 247 C 240 232 259 224 282 224 L 478 224 C 501 224 520 232 534 247 L 553 296 C 572 348 595 390 632 390 C 662 390 687 363 690 317 C 694 260 673 175 648 126 C 626 82 590 70 540 70 C 497 70 465 78 432 88 L 328 88 C 295 78 263 70 220 70 Z" />
 
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
+      <path className={styles.shoulderLine} d="M 143 111 C 153 80 175 55 221 55 L 275 63" />
+      <path className={styles.shoulderLine} d="M 617 111 C 607 80 585 55 539 55 L 485 63" />
+      <g className={stateClass('LT')}>
+        <path className={styles.shoulder} d="M 164 68 C 172 43 193 31 232 34 L 271 41 L 264 55 L 220 51 C 193 50 179 56 174 72 Z" />
+        <text className={styles.shoulderLabel} x="216" y="48">{playstation ? 'L2' : 'LT'}</text>
+      </g>
+      <g className={stateClass('RT')}>
+        <path className={styles.shoulder} d="M 596 68 C 588 43 567 31 528 34 L 489 41 L 496 55 L 540 51 C 567 50 581 56 586 72 Z" />
+        <text className={styles.shoulderLabel} x="544" y="48">{playstation ? 'R2' : 'RT'}</text>
+      </g>
+      <g className={stateClass('LB')}>
+        <rect className={styles.shoulder} x="190" y="66" width="105" height="22" rx="10" />
+        <text className={styles.shoulderLabel} x="243" y="81">{playstation ? 'L1' : 'LB'}</text>
+      </g>
+      <g className={stateClass('RB')}>
+        <rect className={styles.shoulder} x="465" y="66" width="105" height="22" rx="10" />
+        <text className={styles.shoulderLabel} x="517" y="81">{playstation ? 'R1' : 'RB'}</text>
+      </g>
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog('#090d11', 12, 27);
-    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    camera.position.set(0, schemeId === 'keyboard_pc' ? 7.7 : 7.2, schemeId === 'keyboard_pc' ? 9.5 : 8.4);
+      {playstation ? (
+        <g>
+          <rect className={styles.touchpad} x="302" y="92" width="156" height="91" rx="13" />
+          <path className={styles.touchDetail} d="M 310 105 C 350 113 410 113 450 105" />
+          <circle className={styles.systemButton} cx="280" cy="124" r="7" />
+          <circle className={styles.systemButton} cx="480" cy="124" r="7" />
+          <circle className={styles.homeButton} cx="380" cy="202" r="13" />
+          <text className={styles.microLabel} x="380" y="206">PS</text>
+        </g>
+      ) : (
+        <g>
+          <circle className={styles.homeButton} cx="380" cy="132" r="22" />
+          <text className={styles.microLabel} x="380" y="137">X</text>
+          <rect className={styles.systemButton} x="328" y="166" width="24" height="13" rx="5" />
+          <rect className={styles.systemButton} x="408" y="166" width="24" height="13" rx="5" />
+        </g>
+      )}
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(mount.clientWidth, mount.clientHeight, false);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    mount.appendChild(renderer.domElement);
+      <g transform={`translate(${dpadOffset.x} ${dpadOffset.y})`}>
+        {DPAD.map(([token, path]) => (
+          <path key={token} className={`${styles.dpad} ${stateClass(token)}`} d={path} aria-label={token} />
+        ))}
+        <circle className={styles.dpadCenter} cx="186" cy="145" r="8" />
+      </g>
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.07;
-    controls.enablePan = false;
-    controls.minDistance = 6.2;
-    controls.maxDistance = 16;
-    controls.maxPolarAngle = Math.PI * 0.48;
-    controls.target.set(0, 0, 0);
+      <FaceButton token="Y" label={labels.top} x={574} y={112} stateClass={stateClass} />
+      <FaceButton token="B" label={labels.right} x={608} y={146} stateClass={stateClass} />
+      <FaceButton token="A" label={labels.bottom} x={574} y={180} stateClass={stateClass} />
+      <FaceButton token="X" label={labels.left} x={540} y={146} stateClass={stateClass} />
 
-    scene.add(new THREE.HemisphereLight('#dff4ff', '#14100b', 2.05));
-    const keyLight = new THREE.DirectionalLight('#ffb072', 4.2);
-    keyLight.position.set(-3, 8, 4);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
-    scene.add(keyLight);
-    const rimLight = new THREE.PointLight('#ff5a20', 35, 18, 2);
-    rimLight.position.set(6, 2.5, -4);
-    scene.add(rimLight);
+      <Stick x={leftStick.x} y={leftStick.y} side="L" axes={axes} stateClass={stateClass} />
+      <Stick x={playstation ? 475 : 440} y={254} side="R" axes={axes} stateClass={stateClass} />
+      <path className={styles.gripDetail} d="M 211 297 C 238 315 269 324 301 325" />
+      <path className={styles.gripDetail} d="M 549 297 C 522 315 491 324 459 325" />
+      <text className={styles.deviceLabel} x="380" y="374">{playstation ? 'PLAYSTATION LAYOUT' : 'XBOX LAYOUT'}</text>
+    </svg>
+  );
+}
 
-    const floor = new THREE.Mesh(
-      new THREE.CircleGeometry(11, 64),
-      new THREE.MeshStandardMaterial({ color: '#0b1015', roughness: 0.88, metalness: 0.12 }),
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.48;
-    floor.receiveShadow = true;
-    scene.add(floor);
-    const grid = new THREE.GridHelper(18, 18, '#713416', '#1e2a31');
-    grid.position.y = -0.46;
-    scene.add(grid);
+const KEYBOARD_ROWS = [
+  ['1', '2', '3', '4'],
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+] as const;
 
-    const registry = new Map<string, ControlMesh[]>();
-    registryRef.current = registry;
-    const model = schemeId === 'keyboard_pc' ? createKeyboard(registry) : createGamepad(registry);
-    scene.add(model);
-
-    const resize = () => {
-      const width = mount.clientWidth;
-      const height = mount.clientHeight;
-      camera.aspect = width / Math.max(height, 1);
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height, false);
-    };
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(mount);
-    resize();
-
-    const clock = new THREE.Clock();
-    let frame = 0;
-    const animate = () => {
-      frame = window.requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      for (const [token, meshes] of registry) {
-        const active = !mutedRef.current && activeRef.current.has(token);
-        const wrong = wrongRef.current === token;
-        for (const mesh of meshes) {
-          const baseY = mesh.userData.baseY ?? 0;
-          const lift = active ? 0.16 + Math.sin(elapsed * 7) * 0.025 : wrong ? 0.1 : 0;
-          mesh.position.y = THREE.MathUtils.lerp(mesh.position.y, baseY + lift, 0.16);
-          const targetScale = active ? 1.08 : wrong ? 1.05 : 1;
-          mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.14);
-          mesh.material.color.lerp(active ? ORANGE : wrong ? RED : KEY, 0.18);
-          mesh.material.emissive.lerp(active ? ORANGE : wrong ? RED : new THREE.Color('#000000'), 0.18);
-          mesh.material.emissiveIntensity = active ? 0.8 : wrong ? 0.92 : 0;
-        }
-      }
-      controls.update();
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      controls.dispose();
-      scene.traverse((object) => {
-        if (!(object instanceof THREE.Mesh)) return;
-        object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((material) => {
-          if ('map' in material && material.map instanceof THREE.Texture) material.map.dispose();
-          material.dispose();
+function KeyboardOutline({ stateClass }: { stateClass: StateClass }) {
+  const rowStarts = [244, 89, 120, 100];
+  return (
+    <svg className={styles.diagram} viewBox="0 0 920 420" role="img" aria-label="Keyboard input diagram">
+      <rect className={styles.keyboardDeck} x="45" y="52" width="830" height="315" rx="24" />
+      {KEYBOARD_ROWS.map((row, rowIndex) => {
+        let x = rowStarts[rowIndex];
+        const y = 82 + rowIndex * 67;
+        return row.map((token) => {
+          const width = token === 'Shift' ? 116 : 58;
+          const key = (
+            <g key={token} className={stateClass(token)}>
+              <rect className={styles.key} x={x} y={y} width={width} height="52" rx="8" />
+              <text className={styles.keyLabel} x={x + width / 2} y={y + 32}>{token}</text>
+            </g>
+          );
+          x += width + 10;
+          return key;
         });
-      });
-      renderer.dispose();
-      renderer.domElement.remove();
-      registry.clear();
-    };
-  }, [schemeId]);
+      })}
+      <g className={stateClass('Space')}>
+        <rect className={styles.key} x="266" y="350" width="388" height="44" rx="8" />
+        <text className={styles.keyLabel} x="460" y="378">SPACE</text>
+      </g>
+    </svg>
+  );
+}
 
-  return <div ref={mountRef} className="h-full min-h-[24rem] w-full" aria-label="Interactive 3D control model" />;
+export default function ControlScene({
+  schemeId,
+  activeTokens,
+  wrongToken,
+  mutedHints = false,
+  controllerStyle,
+  analogAxes = { lx: 0, ly: 0, rx: 0, ry: 0 },
+}: Props) {
+  const active = new Set(mutedHints ? [] : activeTokens);
+  const stateClass: StateClass = (...tokens) => {
+    if (wrongToken && tokens.includes(wrongToken)) return styles.wrong;
+    if (tokens.some((token) => active.has(token))) return styles.active;
+    return '';
+  };
+
+  return (
+    <div className={styles.frame}>
+      {schemeId === 'keyboard_pc'
+        ? <KeyboardOutline stateClass={stateClass} />
+        : <GamepadOutline style={controllerStyle} axes={analogAxes} stateClass={stateClass} />}
+    </div>
+  );
 }

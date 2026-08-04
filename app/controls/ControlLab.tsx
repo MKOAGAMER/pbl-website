@@ -1,6 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -23,23 +22,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   challengePool,
   deviceButtons,
+  displayControllerToken,
   entriesForScheme,
   handLabel,
   isAmbiguous,
+  parseMoveInputs,
   parseMoveTokens,
 } from './control-utils';
-import type { ControlData, ControlSchemeId, MoveEntry } from './types';
+import type { ControlData, ControlSchemeId, ControllerStyle, InputAction, InputRequirement, MoveEntry } from './types';
+import { useGamepadInput } from './useGamepadInput';
+import ControlScene from './ControlScene';
 import styles from './control-lab.module.css';
-
-const ControlScene = dynamic(() => import('./ControlScene'), {
-  ssr: false,
-  loading: () => (
-    <div className={styles.sceneLoading}>
-      <span />
-      กำลังประกอบโมเดล 3D…
-    </div>
-  ),
-});
 
 type ChallengePhase = 'browse' | 'setup' | 'countdown' | 'playing' | 'results';
 type ChallengeKind = 'practice' | 'timeAttack';
@@ -69,6 +62,7 @@ type ChallengeSession = {
   pool: MoveEntry[];
   current: MoveEntry | null;
   expected: string[];
+  expectedInputs: InputRequirement[];
   inputIndex: number;
   score: number;
   correct: number;
@@ -90,6 +84,7 @@ const initialSession: ChallengeSession = {
   pool: [],
   current: null,
   expected: [],
+  expectedInputs: [],
   inputIndex: 0,
   score: 0,
   correct: 0,
@@ -141,6 +136,9 @@ export function ControlLab({ data }: { data: ControlData }) {
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewPlaying, setPreviewPlaying] = useState(true);
   const [mobilePanel, setMobilePanel] = useState<'moves' | 'model'>('moves');
+  const [controllerStyle, setControllerStyle] = useState<ControllerStyle>('xbox');
+  const [liveInputTokens, setLiveInputTokens] = useState<string[]>([]);
+  const [holdProgressToken, setHoldProgressToken] = useState<string | null>(null);
 
   const [session, setSession] = useState<ChallengeSession>(initialSession);
   const [challengeKind, setChallengeKind] = useState<ChallengeKind>('practice');
@@ -159,7 +157,13 @@ export function ControlLab({ data }: { data: ControlData }) {
   const questionStartedAt = useRef(0);
   const pauseStartedAt = useRef(0);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const submitInputRef = useRef<(token: string) => void>(() => undefined);
+  const submitInputRef = useRef<(token: string, action?: InputAction) => void>(() => undefined);
+  const beginInputRef = useRef<(token: string) => void>(() => undefined);
+  const endInputRef = useRef<(token: string) => void>(() => undefined);
+  const expectedInputRef = useRef<InputRequirement | null>(null);
+  const holdTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const completedHoldsRef = useRef(new Set<string>());
+  const inferredGamepadIdRef = useRef('');
   const submittedSessionRef = useRef<string | null>(null);
 
   const activeScheme = useMemo(
@@ -182,6 +186,10 @@ export function ControlLab({ data }: { data: ControlData }) {
     () => parseMoveTokens(selectedEntry.move.keys, schemeId),
     [schemeId, selectedEntry],
   );
+  const selectedInputs = useMemo(
+    () => parseMoveInputs(selectedEntry.move.keys, schemeId),
+    [schemeId, selectedEntry],
+  );
 
   const moveCount = useMemo(
     () => data.control_schemes.reduce((sum, scheme) => sum + entriesForScheme(scheme).length, 0),
@@ -193,7 +201,16 @@ export function ControlLab({ data }: { data: ControlData }) {
     transitionTimer.current = null;
   }, []);
 
-  useEffect(() => clearTransition, [clearTransition]);
+  const clearHoldTimers = useCallback(() => {
+    holdTimersRef.current.forEach((timer) => clearTimeout(timer));
+    holdTimersRef.current.clear();
+    completedHoldsRef.current.clear();
+  }, []);
+
+  useEffect(() => () => {
+    clearTransition();
+    clearHoldTimers();
+  }, [clearHoldTimers, clearTransition]);
 
   const chooseEntry = useCallback((entry: MoveEntry) => {
     setSelectedEntry(entry);
@@ -355,9 +372,13 @@ export function ControlLab({ data }: { data: ControlData }) {
 
   const startChallenge = useCallback(() => {
     clearTransition();
+    clearHoldTimers();
+    setLiveInputTokens([]);
+    setHoldProgressToken(null);
     const pool = challengePool(activeScheme, challengeCategory);
     if (!pool.length) return;
     const current = randomEntry(pool);
+    const expectedInputs = parseMoveInputs(current.move.keys, schemeId);
     setAutoPreview(false);
     setRecordToBeat(highScore);
     setSubmissionStatus('idle');
@@ -366,10 +387,11 @@ export function ControlLab({ data }: { data: ControlData }) {
       phase: 'countdown',
       pool,
       current,
-      expected: parseMoveTokens(current.move.keys, schemeId),
+      expected: expectedInputs.map((input) => input.token),
+      expectedInputs,
       timeLeft: challengeKind === 'timeAttack' ? attackDuration : 0,
     });
-  }, [activeScheme, attackDuration, challengeCategory, challengeKind, clearTransition, highScore, schemeId]);
+  }, [activeScheme, attackDuration, challengeCategory, challengeKind, clearHoldTimers, clearTransition, highScore, schemeId]);
 
   useEffect(() => {
     if (session.phase !== 'countdown') return;
@@ -400,11 +422,13 @@ export function ControlLab({ data }: { data: ControlData }) {
     setSession((current) => {
       if (current.phase !== 'playing') return current;
       const next = randomEntry(current.pool, current.current?.id);
+      const expectedInputs = parseMoveInputs(next.move.keys, schemeId);
       questionStartedAt.current = performance.now();
       return {
         ...current,
         current: next,
-        expected: parseMoveTokens(next.move.keys, schemeId),
+        expected: expectedInputs.map((input) => input.token),
+        expectedInputs,
         inputIndex: 0,
         feedback: null,
         lastWrong: null,
@@ -412,10 +436,16 @@ export function ControlLab({ data }: { data: ControlData }) {
     });
   }, [schemeId]);
 
-  const submitInput = (token: string) => {
+  const submitInput = (token: string, action: InputAction = 'press') => {
     if (session.phase !== 'playing' || session.paused || session.feedback || !session.current) return;
     const expected = session.expected[session.inputIndex];
-    if (token === expected) {
+    const expectedInput = session.expectedInputs[session.inputIndex] ?? { token: expected, action: 'press' as const };
+    if (action === 'release' && expectedInput.action !== 'release' && !(token === expected && expectedInput.action === 'hold')) return;
+    if (action === 'hold' && expectedInput.action !== 'hold') return;
+    if (action === 'press' && token === expected && expectedInput.action === 'release') return;
+    const actionMatches = expectedInput.action === action || (expectedInput.action === 'press' && action === 'press');
+    if (token === expected && actionMatches) {
+      setHoldProgressToken(null);
       if (session.inputIndex < session.expected.length - 1) {
         setSession((current) => ({ ...current, inputIndex: current.inputIndex + 1, lastWrong: null }));
         return;
@@ -452,6 +482,8 @@ export function ControlLab({ data }: { data: ControlData }) {
       return;
     }
 
+    clearHoldTimers();
+    setHoldProgressToken(null);
     playTone('wrong');
     const completed = retryOnError ? session.completed : session.completed + 1;
     const shouldFinish = challengeKind === 'practice' && !retryOnError && completed >= practiceCount;
@@ -480,7 +512,63 @@ export function ControlLab({ data }: { data: ControlData }) {
 
   useEffect(() => {
     submitInputRef.current = submitInput;
+    expectedInputRef.current = session.expectedInputs[session.inputIndex] ?? null;
   });
+
+  const beginInput = (token: string) => {
+    setLiveInputTokens((current) => current.includes(token) ? current : [...current, token]);
+    if (session.phase !== 'playing' || session.paused || session.feedback) return;
+    const expected = expectedInputRef.current;
+    if (expected?.token === token && expected.action === 'hold') {
+      if (holdTimersRef.current.has(token)) return;
+      setHoldProgressToken(token);
+      const timer = setTimeout(() => {
+        holdTimersRef.current.delete(token);
+        completedHoldsRef.current.add(token);
+        setHoldProgressToken(null);
+        submitInputRef.current(token, 'hold');
+      }, 460);
+      holdTimersRef.current.set(token, timer);
+      return;
+    }
+    if (expected?.token === token && expected.action === 'release') return;
+    const action: InputAction = /^(?:LS|RS) /.test(token) ? 'analog' : 'press';
+    submitInputRef.current(token, action);
+  };
+
+  const endInput = (token: string) => {
+    setLiveInputTokens((current) => current.filter((item) => item !== token));
+    const timer = holdTimersRef.current.get(token);
+    if (timer) {
+      clearTimeout(timer);
+      holdTimersRef.current.delete(token);
+    }
+    const expected = expectedInputRef.current;
+    if (expected?.token === token && expected.action === 'release') {
+      submitInputRef.current(token, 'release');
+    } else if (expected?.token === token && expected.action === 'hold' && !completedHoldsRef.current.has(token)) {
+      submitInputRef.current(token, 'release');
+    }
+    completedHoldsRef.current.delete(token);
+    if (holdProgressToken === token) setHoldProgressToken(null);
+  };
+
+  useEffect(() => {
+    beginInputRef.current = beginInput;
+    endInputRef.current = endInput;
+  });
+
+  const gamepad = useGamepadInput({
+    enabled: schemeId !== 'keyboard_pc' && session.phase === 'playing' && !session.paused,
+    onPress: (token) => beginInputRef.current(token),
+    onRelease: (token) => endInputRef.current(token),
+  });
+
+  useEffect(() => {
+    if (!gamepad.connected || inferredGamepadIdRef.current === gamepad.id) return;
+    inferredGamepadIdRef.current = gamepad.id;
+    queueMicrotask(() => setControllerStyle(gamepad.inferredStyle));
+  }, [gamepad.connected, gamepad.id, gamepad.inferredStyle]);
 
   useEffect(() => {
     if (schemeId !== 'keyboard_pc' || session.phase !== 'playing') return;
@@ -489,10 +577,20 @@ export function ControlLab({ data }: { data: ControlData }) {
       const token = eventToken(event);
       if (!token) return;
       event.preventDefault();
-      submitInputRef.current(token);
+      beginInputRef.current(token);
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      const token = eventToken(event);
+      if (!token) return;
+      event.preventDefault();
+      endInputRef.current(token);
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
   }, [schemeId, session.phase]);
 
   const togglePause = () => {
@@ -507,6 +605,9 @@ export function ControlLab({ data }: { data: ControlData }) {
 
   const returnToBrowse = () => {
     clearTransition();
+    clearHoldTimers();
+    setLiveInputTokens([]);
+    setHoldProgressToken(null);
     setSession((current) => ({ ...current, phase: 'browse', feedback: null, paused: false }));
   };
 
@@ -528,24 +629,43 @@ export function ControlLab({ data }: { data: ControlData }) {
   };
 
   const modelActiveTokens = useMemo(() => {
+    const physical = schemeId === 'keyboard_pc'
+      ? liveInputTokens
+      : [...new Set([...gamepad.activeTokens, ...liveInputTokens])];
     if (session.phase === 'playing' || session.phase === 'countdown') {
-      if (difficulty === 'hard') return [];
-      return session.expected[session.inputIndex] ? [session.expected[session.inputIndex]] : [];
+      const hint = difficulty === 'easy' && session.expected[session.inputIndex] ? [session.expected[session.inputIndex]] : [];
+      return [...new Set([...hint, ...physical])];
     }
-    return selectedTokens[previewIndex] ? [selectedTokens[previewIndex]] : [];
-  }, [difficulty, previewIndex, selectedTokens, session.expected, session.inputIndex, session.phase]);
+    const preview = selectedTokens[previewIndex] ? [selectedTokens[previewIndex]] : [];
+    return [...new Set([...preview, ...physical])];
+  }, [difficulty, gamepad.activeTokens, liveInputTokens, previewIndex, schemeId, selectedTokens, session.expected, session.inputIndex, session.phase]);
 
   const model = (
     <div className={styles.sceneWrap}>
       <div className={styles.sceneTopline}>
-        <span><span className={styles.liveDot} /> LIVE INPUT MODEL</span>
-        <span>ลากเพื่อหมุน · เลื่อนเพื่อซูม</span>
+        <span><span className={styles.liveDot} /> LIVE INPUT DIAGRAM</span>
+        <span>ปุ่มที่กดจะแสดงเป็นสีส้ม</span>
       </div>
+      {schemeId !== 'keyboard_pc' && (
+        <div className={styles.controllerDock}>
+          <div className={`${styles.gamepadStatus} ${gamepad.connected ? styles.gamepadConnected : ''}`}>
+            <span />
+            <strong>{gamepad.connected ? 'CONNECTED' : 'WAITING FOR GAMEPAD'}</strong>
+            <small title={gamepad.id}>{gamepad.connected ? gamepad.id : 'เชื่อมจอยแล้วกดปุ่มใดก็ได้ 1 ครั้ง'}</small>
+          </div>
+          <div className={styles.controllerSwitch} aria-label="รูปแบบจอย">
+            <button type="button" className={controllerStyle === 'xbox' ? styles.controllerStyleActive : ''} onClick={() => setControllerStyle('xbox')}>XBOX</button>
+            <button type="button" className={controllerStyle === 'playstation' ? styles.controllerStyleActive : ''} onClick={() => setControllerStyle('playstation')}>PLAYSTATION</button>
+          </div>
+        </div>
+      )}
       <ControlScene
         schemeId={schemeId}
         activeTokens={modelActiveTokens}
         wrongToken={session.lastWrong}
-        mutedHints={session.phase === 'playing' && difficulty === 'hard'}
+        mutedHints={false}
+        controllerStyle={controllerStyle}
+        analogAxes={gamepad.axes}
       />
       <div className={styles.courtGlow} />
     </div>
@@ -562,7 +682,7 @@ export function ControlLab({ data }: { data: ControlData }) {
         <div className={styles.heroStats}>
           <span><strong>{moveCount}</strong> MOVES</span>
           <span><strong>3</strong> SCHEMES</span>
-          <span><strong>3D</strong> LIVE</span>
+          <span><strong>2D</strong> LIVE</span>
         </div>
       </section>
 
@@ -608,7 +728,7 @@ export function ControlLab({ data }: { data: ControlData }) {
 
           <div className={styles.mobileTabs}>
             <button type="button" className={mobilePanel === 'moves' ? styles.mobileTabActive : ''} onClick={() => setMobilePanel('moves')}>รายการท่า</button>
-            <button type="button" className={mobilePanel === 'model' ? styles.mobileTabActive : ''} onClick={() => setMobilePanel('model')}>โมเดล 3D</button>
+            <button type="button" className={mobilePanel === 'model' ? styles.mobileTabActive : ''} onClick={() => setMobilePanel('model')}>ผังปุ่ม</button>
           </div>
 
           <section className={styles.workspace}>
@@ -667,7 +787,7 @@ export function ControlLab({ data }: { data: ControlData }) {
                   </div>
                   <button type="button" onClick={() => { setPreviewIndex(0); setPreviewPlaying(true); }}><RotateCcw /> เล่นซ้ำ</button>
                 </div>
-                <ComboBar tokens={selectedTokens} progress={previewIndex} />
+                <ComboBar tokens={selectedTokens} requirements={selectedInputs} progress={previewIndex} schemeId={schemeId} controllerStyle={controllerStyle} />
                 <div className={styles.previewFooter}>
                   <div className={styles.sourceCombo}><small>SOURCE COMBO</small><strong>{selectedEntry.move.keys}</strong></div>
                   <label className={styles.toggle}>
@@ -712,6 +832,16 @@ export function ControlLab({ data }: { data: ControlData }) {
                     {activeScheme.categories.map((category) => <option key={category.category} value={category.category}>{category.category}</option>)}
                   </select>
                 </label>
+                {schemeId !== 'keyboard_pc' && (
+                  <div className={`${styles.setupGamepad} ${gamepad.connected ? styles.setupGamepadConnected : ''}`}>
+                    <span />
+                    <div><strong>{gamepad.connected ? 'จอยพร้อมใช้งาน' : 'ยังไม่พบจอย'}</strong><small>{gamepad.connected ? gamepad.id : 'เชื่อมต่อแล้วกดปุ่มบนจอย 1 ครั้ง'}</small></div>
+                    <div className={styles.setupControllerSwitch}>
+                      <button type="button" className={controllerStyle === 'xbox' ? styles.controllerStyleActive : ''} onClick={() => setControllerStyle('xbox')}>Xbox</button>
+                      <button type="button" className={controllerStyle === 'playstation' ? styles.controllerStyleActive : ''} onClick={() => setControllerStyle('playstation')}>PlayStation</button>
+                    </div>
+                  </div>
+                )}
               </SettingGroup>
               <SettingGroup number="03" title="ความยาก">
                 <div className={styles.segmented}>
@@ -761,15 +891,36 @@ export function ControlLab({ data }: { data: ControlData }) {
               <div className={styles.handChip}><Hand /> {handLabel(session.current.move.hand)}</div>
               {difficulty === 'easy' && <p className={styles.easyHint}>EASY HINT · ดูปุ่มสีส้มบนโมเดล</p>}
               {difficulty === 'hard' && <p className={styles.hardHint}>HARD MODE · ไม่มีคำใบ้</p>}
-              <ComboBar tokens={session.expected} progress={session.inputIndex} concealed={difficulty === 'hard'} />
+              <ComboBar tokens={session.expected} requirements={session.expectedInputs} progress={session.inputIndex} concealed={difficulty === 'hard'} schemeId={schemeId} controllerStyle={controllerStyle} />
+              {holdProgressToken && (
+                <div className={styles.holdMeter}><strong>HOLD {schemeId === 'keyboard_pc' ? holdProgressToken : displayControllerToken(holdProgressToken, controllerStyle)}</strong><span><i /></span></div>
+              )}
               {schemeId !== 'keyboard_pc' && (
                 <div className={styles.virtualButtons}>
                   {deviceButtons(schemeId).map((token) => (
-                    <button key={token} type="button" onClick={() => submitInput(token)}>{token}</button>
+                    <button
+                      key={token}
+                      type="button"
+                      className={liveInputTokens.includes(token) || gamepad.activeTokens.includes(token) ? styles.virtualButtonActive : ''}
+                      onPointerDown={(event) => {
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        beginInputRef.current(token);
+                      }}
+                      onPointerUp={() => endInputRef.current(token)}
+                      onPointerCancel={() => endInputRef.current(token)}
+                      onKeyDown={(event) => {
+                        if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) beginInputRef.current(token);
+                      }}
+                      onKeyUp={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') endInputRef.current(token);
+                      }}
+                    >{displayControllerToken(token, controllerStyle)}</button>
                   ))}
                 </div>
               )}
-              {schemeId === 'keyboard_pc' && <p className={styles.keyboardNotice}><Keyboard /> กดปุ่มจริงบนคีย์บอร์ดได้เลย</p>}
+              {schemeId === 'keyboard_pc'
+                ? <p className={styles.keyboardNotice}><Keyboard /> กดปุ่มจริงได้ — ปุ่ม HOLD ต้องค้างอย่างน้อย 0.46 วินาที</p>
+                : <p className={styles.keyboardNotice}><Gamepad2 /> {gamepad.connected ? `รับ input จาก ${gamepad.id}` : 'เชื่อมจอยแล้วกดปุ่มใดก็ได้ เพื่อให้เบราว์เซอร์ตรวจพบ'}</p>}
               {session.feedback && <div className={`${styles.feedback} ${session.feedback.type === 'correct' ? styles.feedbackCorrect : styles.feedbackWrong}`}>{session.feedback.message}{session.feedback.points ? <strong>+{session.feedback.points}</strong> : null}</div>}
             </div>
             <div className={styles.challengeModel}>{model}</div>
@@ -805,14 +956,29 @@ export function ControlLab({ data }: { data: ControlData }) {
   );
 }
 
-function ComboBar({ tokens, progress, concealed = false }: { tokens: string[]; progress: number; concealed?: boolean }) {
+function ComboBar({
+  tokens,
+  requirements,
+  progress,
+  concealed = false,
+  schemeId,
+  controllerStyle,
+}: {
+  tokens: string[];
+  requirements?: InputRequirement[];
+  progress: number;
+  concealed?: boolean;
+  schemeId: ControlSchemeId;
+  controllerStyle: ControllerStyle;
+}) {
   const visibleTokens = tokens.length ? tokens : ['—'];
   return (
     <div className={styles.comboBar}>
       <div className={styles.comboKeys}>
         {visibleTokens.map((token, index) => (
           <span key={`${token}-${index}`} className={`${index < progress ? styles.keyDone : ''} ${index === progress ? styles.keyCurrent : ''}`}>
-            {index < progress ? <Check /> : concealed ? '?' : token}
+            {index < progress ? <Check /> : concealed ? '?' : schemeId === 'keyboard_pc' ? token : displayControllerToken(token, controllerStyle)}
+            {!concealed && index >= progress && requirements?.[index]?.action !== 'press' && <em>{requirements?.[index]?.action}</em>}
           </span>
         ))}
       </div>

@@ -551,12 +551,6 @@
   pointer-events: none;
 }
 
-.sceneWrap canvas {
-  position: relative;
-  z-index: 1;
-  outline: 0;
-}
-
 .sceneTopline {
   position: absolute;
   z-index: 2;
@@ -578,6 +572,91 @@
   display: flex;
   align-items: center;
   color: #94a0a9;
+}
+
+.controllerDock {
+  position: absolute;
+  z-index: 4;
+  top: 2.25rem;
+  right: 0.9rem;
+  left: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  pointer-events: none;
+}
+
+.gamepadStatus {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 0.5rem auto;
+  align-items: center;
+  gap: 0.08rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 12, 15, 0.82);
+  padding: 0.45rem 0.6rem;
+  backdrop-filter: blur(10px);
+}
+
+.gamepadStatus > span {
+  width: 0.43rem;
+  height: 0.43rem;
+  border-radius: 50%;
+  background: #59646c;
+}
+
+.gamepadStatus strong {
+  color: #8a959d;
+  font-size: 0.48rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+.gamepadStatus small {
+  overflow: hidden;
+  max-width: 19rem;
+  grid-column: 2;
+  color: #5f6b74;
+  font-size: 0.46rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gamepadConnected {
+  border-color: rgba(105, 240, 189, 0.3);
+}
+
+.gamepadConnected > span {
+  background: var(--lab-green);
+  box-shadow: 0 0 0.65rem rgba(105, 240, 189, 0.7);
+}
+
+.gamepadConnected strong {
+  color: var(--lab-green);
+}
+
+.controllerSwitch {
+  display: flex;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8, 12, 15, 0.82);
+  padding: 0.2rem;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+}
+
+.controllerSwitch button {
+  border: 0;
+  background: transparent;
+  padding: 0.38rem 0.55rem;
+  color: #657079;
+  font-size: 0.48rem;
+  font-weight: 950;
+}
+
+.controllerSwitch .controllerStyleActive {
+  background: var(--lab-orange);
+  color: #170c06;
 }
 
 .liveDot {
@@ -606,28 +685,6 @@
   filter: blur(2rem);
   pointer-events: none;
 }
-
-.sceneLoading {
-  display: flex;
-  min-height: 24rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  color: #77828b;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
-
-.sceneLoading span {
-  width: 0.9rem;
-  height: 0.9rem;
-  border: 2px solid #3f4951;
-  border-top-color: var(--lab-orange);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 .comboPanel {
   border-top: 1px solid var(--lab-line);
@@ -712,6 +769,19 @@
   font-weight: 900;
   box-shadow: 0 5px 12px rgba(0, 0, 0, 0.28);
   transition: 160ms ease;
+}
+
+.comboKeys span em {
+  margin-top: -0.18rem;
+  color: currentColor;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 0.38rem;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0.72;
 }
 
 .comboKeys span svg {
@@ -1061,6 +1131,76 @@
 
 .selectLabel select {
   outline: 0;
+}
+
+.setupGamepad {
+  display: grid;
+  margin-top: 0.7rem;
+  grid-template-columns: 0.55rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--lab-line);
+  background: #0b1014;
+  padding: 0.65rem 0.7rem;
+}
+
+.setupGamepad > span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #5c666f;
+}
+
+.setupGamepad > div:nth-child(2) {
+  display: grid;
+  min-width: 0;
+}
+
+.setupGamepad strong {
+  color: #9ca5ac;
+  font-size: 0.6rem;
+}
+
+.setupGamepad small {
+  overflow: hidden;
+  margin-top: 0.12rem;
+  color: #626d75;
+  font-size: 0.48rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setupGamepadConnected {
+  border-color: rgba(105, 240, 189, 0.28);
+}
+
+.setupGamepadConnected > span {
+  background: var(--lab-green);
+  box-shadow: 0 0 0.6rem rgba(105, 240, 189, 0.7);
+}
+
+.setupGamepadConnected strong {
+  color: var(--lab-green);
+}
+
+.setupControllerSwitch {
+  display: flex;
+  border: 1px solid var(--lab-line);
+  padding: 0.15rem;
+}
+
+.setupControllerSwitch button {
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.45rem;
+  color: #66717a;
+  font-size: 0.48rem;
+  font-weight: 900;
+}
+
+.setupControllerSwitch .controllerStyleActive {
+  background: var(--lab-orange);
+  color: #160c07;
 }
 
 .segmented {
@@ -1455,6 +1595,48 @@
   background: var(--lab-orange);
   color: #160c07;
   transform: translateY(2px);
+}
+
+.virtualButtons .virtualButtonActive {
+  border-color: var(--lab-orange);
+  background: var(--lab-orange);
+  color: #160c07;
+  box-shadow: 0 0 1rem rgba(255, 106, 34, 0.28);
+}
+
+.holdMeter {
+  display: grid;
+  margin-top: 0.65rem;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--lab-orange-bright);
+}
+
+.holdMeter strong {
+  font-size: 0.5rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+}
+
+.holdMeter > span {
+  height: 0.3rem;
+  overflow: hidden;
+  background: #252e35;
+}
+
+.holdMeter i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--lab-orange), #ffd06d);
+  transform-origin: left;
+  animation: hold-fill 460ms linear both;
+}
+
+@keyframes hold-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 .keyboardNotice {
