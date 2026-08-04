@@ -55,21 +55,62 @@ function addStickDirections(tokens: Set<string>, prefix: 'LS' | 'RS', x: number,
   }
 }
 
-function readSnapshot(gamepad: Gamepad): GamepadSnapshot {
+function relativeAxis(value: number, baseline: number) {
+  const delta = value - baseline;
+  if (Math.abs(delta) < 0.08) return 0;
+  const availableRange = delta > 0 ? 1 - baseline : 1 + baseline;
+  return Math.max(-1, Math.min(1, delta / Math.max(0.2, availableRange)));
+}
+
+function addDpadFromAxes(tokens: Set<string>, gamepad: Gamepad, baseline: number[]) {
+  if ([...tokens].some((token) => token.startsWith('D-Pad '))) return;
+
+  const hat = gamepad.axes[9];
+  const neutralHat = baseline[9];
+  if (neutralHat > 1.1 && hat >= -1.05 && hat <= 1.05) {
+    const position = Math.max(0, Math.min(7, Math.round((hat + 1) * 3.5)));
+    if (position === 0 || position === 1 || position === 7) tokens.add('D-Pad Up');
+    if (position === 1 || position === 2 || position === 3) tokens.add('D-Pad Right');
+    if (position === 3 || position === 4 || position === 5) tokens.add('D-Pad Down');
+    if (position === 5 || position === 6 || position === 7) tokens.add('D-Pad Left');
+    return;
+  }
+
+  if (gamepad.mapping === 'standard' || gamepad.axes.length < 8) return;
+  const dpadX = relativeAxis(gamepad.axes[6] ?? 0, baseline[6] ?? 0);
+  const dpadY = relativeAxis(gamepad.axes[7] ?? 0, baseline[7] ?? 0);
+  if (dpadX <= -0.55) tokens.add('D-Pad Left');
+  if (dpadX >= 0.55) tokens.add('D-Pad Right');
+  if (dpadY <= -0.55) tokens.add('D-Pad Up');
+  if (dpadY >= 0.55) tokens.add('D-Pad Down');
+}
+
+function readSnapshot(gamepad: Gamepad, baseline: number[]): GamepadSnapshot {
   const active = new Set<string>();
   for (const [index, token] of STANDARD_BUTTONS) {
     const button = gamepad.buttons[index];
     if (button && (button.pressed || button.value >= 0.45)) active.add(token);
   }
 
+  const standard = gamepad.mapping === 'standard';
+  const rawAxis = (index: number) => standard
+    ? gamepad.axes[index] ?? 0
+    : relativeAxis(gamepad.axes[index] ?? baseline[index] ?? 0, baseline[index] ?? 0);
+  const rightYCandidates = [3, 4, 5]
+    .filter((index) => index < gamepad.axes.length)
+    .map((index) => rawAxis(index));
+  const rightY = standard
+    ? rawAxis(3)
+    : rightYCandidates.reduce((selected, value) => Math.abs(value) > Math.abs(selected) ? value : selected, 0);
   const axes = {
-    lx: deadzone(gamepad.axes[0] ?? 0),
-    ly: deadzone(gamepad.axes[1] ?? 0),
-    rx: deadzone(gamepad.axes[2] ?? 0),
-    ry: deadzone(gamepad.axes[3] ?? 0),
+    lx: deadzone(rawAxis(0)),
+    ly: deadzone(rawAxis(1)),
+    rx: deadzone(rawAxis(2)),
+    ry: deadzone(rightY),
   };
   addStickDirections(active, 'LS', axes.lx, axes.ly);
   addStickDirections(active, 'RS', axes.rx, axes.ry);
+  addDpadFromAxes(active, gamepad, baseline);
 
   return {
     connected: true,
@@ -112,6 +153,8 @@ export function useGamepadInput({
     let previousTokens = new Set<string>();
     let lastSignature = '';
     let lastPublishedAt = 0;
+    let wasEnabled = enabledRef.current;
+    const axisBaselines = new Map<string, number[]>();
 
     const publishDisconnected = () => {
       if (lastSignature === 'disconnected') return;
@@ -137,9 +180,17 @@ export function useGamepadInput({
         return;
       }
 
-      const next = readSnapshot(gamepad);
+      const gamepadKey = `${gamepad.index}:${gamepad.id}`;
+      let baseline = axisBaselines.get(gamepadKey);
+      if (!baseline) {
+        baseline = Array.from(gamepad.axes);
+        axisBaselines.set(gamepadKey, baseline);
+      }
+      const next = readSnapshot(gamepad, baseline);
       const nextTokens = new Set(next.activeTokens);
-      if (enabledRef.current) {
+      const acceptsInput = enabledRef.current;
+      if (acceptsInput && !wasEnabled) previousTokens = new Set();
+      if (acceptsInput) {
         nextTokens.forEach((token) => {
           if (!previousTokens.has(token)) pressRef.current(token);
         });
@@ -148,6 +199,7 @@ export function useGamepadInput({
         if (!nextTokens.has(token)) releaseRef.current(token);
       });
       previousTokens = nextTokens;
+      wasEnabled = acceptsInput;
 
       const signature = snapshotSignature(next);
       if (signature !== lastSignature && time - lastPublishedAt >= 32) {

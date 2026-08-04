@@ -25,6 +25,14 @@
   stroke-width: 3;
 }
 
+.innerShell {
+  fill: none;
+  stroke: rgba(237, 242, 244, 0.92);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+}
+
 .shoulderLine,
 .gripDetail,
 .touchDetail {
@@ -61,12 +69,61 @@
 
 .touchpad {
   fill: rgba(16, 22, 27, 0.84);
+  stroke-linejoin: round;
 }
 
 .stickRing {
   fill: none;
   stroke: rgba(237, 242, 244, 0.55);
   stroke-width: 1.7;
+}
+
+.speakerHoles {
+  fill: #edf2f4;
+}
+
+.psMark {
+  fill: #edf2f4;
+}
+
+.muteButton,
+.micSlot {
+  fill: none;
+  stroke: rgba(237, 242, 244, 0.82);
+  stroke-width: 2.2;
+}
+
+.interactive {
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+
+.interactive:focus-visible .button,
+.interactive:focus-visible .dpad,
+.interactive:focus-visible .shoulder,
+.interactive:focus-visible .key,
+.dpad.interactive:focus-visible {
+  stroke: #69f0bd;
+  stroke-width: 4;
+}
+
+.hitArea {
+  fill: rgba(255, 255, 255, 0.001);
+  cursor: pointer;
+  outline: none;
+  pointer-events: all;
+  touch-action: none;
+}
+
+.hitArea:focus-visible {
+  fill: rgba(105, 240, 189, 0.13);
+  stroke: #69f0bd;
+  stroke-width: 2;
+}
+
+.stickClick {
+  fill: rgba(255, 255, 255, 0.001);
 }
 
 .faceLabel,

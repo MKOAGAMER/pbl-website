@@ -109,9 +109,9 @@ function randomEntry(pool: MoveEntry[], previousId?: string) {
 
 function eventToken(event: KeyboardEvent) {
   if (event.key === ' ') return 'Space';
-  if (event.key === 'Shift') return 'Shift';
+  if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') return 'Shift';
   if (/^Digit[1-4]$/.test(event.code)) return event.code.slice(-1);
-  if (/^[a-z]$/i.test(event.key)) return event.key.toUpperCase();
+  if (/^Key[A-Z]$/.test(event.code)) return event.code.slice(3);
   return null;
 }
 
@@ -666,6 +666,8 @@ export function ControlLab({ data }: { data: ControlData }) {
         mutedHints={false}
         controllerStyle={controllerStyle}
         analogAxes={gamepad.axes}
+        onInputStart={(token) => beginInputRef.current(token)}
+        onInputEnd={(token) => endInputRef.current(token)}
       />
       <div className={styles.courtGlow} />
     </div>
