@@ -1,0 +1,1574 @@
+{
+  "game": "Practical Basketball (Roblox)",
+  "purpose": "Structured reference data for building an interactive 3D control visualizer / button-press simulator website.",
+  "how_to_use": "Each control_scheme represents ONE input device/mapping. Each category groups related moves. Each move has a display name, the exact key/button combo (as written by the community moderator who authored the source), optional 'hand' (which hand holds the ball, relevant for mirrored animations), and optional notes with extra context or timing info. Some entries include an 'ambiguous_source' note where the original document itself had a contradiction (bracket vs. description text) - flagged so the AI/dev can pick one interpretation instead of silently guessing.",
+  "control_schemes": [
+    {
+      "id": "keyboard_pc",
+      "label": "Keyboard (PC)",
+      "categories": [
+        {
+          "category": "Basic Controls & Gathers",
+          "moves": [
+            {
+              "name": "Shoot",
+              "keys": "Hold E"
+            },
+            {
+              "name": "Pumpfake",
+              "keys": "Tap E"
+            },
+            {
+              "name": "Pumpfake (Alt)",
+              "keys": "Hold E",
+              "notes": "Hold for only a couple milliseconds"
+            },
+            {
+              "name": "Self Alley Oop (Self Lob)",
+              "keys": "F"
+            },
+            {
+              "name": "Alley Oop (to teammate)",
+              "keys": "T + Number"
+            },
+            {
+              "name": "Screen",
+              "keys": "Hold T"
+            },
+            {
+              "name": "Fake Pass",
+              "keys": "Hold Q + 1/2/3/4"
+            },
+            {
+              "name": "Overhead Pass",
+              "keys": "Press 1/2/3/4"
+            },
+            {
+              "name": "Chest Pass",
+              "keys": "Hold Shift + 1/2/3/4"
+            },
+            {
+              "name": "Flashy Pass",
+              "keys": "Hold Shift + Double Tap 1/2/3/4"
+            },
+            {
+              "name": "Bounce Pass",
+              "keys": "Double Tap 1/2/3/4"
+            },
+            {
+              "name": "Swing Pass",
+              "keys": "Hold D + 1/2/3/4",
+              "hand": "right"
+            },
+            {
+              "name": "Swing Pass",
+              "keys": "Hold A + 1/2/3/4",
+              "hand": "left"
+            },
+            {
+              "name": "Bounce Swing Pass",
+              "keys": "Hold D + Double Tap 1/2/3/4",
+              "hand": "right"
+            },
+            {
+              "name": "Bounce Swing Pass",
+              "keys": "Hold A + Double Tap 1/2/3/4",
+              "hand": "left"
+            },
+            {
+              "name": "Moving Shot",
+              "keys": "Shift + D + Hold E",
+              "hand": "right"
+            },
+            {
+              "name": "Moving Shot",
+              "keys": "Shift + A + Hold E",
+              "hand": "left"
+            },
+            {
+              "name": "Fadeaway",
+              "keys": "Shift + S + Hold E"
+            },
+            {
+              "name": "Off Dribble",
+              "keys": "D + Hold E",
+              "hand": "right"
+            },
+            {
+              "name": "Off Dribble",
+              "keys": "A + Hold E",
+              "hand": "left"
+            },
+            {
+              "name": "Layup",
+              "keys": "Hold E",
+              "notes": "While running to the paint/rim"
+            },
+            {
+              "name": "Floater",
+              "keys": "Shift + Double Tap E",
+              "notes": "While running to rim, hold sprint and double tap"
+            },
+            {
+              "name": "Jelly Layup/Dunk",
+              "keys": "Q",
+              "notes": "Press after timing the layup/dunk"
+            },
+            {
+              "name": "Double Clutch Layup/Dunk",
+              "keys": "F",
+              "notes": "Press after timing the layup/dunk"
+            },
+            {
+              "name": "Driving Dunk",
+              "keys": "Shift + Spacebar",
+              "notes": "While running to rim, hold Spacebar to time dunk"
+            },
+            {
+              "name": "Standing Dunk",
+              "keys": "Hold Spacebar"
+            },
+            {
+              "name": "Euro Step",
+              "keys": "Shift + Double Tap E",
+              "notes": "While running, hold sprint + double tap E"
+            },
+            {
+              "name": "Hop Step",
+              "keys": "Shift + Tap E",
+              "notes": "While running, hold sprint + tap E"
+            },
+            {
+              "name": "Spin Gather",
+              "keys": "Double Tap E",
+              "notes": "While running to rim"
+            },
+            {
+              "name": "Side Step",
+              "keys": "Shift + D + Tap E",
+              "hand": "right",
+              "notes": "While moving right"
+            },
+            {
+              "name": "Side Step",
+              "keys": "Shift + A + Tap E",
+              "hand": "left",
+              "notes": "While moving left"
+            },
+            {
+              "name": "Hop Step Back",
+              "keys": "Shift + S + Tap E",
+              "notes": "While moving backwards"
+            },
+            {
+              "name": "Behind the Back Gather",
+              "keys": "Shift + Tap E",
+              "hand": "right",
+              "notes": "Moving left, ball in right hand"
+            },
+            {
+              "name": "Behind the Back Gather",
+              "keys": "Shift + Tap E",
+              "hand": "left",
+              "notes": "Moving right, ball in left hand"
+            },
+            {
+              "name": "Shot Hesi",
+              "keys": "Shift + Tap E"
+            },
+            {
+              "name": "Hesi Pull",
+              "keys": "Tap E",
+              "notes": "While moving in any direction"
+            }
+          ]
+        },
+        {
+          "category": "Jab Steps (Triple Threat only)",
+          "moves": [
+            {
+              "name": "Jab",
+              "keys": "C",
+              "hand": "right"
+            },
+            {
+              "name": "Jab",
+              "keys": "Z",
+              "hand": "left"
+            },
+            {
+              "name": "Jab (Turn around)",
+              "keys": "X"
+            },
+            {
+              "name": "Jab Step Exit",
+              "keys": "Shift + C",
+              "hand": "right"
+            },
+            {
+              "name": "Jab Step Exit",
+              "keys": "Shift + Z",
+              "hand": "left"
+            },
+            {
+              "name": "Jab Step Exit (Turned around)",
+              "keys": "Shift + X"
+            }
+          ],
+          "category_notes": "Almost any dribble move below can be triggered directly out of a jab step."
+        },
+        {
+          "category": "Dribble Moves - Stationary",
+          "moves": [
+            {
+              "name": "Hesi",
+              "keys": "C",
+              "hand": "right"
+            },
+            {
+              "name": "Hesi",
+              "keys": "Z",
+              "hand": "left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "C, C",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "Z, Z",
+              "hand": "left"
+            },
+            {
+              "name": "Stepback",
+              "keys": "X"
+            },
+            {
+              "name": "Snatchback",
+              "keys": "X, X"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "C, X",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "Z, X",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "X, Z",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "X, C",
+              "hand": "left"
+            },
+            {
+              "name": "Tween",
+              "keys": "Z, Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Tween",
+              "keys": "C, C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "V, C",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "V, Z",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "V, Z",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "V, C",
+              "hand": "left"
+            },
+            {
+              "name": "Half Spin",
+              "keys": "V",
+              "hand": "both"
+            },
+            {
+              "name": "Spin",
+              "keys": "C, X, Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin",
+              "keys": "Z, X, C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Shammgod",
+              "keys": "V, V",
+              "hand": "both"
+            }
+          ]
+        },
+        {
+          "category": "Dribble Moves - Escape & Explosive",
+          "moves": [
+            {
+              "name": "Crossover",
+              "keys": "Shift + A + Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "Shift + D + C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "Shift + W + Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "Shift + W + C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "Shift + Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "Shift + C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "Shift + C, C",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "Shift + Z, Z",
+              "hand": "left"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "Shift + D + X",
+              "hand": "right"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "Shift + A + X",
+              "hand": "left"
+            },
+            {
+              "name": "Forward Between the Legs",
+              "keys": "Shift + W + Z, Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Forward Between the Legs",
+              "keys": "Shift + W + C, C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "Shift + Z, Z",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "Shift + C, C",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "Shift + V, C",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "Shift + V, Z",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "Shift + C, X",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "Shift + Z, X",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "Shift + X, Z",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "Shift + X, C",
+              "hand": "left"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "Shift + W + C, X",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "Shift + W + Z, X",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "Shift + S + C, X",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "Shift + S + Z, X",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "Shift + D + Z",
+              "hand": "right"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "Shift + A + C",
+              "hand": "left"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "Shift + C",
+              "hand": "right"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "Shift + Z",
+              "hand": "left"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "Shift + S + C",
+              "hand": "right"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "Shift + S + Z",
+              "hand": "left"
+            },
+            {
+              "name": "Drive",
+              "keys": "Shift + W + C",
+              "hand": "right"
+            },
+            {
+              "name": "Drive",
+              "keys": "Shift + W + Z",
+              "hand": "left"
+            }
+          ]
+        },
+        {
+          "category": "Post Controls",
+          "moves": [
+            {
+              "name": "Post Up",
+              "keys": "Hold G"
+            },
+            {
+              "name": "Post Exit",
+              "keys": "Release G"
+            },
+            {
+              "name": "Post Spin",
+              "keys": "Release G + Hold A",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Spin",
+              "keys": "Release G + Hold D",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Spin (Gather)",
+              "keys": "Hold G + A + Tap E",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Spin (Gather)",
+              "keys": "Hold G + D + Tap E",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Dropstep",
+              "keys": "Hold G + (W/A/S/D) + Double Tap E"
+            },
+            {
+              "name": "Post Hopstep",
+              "keys": "Hold G + (W/A/D) + Tap E",
+              "notes": "Holding Shift is optional"
+            },
+            {
+              "name": "Post Hook",
+              "keys": "Hold G + D + Hold E",
+              "hand": "right",
+              "notes": "AMBIGUOUS IN SOURCE: bracket says 'Hold G + D + E' for BOTH left and right hand versions, but the left-hand description text says 'Hold G + A + Hold E'. Right-hand version taken from the D combo."
+            },
+            {
+              "name": "Post Hook",
+              "keys": "Hold G + A + Hold E",
+              "hand": "left",
+              "notes": "AMBIGUOUS IN SOURCE: original bracket literally repeats 'Hold G + D + E' for this left-hand entry, but its own description text says 'Hold G + A + Hold E'. Used the description version; verify in-game."
+            },
+            {
+              "name": "Spin Post Hook",
+              "keys": "Hold G + A + Hold E",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin Post Hook",
+              "keys": "Hold G + D + Hold E",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Fade",
+              "keys": "Hold G + Shift + D + Hold E",
+              "hand": "right"
+            },
+            {
+              "name": "Post Fade",
+              "keys": "Hold G + Shift + A + Hold E",
+              "hand": "left"
+            },
+            {
+              "name": "Post Fade (Backwards)",
+              "keys": "Hold G + Shift + S + Hold E"
+            },
+            {
+              "name": "Spin Post Fade",
+              "keys": "Hold G + Shift + A + Hold E",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin Post Fade",
+              "keys": "Hold G + Shift + D + Hold E",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Fake into Hook",
+              "keys": "Hold G + A + Double Tap E",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Fake into Hook",
+              "keys": "Hold G + D + Double Tap E",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Fake into Fade",
+              "keys": "Hold G + Shift + A + Tap then Hold E",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Fake into Fade",
+              "keys": "Hold G + Shift + D + Tap then Hold E",
+              "hand": "left",
+              "notes": "Source labels the hand as 'right' again in the description (likely a copy-paste typo) - kept as left-hand for consistency with the mirrored pair above."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "controller_dpad",
+      "label": "Controller - D-Pad scheme (Console, Mobile & PC)",
+      "categories": [
+        {
+          "category": "Basic Controls & Gathers",
+          "moves": [
+            {
+              "name": "Shoot",
+              "keys": "Hold X / Square"
+            },
+            {
+              "name": "Pumpfake",
+              "keys": "Tap X / Square"
+            },
+            {
+              "name": "Pumpfake (Alt)",
+              "keys": "Hold X / Square",
+              "notes": "Hold for only a couple milliseconds"
+            },
+            {
+              "name": "Self Alley Oop (Self Lob)",
+              "keys": "Hold LB/L1 + Press R3/RS"
+            },
+            {
+              "name": "Alley Oop (to teammate)",
+              "keys": "Hold LB/L1 + RB/R1 + teammate icon"
+            },
+            {
+              "name": "Screen",
+              "keys": "Hold B / O"
+            },
+            {
+              "name": "Fake Pass",
+              "keys": "Hold L3/LS + A/B/X/Y (or Triangle/Square/Circle/X)"
+            },
+            {
+              "name": "Overhead Pass",
+              "keys": "Hold RB/R1 + A/B/X/Y"
+            },
+            {
+              "name": "Chest Pass",
+              "keys": "Hold RB/R1 + RT/R2 + A/B/X/Y"
+            },
+            {
+              "name": "Flashy Pass",
+              "keys": "Hold RB/R1 + RT/R2 + Double Tap A/B/X/Y"
+            },
+            {
+              "name": "Bounce Pass",
+              "keys": "Hold RB/R1 + Double Tap A/B/X/Y"
+            },
+            {
+              "name": "Swing Pass",
+              "keys": "Hold RB/R1 + Move LS Right + A/B/X/Y",
+              "hand": "right"
+            },
+            {
+              "name": "Swing Pass",
+              "keys": "Hold RB/R1 + Move LS Left + A/B/X/Y",
+              "hand": "left"
+            },
+            {
+              "name": "Bounce Swing Pass",
+              "keys": "Hold RB/R1 + Move LS Right + Double Tap A/B/X/Y",
+              "hand": "right"
+            },
+            {
+              "name": "Bounce Swing Pass",
+              "keys": "Hold RB/R1 + Move LS Left + Double Tap A/B/X/Y",
+              "hand": "left"
+            },
+            {
+              "name": "Moving Shot",
+              "keys": "Moving right + Hold RT/R2 + X/Square",
+              "hand": "right"
+            },
+            {
+              "name": "Moving Shot",
+              "keys": "Moving left + Hold RT/R2 + X/Square",
+              "hand": "left"
+            },
+            {
+              "name": "Fadeaway",
+              "keys": "Moving backwards + Hold RT/R2 + X/Square"
+            },
+            {
+              "name": "Off Dribble",
+              "keys": "Moving right + Hold X/Square",
+              "hand": "right"
+            },
+            {
+              "name": "Off Dribble",
+              "keys": "Moving left + Hold X/Square",
+              "hand": "left"
+            },
+            {
+              "name": "Layup",
+              "keys": "Hold X/Square",
+              "notes": "While running to the rim"
+            },
+            {
+              "name": "Floater",
+              "keys": "Hold RT/R2 + Double Tap X/Square",
+              "notes": "While running to the rim/paint"
+            },
+            {
+              "name": "Spin Layup",
+              "keys": "Y / Triangle",
+              "notes": "Press after timing the layup/dunk"
+            },
+            {
+              "name": "Double Clutch Layup/Dunk (Jelly)",
+              "keys": "B/Circle or X/Square",
+              "notes": "Press after timing the layup/dunk"
+            },
+            {
+              "name": "Driving Dunk",
+              "keys": "Hold RT/R2 + Y/Triangle",
+              "notes": "While running to the rim/paint"
+            },
+            {
+              "name": "Standing Dunk",
+              "keys": "Hold Y / Triangle"
+            },
+            {
+              "name": "Euro Step",
+              "keys": "Hold RT/R2 + Double Tap X/Square",
+              "notes": "While running to the rim/paint"
+            },
+            {
+              "name": "Hop Step",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "notes": "While running to the rim/paint"
+            },
+            {
+              "name": "Spin Gather",
+              "keys": "Double Tap X/Square",
+              "notes": "While running to the rim/paint"
+            },
+            {
+              "name": "Side Step",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "hand": "right",
+              "notes": "Moving right"
+            },
+            {
+              "name": "Side Step",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "hand": "left",
+              "notes": "Moving left"
+            },
+            {
+              "name": "Hop Step Back",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "notes": "Moving backwards"
+            },
+            {
+              "name": "Behind the Back Gather",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "hand": "right",
+              "notes": "Moving left, ball in right hand"
+            },
+            {
+              "name": "Behind the Back Gather",
+              "keys": "Hold RT/R2 + Tap X/Square",
+              "hand": "left",
+              "notes": "Moving right, ball in left hand"
+            },
+            {
+              "name": "Shot Hesi",
+              "keys": "Hold RT/R2 + Tap X/Square"
+            },
+            {
+              "name": "Hesi Pull",
+              "keys": "Tap X/Square",
+              "notes": "While moving in any direction"
+            }
+          ]
+        },
+        {
+          "category": "Jab Steps (Triple Threat only)",
+          "moves": [
+            {
+              "name": "Jab",
+              "keys": "D-Pad Right"
+            },
+            {
+              "name": "Jab",
+              "keys": "D-Pad Left"
+            },
+            {
+              "name": "Jab (Turn around)",
+              "keys": "D-Pad Down"
+            },
+            {
+              "name": "Jab Step Exit",
+              "keys": "RT/R2 + D-Pad Right"
+            },
+            {
+              "name": "Jab Step Exit",
+              "keys": "RT/R2 + D-Pad Left"
+            },
+            {
+              "name": "Jab Step Exit (Turned around)",
+              "keys": "RT/R2 + D-Pad Down"
+            }
+          ]
+        },
+        {
+          "category": "Dribble Moves - Stationary",
+          "moves": [
+            {
+              "name": "Hesi",
+              "keys": "D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Hesi",
+              "keys": "D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "D-Pad Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "D-Pad Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Stepback",
+              "keys": "D-Pad Down"
+            },
+            {
+              "name": "Snatchback",
+              "keys": "D-Pad Down (twice)"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "D-Pad Right + D-Pad Down",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "D-Pad Left + D-Pad Down",
+              "hand": "left"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "D-Pad Down + Left",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "D-Pad Down + Right",
+              "hand": "left"
+            },
+            {
+              "name": "Tween",
+              "keys": "D-Pad Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Tween",
+              "keys": "D-Pad Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "D-Pad Up + D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "D-Pad Up + D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "D-Pad Up + D-Pad Left",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "D-Pad Up + D-Pad Right",
+              "hand": "left"
+            },
+            {
+              "name": "Half Spin",
+              "keys": "D-Pad Up",
+              "hand": "both"
+            },
+            {
+              "name": "Spin",
+              "keys": "D-Pad Right + Down + Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin",
+              "keys": "D-Pad Left + Down + Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Shammgod",
+              "keys": "D-Pad Up (twice)",
+              "hand": "both"
+            }
+          ]
+        },
+        {
+          "category": "Dribble Moves - Escape & Explosive",
+          "moves": [
+            {
+              "name": "Crossover",
+              "keys": "RT/R2 + Moving Left + D-Pad Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "RT/R2 + Moving Right + D-Pad Right",
+              "hand": "left",
+              "notes": "left to right; AMBIGUOUS IN SOURCE: bracket literally said 'D-Pad Left' but the description explicitly says 'press DPAD Right' - used the description."
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "RT/R2 + D-Pad Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "RT/R2 + D-Pad Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RT/R2 + D-Pad Right (twice)",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RT/R2 + D-Pad Left (twice)",
+              "hand": "left"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "RT/R2 + Moving Forward + D-Pad Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "RT/R2 + Moving Forward + D-Pad Right",
+              "hand": "left",
+              "notes": "left to right; source description said 'ball in right hand' again (likely typo)"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "RT/R2 + Moving Right + D-Pad Down",
+              "hand": "right"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "RT/R2 + Moving Left + D-Pad Down",
+              "hand": "left",
+              "notes": "source description said 'ball in right hand' again (likely typo)"
+            },
+            {
+              "name": "Forward Tween",
+              "keys": "RT/R2 + Moving Forward + D-Pad Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Forward Tween",
+              "keys": "RT/R2 + Moving Forward + D-Pad Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "D-Pad Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "D-Pad Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RT/R2 + D-Pad Up + D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RT/R2 + D-Pad Up + D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RT/R2 + D-Pad Right + D-Pad Down",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RT/R2 + D-Pad Left + D-Pad Down",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RT/R2 + D-Pad Down + Left",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RT/R2 + D-Pad Down + Right",
+              "hand": "left"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "RT/R2 + Moving Forward + D-Pad Right + D-Pad Down",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "RT/R2 + Moving Forward + D-Pad Left + D-Pad Down",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "RT/R2 + Moving Backwards + D-Pad Right + D-Pad Down",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "RT/R2 + Moving Backwards + D-Pad Left + D-Pad Down",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "RT/R2 + Moving Right + D-Pad Left",
+              "hand": "right"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "RT/R2 + Moving Left + D-Pad Right",
+              "hand": "left"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "RT/R2 + D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "RT/R2 + D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "RT/R2 + Moving Backwards + D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "RT/R2 + Moving Backwards + D-Pad Left",
+              "hand": "left"
+            },
+            {
+              "name": "Drive",
+              "keys": "RT/R2 + Moving Forward + D-Pad Right",
+              "hand": "right"
+            },
+            {
+              "name": "Drive",
+              "keys": "RT/R2 + Moving Forward + D-Pad Left",
+              "hand": "left"
+            }
+          ]
+        },
+        {
+          "category": "Post Controls",
+          "moves": [
+            {
+              "name": "Post Up",
+              "keys": "Hold LT/L2"
+            },
+            {
+              "name": "Post Exit",
+              "keys": "Release LT/L2"
+            },
+            {
+              "name": "Post Spin",
+              "keys": "Release LT/L2 + Move LS Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Spin",
+              "keys": "Release LT/L2 + Move LS Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Spin (Gather)",
+              "keys": "Hold LT/L2 + Move LS Left + Tap X/Square",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Spin (Gather)",
+              "keys": "Hold LT/L2 + Move LS Right + Tap X/Square",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Dropstep",
+              "keys": "Hold LT/L2 + Move LS (Up/Left/Down/Right) + Double Tap X/Square"
+            },
+            {
+              "name": "Post Hopstep",
+              "keys": "Hold LT/L2 + Move LS (Up/Left/Right) + Tap X/Square",
+              "notes": "Holding RT/R2 is optional"
+            },
+            {
+              "name": "Post Hook",
+              "keys": "Hold LT/L2 + Move LS Right + Hold X/Square",
+              "hand": "right"
+            },
+            {
+              "name": "Post Hook",
+              "keys": "Hold LT/L2 + Move LS Left + Hold X/Square",
+              "hand": "left"
+            },
+            {
+              "name": "Spin Post Hook",
+              "keys": "Hold LT/L2 + Move LS Left + Hold X/Square",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin Post Hook",
+              "keys": "Hold LT/L2 + Move LS Right + Hold X/Square",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Right + Hold X/Square",
+              "hand": "right"
+            },
+            {
+              "name": "Post Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Left + Hold X/Square",
+              "hand": "left"
+            },
+            {
+              "name": "Post Fade (Backwards)",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Down + Hold X/Square"
+            },
+            {
+              "name": "Spin Post Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Left + Hold X/Square",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin Post Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Right + Hold X/Square",
+              "hand": "left",
+              "notes": "left to right; source description said 'right hand' again (likely typo)"
+            },
+            {
+              "name": "Post Fake into Hook",
+              "keys": "Hold LT/L2 + Move LS Left + Double Tap X/Square",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Fake into Hook",
+              "keys": "Hold LT/L2 + Move LS Right + Double Tap X/Square",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Post Fake into Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Left + Tap then Hold X/Square",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Post Fake into Fade",
+              "keys": "Hold LT/L2 + RT/R2 + Move LS Right + Tap then Hold X/Square",
+              "hand": "left",
+              "notes": "left to right; source description said 'right hand' again (likely typo)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "controller_rightstick",
+      "label": "Controller - Right Stick scheme (alternate mapping for dribble moves)",
+      "categories": [
+        {
+          "category": "Dribble Moves - Stationary",
+          "moves": [
+            {
+              "name": "Hesi",
+              "keys": "RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Hesi",
+              "keys": "RS Left",
+              "hand": "left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "RS Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "RS Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RS Right (twice)",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RS Left (twice)",
+              "hand": "left"
+            },
+            {
+              "name": "Stepback",
+              "keys": "RS Down"
+            },
+            {
+              "name": "Snatchback",
+              "keys": "RS Down (twice)"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RS Right + Down",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RS Left + Down",
+              "hand": "left"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RS Down + Left",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RS Down + Right",
+              "hand": "left"
+            },
+            {
+              "name": "Tween",
+              "keys": "RS Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Tween",
+              "keys": "RS Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RS Up + RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RS Up + RS Left",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "RS Up-Left",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back Between the Legs",
+              "keys": "RS Up-Right",
+              "hand": "left"
+            },
+            {
+              "name": "Half Spin",
+              "keys": "Flick RS Up",
+              "hand": "both"
+            },
+            {
+              "name": "Spin",
+              "keys": "RS Right + Down + Left (rotate clockwise)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Spin",
+              "keys": "RS Left + Down + Right (rotate counter-clockwise)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Shammgod",
+              "keys": "RS Up (twice)",
+              "hand": "both"
+            }
+          ]
+        },
+        {
+          "category": "Dribble Moves - Escape & Explosive",
+          "moves": [
+            {
+              "name": "Crossover",
+              "keys": "RT/R2 + Moving Left + RS Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Crossover",
+              "keys": "RT/R2 + Moving Right + RS Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "RT/R2 + RS Left",
+              "hand": "right"
+            },
+            {
+              "name": "Escape Crossover",
+              "keys": "RT/R2 + RS Right",
+              "hand": "left"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RT/R2 + RS Right (twice)",
+              "hand": "right"
+            },
+            {
+              "name": "Double Crossover",
+              "keys": "RT/R2 + RS Left (twice)",
+              "hand": "left"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "RT/R2 + Moving Forward + RS Left",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Push Crossover",
+              "keys": "RT/R2 + Moving Forward + RS Right",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "RT/R2 + Moving Right + RS Down-Right",
+              "hand": "right"
+            },
+            {
+              "name": "Diagonal Stepback",
+              "keys": "RT/R2 + Moving Left + RS Down-Left",
+              "hand": "left"
+            },
+            {
+              "name": "Forward Tween",
+              "keys": "RT/R2 + Moving Forward + RS Down-Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Forward Tween",
+              "keys": "RT/R2 + Moving Forward + RS Down-Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "RS Left (twice)",
+              "hand": "right",
+              "notes": "right to left"
+            },
+            {
+              "name": "Regular Tween",
+              "keys": "RS Right (twice)",
+              "hand": "left",
+              "notes": "left to right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RT/R2 + RS Up + RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Double Tween",
+              "keys": "RT/R2 + RS Up + RS Left",
+              "hand": "left"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RT/R2 + RS Down-Right",
+              "hand": "right"
+            },
+            {
+              "name": "Behind the Back",
+              "keys": "RT/R2 + RS Down-Left",
+              "hand": "left"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RT/R2 + RS Down + Left",
+              "hand": "right"
+            },
+            {
+              "name": "Double Behind the Back",
+              "keys": "RT/R2 + RS Down + Right",
+              "hand": "left"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "RT/R2 + Moving Forward + RS Down-Right",
+              "hand": "right"
+            },
+            {
+              "name": "Forward Behind the Back",
+              "keys": "RT/R2 + Moving Forward + RS Down-Left",
+              "hand": "left"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "RT/R2 + Moving Backwards + RS Down-Right",
+              "hand": "right"
+            },
+            {
+              "name": "Backwards Behind the Back",
+              "keys": "RT/R2 + Moving Backwards + RS Down-Left",
+              "hand": "left"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "RT/R2 + Moving Right + RS Left",
+              "hand": "right"
+            },
+            {
+              "name": "Misdirection",
+              "keys": "RT/R2 + Moving Left + RS Right",
+              "hand": "left"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "RT/R2 + RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Lateral Glide",
+              "keys": "RT/R2 + RS Left",
+              "hand": "left"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "RT/R2 + Moving Backwards + RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Backwards Lateral Glide",
+              "keys": "RT/R2 + Moving Backwards + RS Left",
+              "hand": "left"
+            },
+            {
+              "name": "Drive",
+              "keys": "RT/R2 + Moving Forward + RS Right",
+              "hand": "right"
+            },
+            {
+              "name": "Drive",
+              "keys": "RT/R2 + Moving Forward + RS Left",
+              "hand": "left"
+            }
+          ],
+          "category_notes": "This is an ALTERNATE right-stick mapping for the same dribble moves listed under controller_dpad. Post controls and basic controls/gathers use the same mapping as controller_dpad (not duplicated here)."
+        }
+      ]
+    }
+  ]
+}
