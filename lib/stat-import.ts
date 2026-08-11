@@ -32,6 +32,17 @@ export const extractedStatRowsSchema = z.array(extractedStatRowSchema).min(1).ma
 
 export type EditableStatRow = z.infer<typeof extractedStatRowSchema>;
 
+export type MatchMvpRecommendation = {
+  playerId: string;
+  player: string;
+  teamId: string;
+  score: number;
+  rank: number;
+  winnerTeamId: string | null;
+  isWinningTeam: boolean;
+  reason: string;
+};
+
 export type StatImportSummary = {
   id: string;
   gameId: string | null;
@@ -86,25 +97,96 @@ export function validateBasketballStatRows(rows: EditableStatRow[]) {
   return issues;
 }
 
-export function toDatabaseStatRows(rows: EditableStatRow[]) {
-  return rows.map((row) => ({
-    player_id: row.playerId,
-    team_id: row.teamId,
-    pts: row.pts,
-    fgm: row.fgm,
-    fga: row.fga,
-    three_pm: row.threePm,
-    three_pa: row.threePa,
-    ftm: row.ftm,
-    fta: row.fta,
-    ast: row.ast,
-    stl: row.stl,
-    bk: row.bk,
-    orb: row.orb,
-    drb: row.drb,
-    tov: row.tov,
-    fls: row.fls,
-    plus_minus: row.plusMinus,
-    ping: row.ping,
+export function calculateMatchMvp(rows: EditableStatRow[]) {
+  const teamScores = new Map<string, number>();
+  rows.forEach((row) => {
+    if (row.teamId) teamScores.set(row.teamId, (teamScores.get(row.teamId) ?? 0) + row.pts);
+  });
+  const rankedTeams = [...teamScores].sort((a, b) => b[1] - a[1]);
+  const winnerTeamId = rankedTeams.length >= 2 && rankedTeams[0][1] !== rankedTeams[1][1]
+    ? rankedTeams[0][0]
+    : null;
+
+  const scoredPlayers = rows
+    .map((row) => {
+      const missedFieldGoals = Math.max(0, row.fga - row.fgm);
+      const missedFreeThrows = Math.max(0, row.fta - row.ftm);
+      const isWinningTeam = Boolean(winnerTeamId && row.teamId === winnerTeamId);
+      const rawScore = row.pts
+        + row.reb * 1.2
+        + row.ast * 1.5
+        + row.stl * 3
+        + row.bk * 3
+        - missedFieldGoals * 0.75
+        - missedFreeThrows * 0.5
+        - row.tov * 1.5
+        - row.fls * 0.25
+        + row.plusMinus * 0.2
+        + (isWinningTeam ? 4 : 0);
+      const score = Math.round(rawScore * 10) / 10;
+      const impact = row.stl + row.bk;
+      const plusMinus = `${row.plusMinus >= 0 ? '+' : ''}${row.plusMinus}`;
+      return {
+        playerId: row.playerId,
+        player: row.player,
+        teamId: row.teamId,
+        score,
+        rank: 0,
+        winnerTeamId,
+        isWinningTeam,
+        points: row.pts,
+        assists: row.ast,
+        rebounds: row.reb,
+        reason: `${row.pts} PTS · ${row.reb} REB · ${row.ast} AST · ${impact} STL+BLK · ${plusMinus} +/-${isWinningTeam ? ' · ทีมชนะ' : ''}`,
+      };
+    })
+    .sort((a, b) => b.score - a.score
+      || b.points - a.points
+      || b.assists - a.assists
+      || b.rebounds - a.rebounds
+      || a.player.localeCompare(b.player));
+  const rankings: MatchMvpRecommendation[] = scoredPlayers.map((entry, index) => ({
+    playerId: entry.playerId,
+    player: entry.player,
+    teamId: entry.teamId,
+    score: entry.score,
+    rank: index + 1,
+    winnerTeamId: entry.winnerTeamId,
+    isWinningTeam: entry.isWinningTeam,
+    reason: entry.reason,
   }));
+
+  return { winnerTeamId, rankings, mvp: rankings[0] ?? null };
+}
+
+export function toDatabaseStatRows(rows: EditableStatRow[]) {
+  const { rankings } = calculateMatchMvp(rows);
+  const rankingsByPlayer = new Map(rankings.map((entry) => [entry.playerId, entry]));
+  return rows.map((row) => {
+    const recommendation = rankingsByPlayer.get(row.playerId);
+    return {
+      player_id: row.playerId,
+      team_id: row.teamId,
+      pts: row.pts,
+      fgm: row.fgm,
+      fga: row.fga,
+      three_pm: row.threePm,
+      three_pa: row.threePa,
+      ftm: row.ftm,
+      fta: row.fta,
+      ast: row.ast,
+      stl: row.stl,
+      bk: row.bk,
+      orb: row.orb,
+      drb: row.drb,
+      tov: row.tov,
+      fls: row.fls,
+      plus_minus: row.plusMinus,
+      ping: row.ping,
+      mvp_score: recommendation?.score ?? null,
+      mvp_rank: recommendation?.rank ?? null,
+      mvp_recommended: recommendation?.rank === 1,
+      mvp_reason: recommendation?.reason ?? null,
+    };
+  });
 }

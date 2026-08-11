@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getApiAdminContext } from '@/lib/admin-auth';
-import { extractedStatRowsSchema, toDatabaseStatRows, validateBasketballStatRows } from '@/lib/stat-import';
+import { calculateMatchMvp, extractedStatRowsSchema, toDatabaseStatRows, validateBasketballStatRows } from '@/lib/stat-import';
 import { isSameOriginRequest } from '@/lib/request-security';
 
 const bodySchema = z.object({ rows: extractedStatRowsSchema });
@@ -27,6 +27,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!statImport) return NextResponse.json({ error: 'ไม่พบรายการนำเข้าสถิตินี้' }, { status: 404 });
 
   const isTournament = Boolean(statImport.tournament_match_id);
+  const mvp = calculateMatchMvp(parsed.data.rows).mvp;
   const { data, error } = await admin.supabase.rpc(isTournament ? 'confirm_tournament_stat_import' : 'confirm_stat_import', {
     p_import_id: id,
     p_reviewer_id: admin.user.id,
@@ -46,5 +47,5 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     revalidatePath('/tournaments');
     revalidatePath('/admin/tournaments');
   }
-  return NextResponse.json({ ok: true, savedRows: data, targetType: isTournament ? 'tournament' : 'league' });
+  return NextResponse.json({ ok: true, savedRows: data, targetType: isTournament ? 'tournament' : 'league', mvp });
 }

@@ -132,17 +132,12 @@
   pointer-events: auto;
 }
 
-.embedWrap iframe,
-.embedHost {
+.embedWrap iframe {
   display: block;
   width: 100%;
   border: 0;
   border-radius: 0.75rem;
   padding-inline: 0.5rem;
-}
-
-.embedHost {
-  min-height: 22rem;
 }
 
 .embedWrap p {

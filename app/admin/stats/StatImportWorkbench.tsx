@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Bot, CheckCircle2, FileImage, Save, Upload, XCircle } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, FileImage, Save, Trophy, Upload, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { validateBasketballStatRows, type EditableStatRow, type StatEntryPlayer, type StatEntryTarget, type StatImportSummary } from '@/lib/stat-import';
+import { calculateMatchMvp, validateBasketballStatRows, type EditableStatRow, type MatchMvpRecommendation, type StatEntryPlayer, type StatEntryTarget, type StatImportSummary } from '@/lib/stat-import';
 
 type Props = {
   targets: StatEntryTarget[];
@@ -45,6 +45,7 @@ export function StatImportWorkbench({ targets, players, imports }: Props) {
     home: rows.filter((row) => row.teamId === activeTarget?.homeTeamId).reduce((total, row) => total + row.pts, 0),
     away: rows.filter((row) => row.teamId === activeTarget?.awayTeamId).reduce((total, row) => total + row.pts, 0),
   }), [activeTarget, rows]);
+  const mvpRecommendation = useMemo(() => calculateMatchMvp(rows).mvp, [rows]);
   const validationIssues = useMemo(() => {
     const issues = rows.length ? validateBasketballStatRows(rows) : [];
     if (activeTarget?.type === 'tournament' && rows.length) {
@@ -141,11 +142,12 @@ export function StatImportWorkbench({ targets, players, imports }: Props) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ rows }),
       });
-      const payload = await response.json() as { error?: string; savedRows?: number };
+      const payload = await response.json() as { error?: string; savedRows?: number; mvp?: MatchMvpRecommendation };
       if (!response.ok) throw new Error(payload.error || 'บันทึกสถิติไม่สำเร็จ');
+      const mvpMessage = payload.mvp ? ` · MVP แนะนำ: ${payload.mvp.player} (${payload.mvp.score})` : '';
       setMessage(activeTarget?.type === 'tournament'
-        ? `บันทึกผล Tournament ${generatedScore.away}–${generatedScore.home} และประกาศผู้ชนะแล้ว`
-        : `บันทึกสถิติ ${payload.savedRows ?? rows.length} แถวแล้ว หน้า Stats จะใช้ข้อมูลล่าสุดทันที`);
+        ? `บันทึกผล Tournament ${generatedScore.away}–${generatedScore.home} และประกาศผู้ชนะแล้ว${mvpMessage}`
+        : `บันทึกสถิติ ${payload.savedRows ?? rows.length} แถวแล้ว หน้า Stats จะใช้ข้อมูลล่าสุดทันที${mvpMessage}`);
       setRows([]);
       setWarnings([]);
       setActiveId('');
@@ -195,6 +197,7 @@ export function StatImportWorkbench({ targets, players, imports }: Props) {
         <section className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)]">
           <div className="flex flex-col gap-4 border-b border-[var(--line)] p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">Step 2 · Mandatory review</p><h2 className="mt-2 text-xl font-black">ตรวจและแก้ก่อนบันทึก</h2><p className="mt-2 text-xs text-[var(--ink-faint)]">Fg%, 3p% และ Ft% เก็บไว้ในหลักฐานการตรวจ ส่วนฐานข้อมูลคำนวณเปอร์เซ็นต์จริงจาก made/attempted เพื่อไม่ให้ข้อมูลคลาดเคลื่อน</p></div><a href={`/api/admin/stats/imports/${activeId}/source`} target="_blank" rel="noreferrer" className="text-xs font-black uppercase tracking-[0.1em] text-[var(--orange-soft)]">เปิดภาพต้นฉบับ ↗</a></div>
           {activeTarget?.type === 'tournament' && <div className="m-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-2xl border border-[var(--orange)]/30 bg-[var(--orange)]/10 p-5 text-center"><div><p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Away</p><p className="race-display mt-2 text-4xl">{generatedScore.away}</p></div><div className="text-xs font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">Generated score</div><div><p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">Home</p><p className="race-display mt-2 text-4xl">{generatedScore.home}</p></div></div>}
+          {mvpRecommendation && <div className="mx-5 mb-5 flex flex-col gap-4 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 sm:flex-row sm:items-center"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-amber-300 text-amber-950"><Trophy className="h-6 w-6" /></span><div className="min-w-0 flex-1"><p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-amber-200">Gemini Match MVP recommendation</p><div className="mt-1 flex flex-wrap items-baseline gap-x-3"><h3 className="text-xl font-black">{mvpRecommendation.player}</h3><span className="number-tabular text-sm font-black text-amber-200">Impact {mvpRecommendation.score}</span></div><p className="mt-2 text-xs leading-5 text-[var(--ink-soft)]">{mvpRecommendation.reason}</p><p className="mt-1 text-[0.62rem] text-[var(--ink-faint)]">คำนวณจากแต้ม รีบาวด์ แอสซิสต์ เกมรับ ประสิทธิภาพ +/- และผลชนะ · Staff เป็นผู้ตัดสินสุดท้าย</p></div></div>}
           {warnings.length > 0 && <div className="m-5 rounded-xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100"><p className="flex items-center gap-2 font-black"><AlertTriangle className="h-4 w-4" /> จุดที่ควรตรวจซ้ำ</p><ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5">{warnings.map((warning, index) => <li key={`${warning}-${index}`}>{warning}</li>)}</ul></div>}
           <div className="overflow-x-auto">
             <table className="min-w-[154rem] border-collapse text-xs">

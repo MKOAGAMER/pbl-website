@@ -69,6 +69,9 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
   const selectedResults = useMemo(() => statsData.results.filter((result) => selectedSet.has(result.competitionId)), [selectedSet, statsData.results]);
   const playerAggregates = useMemo(() => aggregatePlayers(selectedLines), [selectedLines]);
   const teamAggregates = useMemo(() => aggregateTeams(selectedLines, selectedResults), [selectedLines, selectedResults]);
+  const visibleTeamStats = useMemo(() => teamAggregates
+    .filter((entry) => entry.gamesPlayed > 0 && teamsById.has(entry.id))
+    .sort((a, b) => b.stats.pointsPerGame - a.stats.pointsPerGame || teamName(a.id, teamsById).localeCompare(teamName(b.id, teamsById))), [teamAggregates, teamsById]);
   const normalizedQuery = deferredQuery.trim().toLowerCase();
 
   const leaderboard = useMemo(() => {
@@ -159,6 +162,7 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
           </section>
         </>
       )}
+      {view === 'players' && <TeamStatsTable entries={visibleTeamStats} teams={teamsById} selectionLabel={selectionLabel} />}
     </div>
   );
 }
@@ -256,4 +260,29 @@ function LeaderboardRow({ entry, rank, view, metric, players, teams }: { entry: 
   const player = players.get(entry.id); const team = teams.get(view === 'players' ? entry.teamId : entry.id);
   const href = view === 'players' && player ? `/players/${player.slug}` : team ? `/teams/${team.slug}` : '/stats';
   return <Link href={href} className="group grid grid-cols-[2.5rem_minmax(0,1fr)_4rem_5rem] items-center gap-3 border-b border-[var(--line)] px-4 py-3.5 last:border-0 hover:bg-[var(--surface-raised)] sm:grid-cols-[3rem_minmax(0,1fr)_minmax(8rem,0.65fr)_5rem_6rem] sm:px-5"><span className={`number-tabular text-sm font-black ${rank <= 3 ? 'text-[var(--orange-soft)]' : 'text-[var(--ink-faint)]'}`}>#{rank}</span><span className="flex min-w-0 items-center gap-3">{view === 'players' ? <PlayerAvatar src={player?.avatarUrl} name={player?.displayName ?? 'Player'} size="sm" primaryColor={team?.primaryColor} secondaryColor={team?.secondaryColor} /> : team ? <TeamLogo team={team} size="sm" /> : null}<span className="min-w-0"><span className="block truncate text-sm font-black">{entityName(entry, view, players, teams)}</span><span className="block truncate text-[0.62rem] text-[var(--ink-faint)]">{view === 'players' ? `@${player?.robloxUsername ?? 'unknown'}` : team?.abbreviation ?? ''}</span></span></span><span className="hidden text-xs font-bold text-[var(--ink-soft)] sm:block">{view === 'players' ? team?.abbreviation ?? 'FA' : `${entry.wins}-${entry.losses}`}</span><span className="number-tabular text-sm font-bold text-[var(--ink-soft)]">{entry.gamesPlayed}</span><span className="number-tabular text-right text-lg font-black text-[var(--orange-soft)]">{formatMetricValue(entry.stats[metric.key], metric)}</span></Link>;
+}
+
+function TeamStatsTable({ entries, teams, selectionLabel }: { entries: Aggregate[]; teams: Map<string, Team>; selectionLabel: string }) {
+  return (
+    <section className="mt-12" aria-labelledby="team-stats-heading">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div><p className="eyebrow">Team performance</p><h2 id="team-stats-heading" className="display-type mt-3 text-3xl sm:text-4xl">Team stats</h2></div>
+        <p className="text-xs font-bold text-[var(--ink-faint)]">Showing {selectionLabel}</p>
+      </div>
+      {entries.length === 0 ? (
+        <EmptyState icon={Shield} title="No team stats" description="Choose a season or tournament with recorded games to see team totals." />
+      ) : (
+        <div className="overflow-x-auto rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)]">
+          <table className="w-full min-w-[48rem] border-collapse text-sm">
+            <thead><tr className="border-b border-[var(--line)] text-left text-[0.58rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]"><th className="px-5 py-3">Team</th><th className="px-3 py-3 text-center">GP</th><th className="px-3 py-3 text-center">Record</th><th className="px-3 py-3 text-right">PPG</th><th className="px-3 py-3 text-right">RPG</th><th className="px-3 py-3 text-right">APG</th><th className="px-3 py-3 text-right">FG%</th><th className="px-5 py-3 text-right">3PT%</th></tr></thead>
+            <tbody>{entries.map((entry) => {
+              const team = teams.get(entry.id);
+              if (!team) return null;
+              return <tr key={entry.id} className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--surface-raised)]"><td className="px-5 py-3"><Link href={`/teams/${team.slug}`} className="flex items-center gap-3 font-black"><TeamLogo team={team} size="sm" /><span><span className="block">{team.name}</span><span className="block text-[0.62rem] text-[var(--ink-faint)]">{team.abbreviation}</span></span></Link></td><td className="number-tabular px-3 py-3 text-center font-bold">{entry.gamesPlayed}</td><td className="number-tabular px-3 py-3 text-center font-bold">{entry.wins}-{entry.losses}</td><td className="number-tabular px-3 py-3 text-right font-black text-[var(--orange-soft)]">{entry.stats.pointsPerGame.toFixed(1)}</td><td className="number-tabular px-3 py-3 text-right">{entry.stats.reboundsPerGame.toFixed(1)}</td><td className="number-tabular px-3 py-3 text-right">{entry.stats.assistsPerGame.toFixed(1)}</td><td className="number-tabular px-3 py-3 text-right">{entry.stats.fieldGoalPct.toFixed(1)}%</td><td className="number-tabular px-5 py-3 text-right">{entry.stats.threePointPct.toFixed(1)}%</td></tr>;
+            })}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
 }
