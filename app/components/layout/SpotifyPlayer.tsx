@@ -18,7 +18,7 @@ type SpotifyController = {
 type SpotifyIframeApi = {
   createController: (
     element: HTMLElement,
-    options: { url: string; width: string; height: number },
+    options: { url: string; width: number; height: number },
     callback: (controller: SpotifyController) => void,
   ) => void;
 };
@@ -29,7 +29,7 @@ type SpotifyWindow = Window & typeof globalThis & {
 
 export function SpotifyPlayer() {
   const [enabled, setEnabled] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const embedRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<SpotifyController | null>(null);
   const loopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,7 +39,7 @@ export function SpotifyPlayer() {
     if (!enabled || controllerRef.current || !embedRef.current || !spotifyWindow.__pbalSpotifyIframeApi) return;
     spotifyWindow.__pbalSpotifyIframeApi.createController(embedRef.current, {
       url: ALBUM_URL,
-      width: '100%',
+      width: 384,
       height: 352,
     }, (controller) => {
       controllerRef.current = controller;

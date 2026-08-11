@@ -56,7 +56,7 @@ const metrics: MetricConfig[] = [
 export function StatsExplorer({ statsData, players, teams }: { statsData: StatsExplorerData; players: Player[]; teams: Team[] }) {
   const [view, setView] = useState<ViewMode>('players');
   const [metricKey, setMetricKey] = useState<MetricKey>('pointsPerGame');
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => statsData.initialCompetitionId ? [statsData.initialCompetitionId] : []);
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => statsData.competitions.map((item) => item.id));
   const [teamId, setTeamId] = useState('all');
   const [minGames, setMinGames] = useState(1);
   const [query, setQuery] = useState('');
