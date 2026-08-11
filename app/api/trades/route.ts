@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase-admin';
 
 const requestSchema = z.object({
   playerId: z.string().uuid(),
-  toTeamId: z.string().uuid(),
+  toTeamId: z.string().uuid().nullable(),
   requestKind: z.enum(['acquire', 'release', 'transfer']),
   notes: z.string().trim().max(500).optional().default(''),
 });

@@ -33,6 +33,41 @@
   stroke-width: 2.6;
 }
 
+.xboxBody {
+  fill: rgba(7, 10, 13, 0.86);
+}
+
+.xboxPanel {
+  fill: none;
+  stroke: rgba(237, 242, 244, 0.7);
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.xboxDpadWell {
+  fill: #0b1014;
+  stroke: rgba(237, 242, 244, 0.74);
+  stroke-width: 2;
+}
+
+.xboxHome {
+  fill: #0b1014;
+  stroke: #edf2f4;
+  stroke-width: 2;
+}
+
+.xboxMark {
+  fill: #edf2f4;
+}
+
+.menuMark {
+  fill: none;
+  stroke: #edf2f4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .shoulderLine,
 .gripDetail,
 .touchDetail {

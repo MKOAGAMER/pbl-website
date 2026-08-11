@@ -57,6 +57,35 @@ function Dpad({ x, y, stateClass, inputEvents }: {
   );
 }
 
+function XboxDpad({ x, y, stateClass, inputEvents }: {
+  x: number;
+  y: number;
+  stateClass: StateClass;
+  inputEvents: InputEvents;
+}) {
+  const directions = [
+    ['D-Pad Up', 'M -12 -42 Q -12 -47 -7 -47 L 7 -47 Q 12 -47 12 -42 L 12 -12 L -12 -12 Z'],
+    ['D-Pad Right', 'M 12 -12 L 42 -12 Q 47 -12 47 -7 L 47 7 Q 47 12 42 12 L 12 12 Z'],
+    ['D-Pad Down', 'M -12 12 L 12 12 L 12 42 Q 12 47 7 47 L -7 47 Q -12 47 -12 42 Z'],
+    ['D-Pad Left', 'M -47 -7 Q -47 -12 -42 -12 L -12 -12 L -12 12 L -42 12 Q -47 12 -47 7 Z'],
+  ] as const;
+
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <circle className={styles.xboxDpadWell} cx="0" cy="0" r="45" />
+      {directions.map(([token, path]) => (
+        <path
+          key={token}
+          className={`${styles.dpad} ${styles.interactive} ${stateClass(token)}`}
+          d={path}
+          {...inputEvents(token)}
+        />
+      ))}
+      <circle className={styles.dpadCenter} cx="0" cy="0" r="8" />
+    </g>
+  );
+}
+
 function Stick({ x, y, side, axes, stateClass, inputEvents }: {
   x: number;
   y: number;
@@ -102,6 +131,55 @@ function FaceButton({ token, label, x, y, stateClass, inputEvents }: {
   );
 }
 
+function XboxOutline({ axes, stateClass, inputEvents }: {
+  axes: GamepadAxes;
+  stateClass: StateClass;
+  inputEvents: InputEvents;
+}) {
+  return (
+    <svg className={styles.diagram} viewBox="0 0 760 620" role="img" aria-label="Xbox controller input diagram">
+      <path className={`${styles.body} ${styles.xboxBody}`} d="M 171 231 C 193 213 221 204 252 205 L 294 211 C 324 201 436 201 466 211 L 508 205 C 539 204 567 213 589 231 C 614 270 632 338 632 400 C 632 451 607 486 573 486 C 545 486 526 456 505 421 C 486 389 457 376 421 376 L 339 376 C 303 376 274 389 255 421 C 234 456 215 486 187 486 C 153 486 128 451 128 400 C 128 338 146 270 171 231 Z" />
+      <path className={styles.xboxPanel} d="M 191 251 C 230 225 280 223 317 236 C 338 243 422 243 443 236 C 480 223 530 225 569 251" />
+      <path className={styles.xboxPanel} d="M 255 421 C 274 389 303 376 339 376 L 421 376 C 457 376 486 389 505 421" />
+
+      <path className={styles.shoulderLine} d="M 178 225 C 185 199 205 187 244 190 L 294 203" />
+      <path className={styles.shoulderLine} d="M 582 225 C 575 199 555 187 516 190 L 466 203" />
+      <g className={`${styles.interactive} ${stateClass('LT')}`} {...inputEvents('LT')}>
+        <path className={styles.shoulder} d="M 184 205 C 200 185 231 181 267 189 L 292 202 L 284 214 L 242 203 C 218 199 201 204 180 224 Z" />
+        <text className={styles.shoulderLabel} x="231" y="199">LT</text>
+      </g>
+      <g className={`${styles.interactive} ${stateClass('RT')}`} {...inputEvents('RT')}>
+        <path className={styles.shoulder} d="M 576 205 C 560 185 529 181 493 189 L 468 202 L 476 214 L 518 203 C 542 199 559 204 580 224 Z" />
+        <text className={styles.shoulderLabel} x="529" y="199">RT</text>
+      </g>
+      <g className={`${styles.interactive} ${stateClass('LB')}`} {...inputEvents('LB')}>
+        <path className={styles.shoulder} d="M 180 224 C 211 205 246 205 284 214 L 277 231 C 241 222 207 225 171 245 Z" />
+        <text className={styles.shoulderLabel} x="228" y="224">LB</text>
+      </g>
+      <g className={`${styles.interactive} ${stateClass('RB')}`} {...inputEvents('RB')}>
+        <path className={styles.shoulder} d="M 580 224 C 549 205 514 205 476 214 L 483 231 C 519 222 553 225 589 245 Z" />
+        <text className={styles.shoulderLabel} x="532" y="224">RB</text>
+      </g>
+
+      <Stick x={243} y={283} side="L" axes={axes} stateClass={stateClass} inputEvents={inputEvents} />
+      <XboxDpad x={298} y={373} stateClass={stateClass} inputEvents={inputEvents} />
+      <Stick x={432} y={373} side="R" axes={axes} stateClass={stateClass} inputEvents={inputEvents} />
+
+      <FaceButton token="Y" label="Y" x={531} y={265} stateClass={stateClass} inputEvents={inputEvents} />
+      <FaceButton token="B" label="B" x={570} y={304} stateClass={stateClass} inputEvents={inputEvents} />
+      <FaceButton token="A" label="A" x={531} y={343} stateClass={stateClass} inputEvents={inputEvents} />
+      <FaceButton token="X" label="X" x={492} y={304} stateClass={stateClass} inputEvents={inputEvents} />
+
+      <circle className={styles.xboxHome} cx="380" cy="246" r="21" />
+      <path className={styles.xboxMark} d="M 369 236 C 375 231 385 231 391 236 C 386 235 383 239 380 244 C 377 239 374 235 369 236 Z M 367 239 C 369 246 373 251 380 255 C 374 255 368 251 365 246 C 364 243 365 241 367 239 Z M 393 239 C 391 246 387 251 380 255 C 386 255 392 251 395 246 C 396 243 395 241 393 239 Z" />
+      <circle className={styles.systemButton} cx="343" cy="305" r="9" />
+      <circle className={styles.systemButton} cx="417" cy="305" r="9" />
+      <path className={styles.menuMark} d="M 338 301 H 348 M 338 305 H 348 M 338 309 H 348 M 413 301 H 421 V 309 H 413 Z" />
+      <text className={styles.deviceLabel} x="380" y="548">XBOX LAYOUT</text>
+    </svg>
+  );
+}
+
 function GamepadOutline({ style, axes, stateClass, inputEvents }: {
   style: ControllerStyle;
   axes: GamepadAxes;
@@ -109,6 +187,7 @@ function GamepadOutline({ style, axes, stateClass, inputEvents }: {
   inputEvents: InputEvents;
 }) {
   const playstation = style === 'playstation';
+  if (!playstation) return <XboxOutline axes={axes} stateClass={stateClass} inputEvents={inputEvents} />;
   const leftStick = playstation ? { x: 286, y: 376 } : { x: 201, y: 297 };
   const dpad = playstation ? { x: 201, y: 298 } : { x: 286, y: 376 };
   const labels = playstation

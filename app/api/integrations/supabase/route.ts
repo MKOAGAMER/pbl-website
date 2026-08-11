@@ -212,12 +212,12 @@ export async function POST(request: Request) {
 
       await sendDiscordNotification('trade', {
         title: `🔄 OFFICIAL TRADE · ${short(playerName, 220)}`,
-        description: `${playerName} ย้ายจาก ${fromTeam?.name ?? 'Free Agent'} ไป ${toTeam?.name ?? 'Unknown team'}`,
+        description: `${playerName} ย้ายจาก ${fromTeam?.name ?? 'Free Agent'} ไป ${toTeam?.name ?? 'Free Agent'}`,
         url: `${getSiteUrl()}/trades`,
         thumbnail: player?.avatar_url ? { url: player.avatar_url } : undefined,
         fields: [
           { name: 'ทีมต้นทาง', value: fromTeam ? `${fromTeam.name} (${fromTeam.abbreviation})` : 'Free Agent', inline: true },
-          { name: 'ทีมปลายทาง', value: toTeam ? `${toTeam.name} (${toTeam.abbreviation})` : 'Unknown team', inline: true },
+          { name: 'ทีมปลายทาง', value: toTeam ? `${toTeam.name} (${toTeam.abbreviation})` : 'Free Agent', inline: true },
           { name: 'ประเภทรายการ', value: tradeKindLabel, inline: true },
         ],
         timestamp: stringValue(payload.record.reviewed_at) || stringValue(payload.record.updated_at) || new Date().toISOString(),

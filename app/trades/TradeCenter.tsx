@@ -15,21 +15,31 @@ type Props = {
   isStaff: boolean;
   canRequestTrade: boolean;
   franchiseTeamId: string | null;
+  currentPlayerId: string | null;
 };
 
-export function TradeCenter({ trades, players, teams, currentUsername, isStaff, canRequestTrade, franchiseTeamId }: Props) {
+export function TradeCenter({ trades, players, teams, currentUsername, isStaff, canRequestTrade, franchiseTeamId, currentPlayerId }: Props) {
   const router = useRouter();
   const [requestKind, setRequestKind] = useState<TradeRequestKind>(franchiseTeamId ? 'acquire' : 'transfer');
   const eligiblePlayers = useMemo(() => {
-    if (!franchiseTeamId || requestKind === 'transfer') return players;
+    if (currentPlayerId && !franchiseTeamId && !isStaff) {
+      return players.filter((player) => player.id === currentPlayerId);
+    }
+    if (!franchiseTeamId || requestKind === 'transfer') {
+      return requestKind === 'acquire'
+        ? players.filter((player) => !player.teamId)
+        : players.filter((player) => Boolean(player.teamId));
+    }
     return requestKind === 'release'
       ? players.filter((player) => player.teamId === franchiseTeamId)
       : players.filter((player) => player.teamId !== franchiseTeamId);
-  }, [franchiseTeamId, players, requestKind]);
+  }, [currentPlayerId, franchiseTeamId, isStaff, players, requestKind]);
   const [playerId, setPlayerId] = useState(() => (
-    franchiseTeamId
+    currentPlayerId && !franchiseTeamId && !isStaff
+      ? currentPlayerId
+      : franchiseTeamId
       ? players.find((player) => player.teamId !== franchiseTeamId)?.id ?? ''
-      : players[0]?.id ?? ''
+      : players.find((player) => Boolean(player.teamId))?.id ?? ''
   ));
   const selectedPlayer = eligiblePlayers.find((player) => player.id === playerId);
   const destinations = teams.filter((team) => team.id !== selectedPlayer?.teamId);
@@ -55,8 +65,11 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
   async function submitTrade(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('');
-    const destinationTeamId = requestKind === 'acquire' && franchiseTeamId ? franchiseTeamId : toTeamId;
-    if (!playerId || !destinationTeamId) {
+    const destinationTeamId = requestKind === 'acquire' && franchiseTeamId
+      ? franchiseTeamId
+      : toTeamId === '__free_agent__' ? null : toTeamId || null;
+    const submittedKind: TradeRequestKind = destinationTeamId ? requestKind : 'release';
+    if (!playerId || (submittedKind !== 'release' && !destinationTeamId)) {
       setMessage('กรุณาเลือกผู้เล่นและทีมปลายทาง');
       return;
     }
@@ -65,11 +78,13 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
       const response = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ playerId, toTeamId: destinationTeamId, requestKind, notes }),
+        body: JSON.stringify({ playerId, toTeamId: destinationTeamId, requestKind: submittedKind, notes }),
       });
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error || 'ส่งคำขอไม่สำเร็จ');
-      setMessage('ส่งคำขอแล้ว ทีมงานลีกจะตรวจสอบก่อนประกาศอย่างเป็นทางการ');
+      setMessage(currentPlayerId && !franchiseTeamId && !isStaff
+        ? 'ส่งคำขอแล้ว Franchise Owner และทีมงานลีกจะตรวจสอบก่อนเปลี่ยน roster'
+        : 'ส่งคำขอแล้ว ทีมงานลีกจะตรวจสอบก่อนประกาศอย่างเป็นทางการ');
       setNotes('');
       setToTeamId('');
       router.refresh();
@@ -110,23 +125,28 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
               </div>
             ) : !canRequestTrade ? (
               <div className="mt-6 rounded-xl border border-[var(--line)] bg-[var(--page)] p-4 text-sm leading-6 text-[var(--ink-soft)]">
-                การยื่นคำขอซื้อขายสงวนไว้สำหรับยศ <strong className="text-[var(--ink)]">Franchise Owner</strong> และทีมงานลีก ติดต่อแอดมินเพื่อขอรับยศและผูกทีม Franchise
+                บัญชีนี้ยังไม่ได้ผูกกับ Player profile จึงยื่นคำขอย้ายทีมไม่ได้ กรุณาติดต่อแอดมินเพื่อผูก Roblox account กับผู้เล่น
               </div>
             ) : (
               <form onSubmit={submitTrade} className="mt-6 space-y-4">
                 <p className="text-xs text-[var(--ink-faint)]">ยื่นคำขอในชื่อ <strong className="text-[var(--ink)]">{currentUsername}</strong></p>
-                {franchiseTeamId && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ประเภทธุรกรรม
+                {(franchiseTeamId || isStaff) && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ประเภทธุรกรรม
                   <select value={requestKind} onChange={(event) => {
                     const kind = event.target.value as TradeRequestKind;
                     setRequestKind(kind);
-                    const nextPlayers = kind === 'release'
-                      ? players.filter((player) => player.teamId === franchiseTeamId)
-                      : players.filter((player) => player.teamId !== franchiseTeamId);
+                    const nextPlayers = franchiseTeamId
+                      ? kind === 'release'
+                        ? players.filter((player) => player.teamId === franchiseTeamId)
+                        : players.filter((player) => player.teamId !== franchiseTeamId)
+                      : kind === 'acquire'
+                        ? players.filter((player) => !player.teamId)
+                        : players.filter((player) => Boolean(player.teamId));
                     setPlayerId(nextPlayers[0]?.id ?? '');
                     setToTeamId('');
                   }} className="admin-input mt-2">
                     <option value="acquire">ซื้อผู้เล่นเข้าทีม</option>
-                    <option value="release">ขาย / ส่งผู้เล่นออกจากทีม</option>
+                    <option value="release">ปล่อย / ส่งผู้เล่นออกจากทีม</option>
+                    {isStaff && <option value="transfer">ย้ายระหว่างทีม</option>}
                   </select>
                 </label>}
                 <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ผู้เล่น
@@ -137,11 +157,12 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--page)] p-3 text-center">
                   <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ต้นทาง</span><strong className="mt-1 block text-sm">{teams.find((team) => team.id === selectedPlayer?.teamId)?.abbreviation ?? 'FA'}</strong></span>
                   <ArrowLeftRight className="h-5 w-5 text-[var(--orange-soft)]" />
-                  <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ปลายทาง</span><strong className="mt-1 block text-sm">{teams.find((team) => team.id === (requestKind === 'acquire' ? franchiseTeamId : toTeamId))?.abbreviation ?? '—'}</strong></span>
+                  <span><span className="block text-[0.6rem] font-black uppercase text-[var(--ink-faint)]">ปลายทาง</span><strong className="mt-1 block text-sm">{toTeamId === '__free_agent__' ? 'FA' : teams.find((team) => team.id === (requestKind === 'acquire' && franchiseTeamId ? franchiseTeamId : toTeamId))?.abbreviation ?? (requestKind === 'release' ? 'FA' : '—')}</strong></span>
                 </div>
-                {requestKind !== 'acquire' && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ทีมปลายทาง
-                  <select value={toTeamId} onChange={(event) => setToTeamId(event.target.value)} className="admin-input mt-2" required>
+                {!(requestKind === 'acquire' && franchiseTeamId) && <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">ทีมปลายทาง
+                  <select value={toTeamId} onChange={(event) => setToTeamId(event.target.value)} className="admin-input mt-2" required={requestKind !== 'release'}>
                     <option value="">เลือกทีม</option>
+                    {(requestKind === 'release' || Boolean(currentPlayerId && !franchiseTeamId && !isStaff)) && <option value="__free_agent__">Free Agent (ไม่มีทีม)</option>}
                     {destinations.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
                   </select>
                 </label>}
@@ -150,11 +171,11 @@ export function TradeCenter({ trades, players, teams, currentUsername, isStaff, 
                 </label>
                 {message && <p role="status" className="rounded-xl border border-[var(--line)] bg-[var(--page)] px-3 py-2.5 text-sm text-[var(--ink-soft)]">{message}</p>}
                 <button type="submit" disabled={submitting || eligiblePlayers.length === 0} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--orange)] px-5 text-xs font-black uppercase tracking-[0.12em] text-black disabled:cursor-not-allowed disabled:opacity-50">
-                  {submitting ? 'กำลังส่ง...' : 'ส่งให้ทีมงานตรวจสอบ'}
+                  {submitting ? 'กำลังส่ง...' : currentPlayerId && !franchiseTeamId && !isStaff ? 'ส่งคำขอย้ายทีม' : 'ส่งให้ทีมงานตรวจสอบ'}
                 </button>
               </form>
             )}
-            <div className="mt-5 flex gap-3 border-t border-[var(--line)] pt-5 text-xs leading-5 text-[var(--ink-faint)]"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><p>คำขอจะยังไม่เปลี่ยน roster จนกว่า staff อนุมัติ ระบบบันทึกผู้ตรวจสอบและเวลาทุกครั้ง</p></div>
+            <div className="mt-5 flex gap-3 border-t border-[var(--line)] pt-5 text-xs leading-5 text-[var(--ink-faint)]"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /><p>Player สามารถขอย้ายทีมของตัวเองหรือขอเป็น Free Agent ได้ โดย Franchise Owner จะเห็นคำขอของทีม และ roster จะเปลี่ยนเมื่อ staff อนุมัติเท่านั้น</p></div>
           </section>
 
           <section>

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const createSchema = z.object({
   playerId: z.string().uuid(),
-  toTeamId: z.string().uuid(),
+  toTeamId: z.string().uuid().nullable(),
   requestKind: z.enum(['acquire', 'release', 'transfer']),
   notes: z.string().trim().max(500).optional().default(''),
   externalRequestId: z.string().trim().min(1).max(200).optional(),

@@ -39,9 +39,10 @@ npm run dev
 11. `supabase/migrations/202608040002_discipline_discord_webhook.sql`
 12. `supabase/migrations/202608040003_content_match_discord_webhook.sql`
 13. `supabase/migrations/202608040004_tournament_match_discord_webhook.sql`
-14. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
+14. `supabase/migrations/202608110001_player_trade_free_agent.sql`
+15. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
-Migration ล่าสุดเพิ่ม Franchise Owner, การซื้อ/ปล่อยผู้เล่นผ่านการอนุมัติของ Staff, About และหลายตำแหน่งของผู้เล่น รวมถึง Tournament Control ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ
+Migration ล่าสุดเพิ่มคำขอย้ายทีมของ Player และการปล่อยผู้เล่นเป็น Free Agent โดย roster จะเปลี่ยนหลัง Staff อนุมัติเท่านั้น ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ
 
 ## ตรวจคุณภาพ
 

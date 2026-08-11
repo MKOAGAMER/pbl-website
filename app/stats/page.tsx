@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { PageIntro } from '@/app/components/ui/PageIntro';
 import { getSiteData } from '@/lib/league-data';
+import { getStatsExplorerData } from '@/lib/stats-data';
 import { StatsExplorer } from './StatsExplorer';
 
 export const metadata: Metadata = {
@@ -10,15 +11,16 @@ export const metadata: Metadata = {
 
 export default async function StatsPage() {
   const data = await getSiteData();
+  const statsData = await getStatsExplorerData(data);
 
   return (
     <>
       <PageIntro
         eyebrow="League leaders"
         title="Numbers that tell the story."
-        description={`Explore ${data.season.name} averages across scoring, rebounding, playmaking, defense and shooting. Adjust the eligibility filters to build your own leaderboard.`}
+        description="Explore player and team averages across regular seasons and tournaments. Select one or more competitions to build the leaderboard you need."
       />
-      <StatsExplorer seasonName={data.season.name} players={data.players} teams={data.teams} />
+      <StatsExplorer statsData={statsData} players={data.players} teams={data.teams} />
     </>
   );
 }

@@ -24,6 +24,7 @@ export default async function TradesPage() {
   let tradeRows: Row[] = [];
   let historyPlayerRows: Row[] = [];
   let historyTeamRows: Row[] = [];
+  let currentPlayerId: string | null = null;
 
   if (supabase) {
     const [tradesResult, playersResult, teamsResult] = await Promise.all([
@@ -39,6 +40,14 @@ export default async function TradesPage() {
     if (!tradesResult.error && Array.isArray(tradesResult.data)) tradeRows = tradesResult.data as Row[];
     if (!playersResult.error && Array.isArray(playersResult.data)) historyPlayerRows = playersResult.data as Row[];
     if (!teamsResult.error && Array.isArray(teamsResult.data)) historyTeamRows = teamsResult.data as Row[];
+    if (user) {
+      const { data: linkedPlayer } = await supabase
+        .from('players')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      currentPlayerId = linkedPlayer?.id ? String(linkedPlayer.id) : null;
+    }
   }
 
   const playerById = new Map(siteData.players.map((player) => [player.id, { name: player.displayName, slug: player.slug }]));
@@ -50,7 +59,12 @@ export default async function TradesPage() {
   historyTeamRows.forEach((row) => teamById.set(text(row.id), { name: text(row.name) || 'Unknown team', abbreviation: text(row.abbreviation) || '—' }));
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
   const visibleRows = tradeRows.filter((row) => (
-    row.status === 'approved' || row.created_by === user?.id || isStaff
+    row.status === 'approved'
+    || row.created_by === user?.id
+    || isStaff
+    || Boolean(user?.franchiseTeamId && (
+      row.from_team_id === user.franchiseTeamId || row.to_team_id === user.franchiseTeamId
+    ))
   ));
   const trades: TradeRecord[] = visibleRows.map((row) => {
     const player = playerById.get(text(row.player_id));
@@ -65,8 +79,8 @@ export default async function TradesPage() {
       fromTeamName: fromTeam?.name ?? 'Free Agent',
       fromTeamAbbreviation: fromTeam?.abbreviation ?? 'FA',
       toTeamId: text(row.to_team_id),
-      toTeamName: toTeam?.name ?? 'Unknown team',
-      toTeamAbbreviation: toTeam?.abbreviation ?? '—',
+      toTeamName: toTeam?.name ?? 'Free Agent',
+      toTeamAbbreviation: toTeam?.abbreviation ?? 'FA',
       tradeDate: text(row.trade_date),
       status: text(row.status) as TradeStatus,
       requestKind: (text(row.request_kind) || 'transfer') as TradeRequestKind,
@@ -86,8 +100,9 @@ export default async function TradesPage() {
       teams={siteData.teams}
       currentUsername={user?.username ?? null}
       isStaff={isStaff}
-      canRequestTrade={isStaff || user?.role === 'franchise_owner'}
+      canRequestTrade={isStaff || user?.role === 'franchise_owner' || Boolean(currentPlayerId)}
       franchiseTeamId={user?.franchiseTeamId ?? null}
+      currentPlayerId={currentPlayerId}
     />
   );
 }

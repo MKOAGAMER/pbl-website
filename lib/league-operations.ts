@@ -12,7 +12,7 @@ export async function createTradeRequest(
   actor: PbalUser,
   input: {
     playerId: string;
-    toTeamId: string;
+    toTeamId: string | null;
     requestKind: TradeRequestKind;
     notes?: string;
     source: OperationSource;
@@ -20,8 +20,8 @@ export async function createTradeRequest(
   },
 ) {
   const isStaff = actor.role === 'staff' || actor.role === 'admin';
-  if (!isStaff && actor.role !== 'franchise_owner') {
-    throw new LeagueOperationError(403, 'trade_forbidden', 'Only a Franchise Owner or league staff can submit a trade request.');
+  if (!isStaff && actor.role !== 'franchise_owner' && actor.role !== 'player') {
+    throw new LeagueOperationError(403, 'trade_forbidden', 'Only a player, Franchise Owner or league staff can submit a trade request.');
   }
 
   if (input.externalRequestId) {
@@ -35,7 +35,7 @@ export async function createTradeRequest(
   }
 
   const [{ data: player, error: playerError }, { data: activeSeason, error: seasonError }] = await Promise.all([
-    supabase.from('players').select('id, team_id, is_active').eq('id', input.playerId).maybeSingle(),
+    supabase.from('players').select('id, team_id, user_id, is_active').eq('id', input.playerId).maybeSingle(),
     supabase.from('seasons').select('id').eq('status', 'active').order('starts_on', { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (playerError || seasonError) {
@@ -60,8 +60,25 @@ export async function createTradeRequest(
   if (!fromTeamId && input.requestKind !== 'acquire') {
     throw new LeagueOperationError(409, 'free_agent_requires_acquire', 'A Free Agent can only be submitted as an acquire request.');
   }
-  if (fromTeamId === input.toTeamId) {
+  if (!input.toTeamId && input.requestKind !== 'release') {
+    throw new LeagueOperationError(400, 'free_agent_requires_release', 'Moving a player to Free Agent must use a release request.');
+  }
+  if (fromTeamId && fromTeamId === input.toTeamId) {
     throw new LeagueOperationError(400, 'same_team', 'Origin and destination teams must be different.');
+  }
+
+  if (actor.role === 'player') {
+    if (player.user_id !== actor.id) {
+      throw new LeagueOperationError(403, 'player_trade_forbidden', 'Players can only request a move for their own linked profile.');
+    }
+    if (!fromTeamId) {
+      throw new LeagueOperationError(409, 'free_agent_cannot_transfer', 'This player is already a Free Agent.');
+    }
+    const validSelfRequest = input.requestKind === 'transfer' && Boolean(input.toTeamId)
+      || input.requestKind === 'release' && !input.toTeamId;
+    if (!validSelfRequest) {
+      throw new LeagueOperationError(400, 'invalid_player_trade_kind', 'Players can request a team transfer or ask to become a Free Agent.');
+    }
   }
 
   if (actor.role === 'franchise_owner') {
@@ -79,14 +96,16 @@ export async function createTradeRequest(
     }
   }
 
-  const { data: destination, error: teamError } = await supabase
-    .from('teams')
-    .select('id')
-    .eq('id', input.toTeamId)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (teamError) throw new LeagueOperationError(503, 'database_unavailable', teamError.message);
-  if (!destination) throw new LeagueOperationError(404, 'team_not_found', 'Destination team was not found.');
+  if (input.toTeamId) {
+    const { data: destination, error: teamError } = await supabase
+      .from('teams')
+      .select('id')
+      .eq('id', input.toTeamId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (teamError) throw new LeagueOperationError(503, 'database_unavailable', teamError.message);
+    if (!destination) throw new LeagueOperationError(404, 'team_not_found', 'Destination team was not found.');
+  }
 
   const { data: existing } = await supabase
     .from('trades')
