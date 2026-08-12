@@ -32,7 +32,10 @@ async function loadPublicTournaments(): Promise<Tournament[]> {
       status: String(item.status) as TournamentTeam['status'],
     })),
     matches: matches.filter((item) => item.tournament_id === row.id).map((item): TournamentMatch => ({
-      id: String(item.id), roundLabel: String(item.round_label), matchNumber: numberOrNull(item.match_number),
+      id: String(item.id), stage: stringOrNull(item.stage) as TournamentMatch['stage'], groupName: stringOrNull(item.group_name),
+      bracketRound: stringOrNull(item.bracket_round) as TournamentMatch['bracketRound'], bracketPosition: numberOrNull(item.bracket_position),
+      nextMatchId: stringOrNull(item.next_match_id), nextMatchSide: stringOrNull(item.next_match_side) as TournamentMatch['nextMatchSide'],
+      roundLabel: String(item.round_label), matchNumber: numberOrNull(item.match_number),
       scheduledAt: stringOrNull(item.scheduled_at), venue: stringOrNull(item.venue), status: String(item.status) as TournamentMatch['status'],
       homeTeamId: stringOrNull(item.home_team_id), awayTeamId: stringOrNull(item.away_team_id), homeScore: numberOrNull(item.home_score),
       awayScore: numberOrNull(item.away_score), winnerTeamId: stringOrNull(item.winner_team_id), streamUrl: stringOrNull(item.stream_url), notes: stringOrNull(item.notes),

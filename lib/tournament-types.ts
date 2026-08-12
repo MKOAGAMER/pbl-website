@@ -1,5 +1,5 @@
 export type TournamentStatus = 'draft' | 'registration' | 'active' | 'completed' | 'cancelled';
-export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage';
+export type TournamentFormat = 'single_elimination' | 'double_elimination' | 'round_robin' | 'group_stage' | 'fiba';
 
 export type TournamentTeam = {
   id: string;
@@ -11,6 +11,12 @@ export type TournamentTeam = {
 
 export type TournamentMatch = {
   id: string;
+  stage: 'group' | 'knockout' | null;
+  groupName: string | null;
+  bracketRound: 'quarter_final' | 'semi_final' | 'final' | null;
+  bracketPosition: number | null;
+  nextMatchId: string | null;
+  nextMatchSide: 'home' | 'away' | null;
   roundLabel: string;
   matchNumber: number | null;
   scheduledAt: string | null;

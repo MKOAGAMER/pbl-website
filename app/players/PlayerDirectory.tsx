@@ -154,10 +154,7 @@ export function PlayerDirectory({ players, teams, statsData, accolades }: Player
                 />
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-4">
-                    <span className="relative shrink-0">
-                      <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
-                      <MedalBadges accolades={accolades.filter((item) => item.playerId === player.id)} size="sm" className="absolute -bottom-2 -right-3 max-w-20 justify-end" />
-                    </span>
+                    <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
                     <span className="min-w-0">
                       <span className="flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.11em] text-[var(--ink-faint)]">
                         #{player.jerseyNumber} <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" /> {player.positions.join(' / ')}
@@ -165,6 +162,7 @@ export function PlayerDirectory({ players, teams, statsData, accolades }: Player
                       <span className="mt-1.5 block truncate text-xl font-black tracking-[-0.04em] transition group-hover:text-[var(--orange-soft)]">{player.displayName}</span>
                       <span className="mt-1 flex items-center gap-1.5 truncate text-xs text-[var(--ink-faint)]"><UserRound className="h-3.5 w-3.5" /> @{player.robloxUsername}</span>
                     </span>
+                    <MedalBadges accolades={accolades.filter((item) => item.playerId === player.id)} size="sm" className="max-w-36 shrink-0 self-center" />
                   </div>
                   <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${player.isActive ? 'bg-emerald-400' : 'bg-[var(--ink-faint)]'}`} title={player.isActive ? 'Active' : 'Inactive'} />
                 </div>
