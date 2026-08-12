@@ -43,6 +43,7 @@ npm run dev
 15. `supabase/migrations/202608120001_tournament_accolades.sql`
 16. `supabase/migrations/202608120002_accolade_colors.sql`
 17. `supabase/migrations/202608120003_fiba_tournament_format.sql`
+18. `supabase/migrations/202608130001_forfeit_results.sql`
 15. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
 Migration ล่าสุดเพิ่มคำขอย้ายทีมของ Player และการปล่อยผู้เล่นเป็น Free Agent โดย roster จะเปลี่ยนหลัง Staff อนุมัติเท่านั้น ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ

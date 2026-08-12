@@ -89,6 +89,10 @@ export function isSiteDataHealthy(data: SiteData) {
   return data.source === 'supabase' && data.season.id !== pendingSeason.id;
 }
 
+export function isTournamentOnlyMode(data: SiteData) {
+  return data.source === 'supabase' && data.season.id === pendingSeason.id && data.teams.length > 0;
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()

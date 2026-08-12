@@ -7,6 +7,7 @@ import { requireAdminPermission } from '@/lib/admin-auth';
 import { getRobloxUserByUsername } from '@/lib/roblox-users';
 
 const uuid = z.string().uuid();
+const optionalId = z.union([z.literal(''), uuid]);
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const position = z.enum(['PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL']);
 const optionalUrl = z.union([z.literal(''), z.string().url().max(500)]);
@@ -338,31 +339,42 @@ export async function updateGame(formData: FormData) {
     status: z.enum(['scheduled', 'live', 'final', 'postponed', 'cancelled']),
     homeScore: z.union([z.literal(''), z.coerce.number().int().min(0)]),
     awayScore: z.union([z.literal(''), z.coerce.number().int().min(0)]),
+    resultType: z.enum(['played', 'forfeit']),
+    forfeitTeamId: optionalId,
     streamUrl: optionalUrl,
     notes: z.string().trim().max(2000),
   }).safeParse({
     gameId: formData.get('game_id'), homeTeamId: formData.get('home_team_id'), awayTeamId: formData.get('away_team_id'),
     startsAt: formData.get('starts_at'), venue: formData.get('venue'), status: formData.get('status'),
-    homeScore: formData.get('home_score'), awayScore: formData.get('away_score'), streamUrl: formData.get('stream_url'), notes: formData.get('notes'),
+    homeScore: formData.get('home_score'), awayScore: formData.get('away_score'), resultType: formData.get('result_type') || 'played', forfeitTeamId: formData.get('forfeit_team_id'), streamUrl: formData.get('stream_url'), notes: formData.get('notes'),
   });
   if (!parsed.success || parsed.data.homeTeamId === parsed.data.awayTeamId) redirect('/admin/league?error=invalid-game');
-  const homeScore = parsed.data.homeScore === '' ? null : parsed.data.homeScore;
-  const awayScore = parsed.data.awayScore === '' ? null : parsed.data.awayScore;
-  if (parsed.data.status === 'final' && (homeScore === null || awayScore === null || homeScore === awayScore)) {
+  const isForfeit = parsed.data.resultType === 'forfeit';
+  if (isForfeit && (!parsed.data.forfeitTeamId || (parsed.data.forfeitTeamId !== parsed.data.homeTeamId && parsed.data.forfeitTeamId !== parsed.data.awayTeamId))) {
+    redirect('/admin/league?error=forfeit-team-required');
+  }
+  const homeScore = isForfeit ? (parsed.data.forfeitTeamId === parsed.data.homeTeamId ? 0 : 20) : parsed.data.homeScore === '' ? null : parsed.data.homeScore;
+  const awayScore = isForfeit ? (parsed.data.forfeitTeamId === parsed.data.awayTeamId ? 0 : 20) : parsed.data.awayScore === '' ? null : parsed.data.awayScore;
+  const status = isForfeit ? 'final' : parsed.data.status;
+  if (status === 'final' && (homeScore === null || awayScore === null || homeScore === awayScore)) {
     redirect('/admin/league?error=invalid-game');
   }
-  const { error } = await supabase.from('games').update({
+  const { error: forfeitSchemaError } = await supabase.from('games').select('result_type').limit(1);
+  if (isForfeit && forfeitSchemaError) redirect('/admin/league?error=forfeit-migration-required');
+  const payload = {
     home_team_id: parsed.data.homeTeamId,
     away_team_id: parsed.data.awayTeamId,
     scheduled_at: new Date(parsed.data.startsAt).toISOString(),
     venue: parsed.data.venue || null,
-    status: parsed.data.status,
+    status,
     home_score: homeScore,
     away_score: awayScore,
     stream_url: parsed.data.streamUrl || null,
     notes: parsed.data.notes || null,
     updated_at: new Date().toISOString(),
-  }).eq('id', parsed.data.gameId);
+    ...(forfeitSchemaError ? {} : { result_type: parsed.data.resultType, forfeit_team_id: isForfeit ? parsed.data.forfeitTeamId : null }),
+  };
+  const { error } = await supabase.from('games').update(payload).eq('id', parsed.data.gameId);
   if (error) {
     console.error('[league:update-game]', error.message);
     redirect('/admin/league?error=game-save');

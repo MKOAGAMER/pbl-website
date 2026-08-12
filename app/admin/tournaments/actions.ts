@@ -33,6 +33,7 @@ export async function saveTournament(formData: FormData) {
     venue: formData.get('venue'), championTeamId: formData.get('champion_team_id') ?? '', isPublic: formData.get('is_public') === 'on',
   });
   if (!parsed.success || (parsed.data.startsAt && parsed.data.endsAt && parsed.data.endsAt < parsed.data.startsAt)) redirect('/admin/tournaments?error=invalid-tournament');
+  if (parsed.data.status === 'completed' && !parsed.data.championTeamId) redirect('/admin/tournaments?error=completed-needs-champion');
   if (parsed.data.championTeamId) {
     if (!parsed.data.id) redirect('/admin/tournaments?error=invalid-champion');
     const { data: championEntry } = await supabase.from('tournament_teams').select('id').eq('tournament_id', parsed.data.id).eq('team_id', parsed.data.championTeamId).maybeSingle();
@@ -150,28 +151,56 @@ export async function saveTournamentMatch(formData: FormData) {
   const parsed = z.object({ id: optionalId, tournamentId: uuid, roundLabel: z.string().trim().min(1).max(80), matchNumber: optionalPositiveInt,
     scheduledAt: optionalDateTime, venue: z.string().trim().max(160), status: z.enum(['scheduled', 'live', 'final', 'postponed', 'cancelled']),
     homeTeamId: optionalId, awayTeamId: optionalId, homeScore: optionalScore, awayScore: optionalScore, winnerTeamId: optionalId,
+    resultType: z.enum(['played', 'forfeit']), forfeitTeamId: optionalId,
     streamUrl: optionalUrl, notes: z.string().trim().max(2000),
   }).safeParse({ id: formData.get('id'), tournamentId: formData.get('tournament_id'), roundLabel: formData.get('round_label'), matchNumber: formData.get('match_number'),
     scheduledAt: formData.get('scheduled_at'), venue: formData.get('venue'), status: formData.get('status'), homeTeamId: formData.get('home_team_id'),
     awayTeamId: formData.get('away_team_id'), homeScore: formData.get('home_score'), awayScore: formData.get('away_score'), winnerTeamId: formData.get('winner_team_id'),
+    resultType: formData.get('result_type') || 'played', forfeitTeamId: formData.get('forfeit_team_id'),
     streamUrl: formData.get('stream_url'), notes: formData.get('notes') });
   if (!parsed.success || (parsed.data.homeTeamId && parsed.data.homeTeamId === parsed.data.awayTeamId)) redirect('/admin/tournaments?error=invalid-match');
-  const hasBothScores = parsed.data.homeScore !== '' && parsed.data.awayScore !== '';
-  if (parsed.data.status === 'final' && (!hasBothScores || parsed.data.homeScore === parsed.data.awayScore)) redirect('/admin/tournaments?error=final-score-required');
-  const derivedWinnerId = parsed.data.status === 'final' && hasBothScores
-    ? parsed.data.homeScore > parsed.data.awayScore ? parsed.data.homeTeamId : parsed.data.awayTeamId
+  const isForfeit = parsed.data.resultType === 'forfeit';
+  if (isForfeit && (!parsed.data.forfeitTeamId || (parsed.data.forfeitTeamId !== parsed.data.homeTeamId && parsed.data.forfeitTeamId !== parsed.data.awayTeamId))) redirect('/admin/tournaments?error=forfeit-team-required');
+  const homeScore = isForfeit ? (parsed.data.forfeitTeamId === parsed.data.homeTeamId ? 0 : 20) : parsed.data.homeScore;
+  const awayScore = isForfeit ? (parsed.data.forfeitTeamId === parsed.data.awayTeamId ? 0 : 20) : parsed.data.awayScore;
+  const status = isForfeit ? 'final' : parsed.data.status;
+  const hasFinalScore = homeScore !== '' && awayScore !== '';
+  if (status === 'final' && (!hasFinalScore || homeScore === awayScore)) redirect('/admin/tournaments?error=final-score-required');
+  const derivedWinnerId = status === 'final' && hasFinalScore
+    ? homeScore > awayScore ? parsed.data.homeTeamId : parsed.data.awayTeamId
     : parsed.data.winnerTeamId;
   if (derivedWinnerId && derivedWinnerId !== parsed.data.homeTeamId && derivedWinnerId !== parsed.data.awayTeamId) redirect('/admin/tournaments?error=invalid-winner');
-  const selectedTeamIds = [...new Set([parsed.data.homeTeamId, parsed.data.awayTeamId, parsed.data.winnerTeamId].filter(Boolean))] as string[];
+  const selectedTeamIds = [...new Set([parsed.data.homeTeamId, parsed.data.awayTeamId, parsed.data.winnerTeamId, parsed.data.forfeitTeamId].filter(Boolean))] as string[];
   if (selectedTeamIds.length) {
     const { data: participantRows } = await supabase.from('tournament_teams').select('team_id').eq('tournament_id', parsed.data.tournamentId).in('team_id', selectedTeamIds);
     if (participantRows?.length !== selectedTeamIds.length) redirect('/admin/tournaments?error=invalid-team');
   }
+  if (parsed.data.matchNumber) {
+    const { data: numberConflict } = await supabase.from('tournament_matches').select('id').eq('tournament_id', parsed.data.tournamentId).eq('match_number', parsed.data.matchNumber).neq('id', parsed.data.id || '00000000-0000-0000-0000-000000000000').maybeSingle();
+    if (numberConflict) redirect('/admin/tournaments?error=duplicate-match-number');
+  }
+  const { data: tournament } = await supabase.from('tournaments').select('format').eq('id', parsed.data.tournamentId).maybeSingle();
+  if (!parsed.data.id && tournament?.format === 'single_elimination') {
+    const [{ count: teamCount }, { count: matchCount }, existingMatches] = await Promise.all([
+      supabase.from('tournament_teams').select('*', { count: 'exact', head: true }).eq('tournament_id', parsed.data.tournamentId),
+      supabase.from('tournament_matches').select('*', { count: 'exact', head: true }).eq('tournament_id', parsed.data.tournamentId),
+      supabase.from('tournament_matches').select('home_team_id, away_team_id').eq('tournament_id', parsed.data.tournamentId),
+    ]);
+    if ((teamCount ?? 0) > 0 && (matchCount ?? 0) >= (teamCount ?? 0) - 1) redirect('/admin/tournaments?error=single-elimination-complete');
+    const duplicatePair = (existingMatches.data ?? []).some((match) =>
+      (match.home_team_id === parsed.data.homeTeamId && match.away_team_id === parsed.data.awayTeamId)
+      || (match.home_team_id === parsed.data.awayTeamId && match.away_team_id === parsed.data.homeTeamId),
+    );
+    if (duplicatePair) redirect('/admin/tournaments?error=duplicate-single-elimination-pair');
+  }
+  const { error: forfeitSchemaError } = await supabase.from('tournament_matches').select('result_type').limit(1);
+  if (isForfeit && forfeitSchemaError) redirect('/admin/tournaments?error=forfeit-migration-required');
   const payload = { tournament_id: parsed.data.tournamentId, round_label: parsed.data.roundLabel, match_number: parsed.data.matchNumber || null,
-    scheduled_at: parsed.data.scheduledAt ? ictDateTimeToIso(parsed.data.scheduledAt) : null, venue: parsed.data.venue || null, status: parsed.data.status,
-    home_team_id: parsed.data.homeTeamId || null, away_team_id: parsed.data.awayTeamId || null, home_score: parsed.data.homeScore === '' ? null : parsed.data.homeScore,
-    away_score: parsed.data.awayScore === '' ? null : parsed.data.awayScore, winner_team_id: derivedWinnerId || null,
-    stream_url: parsed.data.streamUrl || null, notes: parsed.data.notes || null, updated_at: new Date().toISOString() };
+    scheduled_at: parsed.data.scheduledAt ? ictDateTimeToIso(parsed.data.scheduledAt) : null, venue: parsed.data.venue || null, status,
+    home_team_id: parsed.data.homeTeamId || null, away_team_id: parsed.data.awayTeamId || null, home_score: homeScore === '' ? null : homeScore,
+    away_score: awayScore === '' ? null : awayScore, winner_team_id: derivedWinnerId || null,
+    stream_url: parsed.data.streamUrl || null, notes: parsed.data.notes || null, updated_at: new Date().toISOString(),
+    ...(forfeitSchemaError ? {} : { result_type: parsed.data.resultType, forfeit_team_id: isForfeit ? parsed.data.forfeitTeamId : null }) };
   const result = parsed.data.id ? await supabase.from('tournament_matches').update(payload).eq('id', parsed.data.id) : await supabase.from('tournament_matches').insert(payload);
   if (result.error) { console.error('[tournament:match]', result.error.message); redirect('/admin/tournaments?error=match-save'); }
   if (parsed.data.id) {

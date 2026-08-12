@@ -21,6 +21,7 @@
 15. `supabase/migrations/202608120001_tournament_accolades.sql`
 16. `supabase/migrations/202608120002_accolade_colors.sql`
 17. `supabase/migrations/202608120003_fiba_tournament_format.sql`
+18. `supabase/migrations/202608130001_forfeit_results.sql`
 15. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะและระบบอัปโหลดจากเครื่อง
 16. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 

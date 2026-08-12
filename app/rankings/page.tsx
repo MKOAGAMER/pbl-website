@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowUpRight, BarChart3, Medal, Trophy } from 'lucide-react';
-import { getSiteData } from '@/lib/league-data';
+import { getSiteData, isTournamentOnlyMode } from '@/lib/league-data';
 import type { Game, Team } from '@/lib/league-types';
 import { cn, winPercentage } from '@/lib/utils';
 import { EmptyState } from '@/app/components/ui/EmptyState';
@@ -21,6 +21,7 @@ interface RankedTeam {
 
 export default async function RankingsPage() {
   const data = await getSiteData();
+  if (isTournamentOnlyMode(data)) return <main className="site-shell py-20"><EmptyState icon={BarChart3} title="League rankings are not active" description="Power rankings start when a league season is active. Tournament tables and brackets remain available now." action={{ href: '/tournaments', label: 'View tournaments' }} /></main>;
   const rankings = buildRankings(
     data.teams,
     data.games.filter((game) => game.seasonId === data.season.id),

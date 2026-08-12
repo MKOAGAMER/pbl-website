@@ -39,7 +39,7 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
     supabase.from('players').select('id, name, roblox_username').order('name'),
     supabase.from('rosters').select('season_id, player_id, team_id, jersey_number, status').eq('status', 'active'),
     supabase.from('season_teams').select('season_id, team_id, conference, is_active'),
-    supabase.from('games').select('id, season_id, home_team_id, away_team_id, scheduled_at, venue, status, home_score, away_score, stream_url, notes').order('scheduled_at', { ascending: false }).limit(100),
+    supabase.from('games').select('*').order('scheduled_at', { ascending: false }).limit(100),
   ]);
   const seasons = (seasonResult.data ?? []) as Row[];
   const allTeams = (teamResult.data ?? []) as Row[];
@@ -184,6 +184,8 @@ export default async function LeagueOperationsPage({ searchParams }: Props) {
                 <Input name="starts_at" label="Tip-off" type="datetime-local" defaultValue={dateTimeLocal(game.scheduled_at)} required />
                 <Input name="venue" label="Venue" defaultValue={value(game.venue)} />
                 <Select name="status" label="Status" defaultValue={value(game.status)}><option value="scheduled">Scheduled</option><option value="live">Live</option><option value="final">Final</option><option value="postponed">Postponed</option><option value="cancelled">Cancelled</option></Select>
+                <Select name="result_type" label="Result type" defaultValue={value(game.result_type) || 'played'}><option value="played">Played game</option><option value="forfeit">Forfeit / walkover (20–0)</option></Select>
+                <Select name="forfeit_team_id" label="Team that forfeited" defaultValue={value(game.forfeit_team_id)}><option value="">None</option>{allTeams.map((team) => <option key={value(team.id)} value={value(team.id)}>{value(team.abbreviation)} · {value(team.name)}</option>)}</Select>
                 <Input name="stream_url" label="Stream URL" type="url" defaultValue={value(game.stream_url)} />
                 <Input name="home_score" label="Home score" type="number" min="0" defaultValue={game.home_score === null ? '' : numberValue(game.home_score)} />
                 <Input name="away_score" label="Away score" type="number" min="0" defaultValue={game.away_score === null ? '' : numberValue(game.away_score)} />
