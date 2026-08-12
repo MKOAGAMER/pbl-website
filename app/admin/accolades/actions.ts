@@ -8,6 +8,7 @@ import { requireAdminPermission } from '@/lib/admin-auth';
 const uuid = z.string().uuid();
 const optionalId = z.union([z.literal(''), uuid]);
 const recipient = z.string().regex(/^(player|team):[0-9a-f-]{36}$/i);
+const competition = z.string().regex(/^(season|tournament):[0-9a-f-]{36}$/i);
 
 function refreshAccolades() {
   updateTag('pbal-site-data');
@@ -21,7 +22,7 @@ export async function saveAccolade(formData: FormData) {
   const { supabase } = await requireAdminPermission('staff');
   const parsed = z.object({
     id: optionalId,
-    seasonId: uuid,
+    competition,
     recipient,
     title: z.string().trim().min(2).max(120),
     category: z.enum(['achievement', 'medal', 'championship', 'award', 'record']),
@@ -31,7 +32,7 @@ export async function saveAccolade(formData: FormData) {
     isPublic: z.boolean(),
   }).safeParse({
     id: formData.get('id') ?? '',
-    seasonId: formData.get('season_id'),
+    competition: formData.get('competition'),
     recipient: formData.get('recipient'),
     title: formData.get('title'),
     category: formData.get('category'),
@@ -47,8 +48,14 @@ export async function saveAccolade(formData: FormData) {
   const { data: recipientRow } = await supabase.from(recipientTable).select('id').eq('id', recipientId).maybeSingle();
   if (!recipientRow) redirect('/admin/accolades?error=recipient-not-found');
 
+  const [competitionType, competitionId] = parsed.data.competition.split(':') as ['season' | 'tournament', string];
+  const competitionTable = competitionType === 'season' ? 'seasons' : 'tournaments';
+  const { data: competitionRow } = await supabase.from(competitionTable).select('id').eq('id', competitionId).maybeSingle();
+  if (!competitionRow) redirect('/admin/accolades?error=competition-not-found');
+
   const payload = {
-    season_id: parsed.data.seasonId,
+    season_id: competitionType === 'season' ? competitionId : null,
+    tournament_id: competitionType === 'tournament' ? competitionId : null,
     player_id: recipientType === 'player' ? recipientId : null,
     team_id: recipientType === 'team' ? recipientId : null,
     title: parsed.data.title,

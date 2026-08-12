@@ -18,6 +18,62 @@
   filter: drop-shadow(0 1.4rem 2rem rgba(0, 0, 0, 0.38));
 }
 
+.figmaXboxDiagram {
+  width: min(100%, 46rem);
+  max-height: 33rem;
+  filter: drop-shadow(0 1.2rem 1.8rem rgba(0, 0, 0, 0.32));
+}
+
+.figmaAsset {
+  pointer-events: none;
+  filter: invert(1);
+}
+
+.figmaControlAsset {
+  transition: filter 120ms ease;
+}
+
+.figmaStickWell {
+  fill: rgba(11, 16, 20, 0.48);
+  stroke: rgba(237, 242, 244, 0.92);
+  stroke-width: 4;
+}
+
+.figmaStickCap {
+  fill: rgba(245, 245, 245, 0.16);
+  stroke: rgba(237, 242, 244, 0.92);
+  stroke-width: 4;
+  transition: fill 120ms ease, stroke 120ms ease, filter 120ms ease;
+}
+
+.figmaDpadDirection {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: transparent;
+  transition: fill 120ms ease, filter 120ms ease;
+}
+
+.figmaFaceLabel,
+.figmaShoulderLabel {
+  fill: #edf2f4;
+  font-family: Arial, sans-serif;
+  font-size: 31px;
+  font-weight: 900;
+  paint-order: stroke;
+  pointer-events: none;
+  stroke: rgba(7, 10, 13, 0.55);
+  stroke-width: 1.5px;
+  text-anchor: middle;
+  user-select: none;
+}
+
+.figmaSystemMark {
+  fill: none;
+  stroke: #edf2f4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.5;
+}
+
 .body,
 .keyboardDeck {
   fill: rgba(7, 10, 13, 0.82);
@@ -200,6 +256,19 @@
   filter: drop-shadow(0 0 11px rgba(255, 107, 34, 0.78));
 }
 
+.active .figmaControlAsset,
+.active.figmaControlAsset {
+  filter: brightness(0) saturate(100%) invert(53%) sepia(98%) saturate(2360%) hue-rotate(341deg) brightness(103%) contrast(102%) drop-shadow(0 0 12px rgba(255, 107, 34, 0.82));
+}
+
+.active .figmaStickCap,
+.active.figmaStickCap,
+.active.figmaDpadDirection {
+  fill: #ff6b22;
+  stroke: #ffd1b8;
+  filter: drop-shadow(0 0 11px rgba(255, 107, 34, 0.78));
+}
+
 .wrong .button,
 .wrong.button,
 .wrong .dpad,
@@ -215,15 +284,33 @@
   filter: drop-shadow(0 0 11px rgba(255, 64, 93, 0.8));
 }
 
+.wrong .figmaControlAsset,
+.wrong.figmaControlAsset {
+  filter: brightness(0) saturate(100%) invert(38%) sepia(94%) saturate(4110%) hue-rotate(334deg) brightness(105%) contrast(104%) drop-shadow(0 0 12px rgba(255, 64, 93, 0.82));
+}
+
+.wrong .figmaStickCap,
+.wrong.figmaStickCap,
+.wrong.figmaDpadDirection {
+  fill: #ff405d;
+  stroke: #ffc0ca;
+  filter: drop-shadow(0 0 11px rgba(255, 64, 93, 0.8));
+}
+
 .active .faceLabel,
 .active .keyLabel,
 .active .shoulderLabel,
 .active .microLabel,
+.active .figmaFaceLabel,
+.active .figmaShoulderLabel,
 .wrong .faceLabel,
 .wrong .keyLabel,
 .wrong .shoulderLabel,
-.wrong .microLabel {
+.wrong .microLabel,
+.wrong .figmaFaceLabel,
+.wrong .figmaShoulderLabel {
   fill: #120907;
+  stroke: transparent;
 }
 
 @media (max-width: 620px) {
@@ -234,5 +321,9 @@
 
   .diagram {
     width: 112%;
+  }
+
+  .figmaXboxDiagram {
+    width: 108%;
   }
 }

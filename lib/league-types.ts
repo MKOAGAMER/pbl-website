@@ -111,6 +111,7 @@ export interface NewsPost {
 export interface Accolade {
   id: string;
   season: string;
+  competitionType: 'season' | 'tournament';
   title: string;
   recipient: string;
   playerId?: string | null;

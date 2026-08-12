@@ -48,7 +48,7 @@ function AccoladeSection({ title, description, items, icon: Icon, teams }: { tit
           const team = teams.find((entry) => entry.id === item.teamId);
           const card = (
             <article className="lift relative isolate overflow-hidden rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
-              <span className="absolute right-5 top-4 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--ink-faint)]">{item.season}</span>
+              <span className="absolute right-5 top-4 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--ink-faint)]">{item.competitionType === 'tournament' ? 'Tournament' : 'League'} · {item.season}</span>
               <div className="flex items-start gap-4 pr-14">
                 {team ? <TeamLogo team={team} size="md" /> : item.playerId ? <PlayerAvatar src={item.recipientAvatarUrl} name={item.recipient} size="sm" className="!h-12 !w-12" /> : <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--surface-soft)]"><Icon className="h-5 w-5 text-[var(--ink-faint)]" /></span>}
                 <div><p className="text-[0.6rem] font-black uppercase tracking-[0.13em] text-[var(--orange-soft)]">{item.category || item.type}</p><h3 className="mt-1 text-xl font-black tracking-[-0.035em]">{item.title}</h3><p className="mt-1 text-sm font-bold text-[var(--ink-soft)]">{item.recipient}</p></div>

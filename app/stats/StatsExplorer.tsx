@@ -53,7 +53,8 @@ const metrics: MetricConfig[] = [
   { key: 'threePointPct', shortLabel: '3PT%', label: 'Three-point percentage', description: 'Share of three-point attempts made.', percentage: true },
 ];
 
-export function StatsExplorer({ statsData, players, teams }: { statsData: StatsExplorerData; players: Player[]; teams: Team[] }) {
+export function StatsExplorer({ statsData }: { statsData: StatsExplorerData }) {
+  const { players, teams } = statsData;
   const [view, setView] = useState<ViewMode>('players');
   const [metricKey, setMetricKey] = useState<MetricKey>('pointsPerGame');
   const [selectedIds, setSelectedIds] = useState<string[]>(() => statsData.competitions.map((item) => item.id));
@@ -102,8 +103,19 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
     ? leaderboard.reduce((total, entry) => total + entry.stats[metricKey], 0) / leaderboard.length
     : 0;
   const gamesTracked = leaderboard.reduce((highest, entry) => Math.max(highest, entry.gamesPlayed), 0);
-  const selectionLabel = selectedIds.length === statsData.competitions.length && selectedIds.length
-    ? 'All-Time'
+  const seasonIds = statsData.competitions.filter((item) => item.kind === 'season').map((item) => item.id);
+  const tournamentIds = statsData.competitions.filter((item) => item.kind === 'tournament').map((item) => item.id);
+  const selectedScope = sameIds(selectedIds, statsData.competitions.map((item) => item.id))
+    ? 'all'
+    : seasonIds.length > 0 && sameIds(selectedIds, seasonIds)
+      ? 'season'
+      : tournamentIds.length > 0 && sameIds(selectedIds, tournamentIds) ? 'tournament' : 'custom';
+  const selectionLabel = selectedScope === 'all' && selectedIds.length
+    ? 'All competitions'
+    : selectedScope === 'season'
+      ? 'All league seasons'
+      : selectedScope === 'tournament'
+        ? 'All tournaments'
     : selectedIds.length === 1
       ? statsData.competitions.find((item) => item.id === selectedIds[0])?.name ?? 'Select competitions'
       : selectedIds.length ? `${selectedIds.length} competitions` : 'Select competitions';
@@ -114,10 +126,17 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
 
   return (
     <div className="site-shell py-12 sm:py-16">
-      <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex w-fit rounded-full border border-[var(--line)] bg-[var(--surface)] p-1" aria-label="Statistics view">
-          <ViewButton active={view === 'players'} onClick={() => setView('players')} icon={Users}>Player stats</ViewButton>
-          <ViewButton active={view === 'teams'} onClick={() => { setView('teams'); setTeamId('all'); }} icon={Shield}>Team stats</ViewButton>
+      <div className="mb-7 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="flex w-fit rounded-full border border-[var(--line)] bg-[var(--surface)] p-1" aria-label="Statistics view">
+            <ViewButton active={view === 'players'} onClick={() => setView('players')} icon={Users}>Player stats</ViewButton>
+            <ViewButton active={view === 'teams'} onClick={() => { setView('teams'); setTeamId('all'); }} icon={Shield}>Team stats</ViewButton>
+          </div>
+          <div className="flex w-fit max-w-full overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--surface)] p-1" aria-label="Competition type">
+            <ScopeButton active={selectedScope === 'all'} onClick={() => setSelectedIds(statsData.competitions.map((item) => item.id))}>All competitions</ScopeButton>
+            <ScopeButton active={selectedScope === 'season'} onClick={() => setSelectedIds(seasonIds)} disabled={!seasonIds.length}>League seasons</ScopeButton>
+            <ScopeButton active={selectedScope === 'tournament'} onClick={() => setSelectedIds(tournamentIds)} disabled={!tournamentIds.length}>Tournaments</ScopeButton>
+          </div>
         </div>
         <CompetitionSelector competitions={statsData.competitions} selectedIds={selectedIds} label={selectionLabel} onToggle={toggleCompetition} onAll={() => setSelectedIds(statsData.competitions.map((item) => item.id))} onClear={() => setSelectedIds([])} />
       </div>
@@ -147,7 +166,7 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
         </div>
       </section>
 
-      {leaderboard.length === 0 ? <div className="mt-7"><EmptyState icon={selectedIds.length ? SearchX : BarChart3} title={selectedIds.length ? `No eligible ${view}` : 'Choose a season or tournament'} description={selectedIds.length ? 'Try lowering the games requirement or changing the search filters.' : 'Use Select seasons above to choose the competitions shown in this leaderboard.'} /></div> : (
+      {leaderboard.length === 0 ? <div className="mt-7"><EmptyState icon={selectedIds.length ? SearchX : BarChart3} title={selectedIds.length ? `No eligible ${view}` : 'Choose a season or tournament'} description={selectedIds.length ? 'Try lowering the games requirement or changing the search filters.' : 'Use Select competitions above to choose what is shown in this leaderboard.'} /></div> : (
         <>
           <section className="mt-10" aria-labelledby="podium-heading">
             <div className="mb-5"><p className="eyebrow">Top performers</p><h2 id="podium-heading" className="display-type mt-3 text-3xl sm:text-4xl">{metric.label}</h2></div>
@@ -170,9 +189,9 @@ export function StatsExplorer({ statsData, players, teams }: { statsData: StatsE
 function CompetitionSelector({ competitions, selectedIds, label, onToggle, onAll, onClear }: { competitions: StatsCompetition[]; selectedIds: string[]; label: string; onToggle: (id: string) => void; onAll: () => void; onClear: () => void }) {
   const allSelected = competitions.length > 0 && selectedIds.length === competitions.length;
   return <details className="group relative w-full lg:w-80">
-    <summary className="flex h-12 cursor-pointer list-none items-center justify-between rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-4 text-left [&::-webkit-details-marker]:hidden"><span className="min-w-0"><span className="block text-[0.55rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">Select seasons</span><strong className="mt-0.5 block truncate text-sm">{label}</strong></span><ChevronDown className="h-4 w-4 text-[var(--ink-faint)] transition group-open:rotate-180" /></summary>
+    <summary className="flex h-12 cursor-pointer list-none items-center justify-between rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] px-4 text-left [&::-webkit-details-marker]:hidden"><span className="min-w-0"><span className="block text-[0.55rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">Select competitions</span><strong className="mt-0.5 block truncate text-sm">{label}</strong></span><ChevronDown className="h-4 w-4 text-[var(--ink-faint)] transition group-open:rotate-180" /></summary>
     <div className="absolute right-0 z-40 mt-2 max-h-96 w-full overflow-y-auto rounded-xl border border-[var(--line-strong)] bg-[var(--surface)] shadow-2xl">
-      <div className="sticky top-0 flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[0.62rem] font-black uppercase tracking-[0.08em]"><span className="text-[var(--ink-faint)]">Select seasons</span><span className="flex gap-3"><button type="button" onClick={onClear} className="text-sky-300">Clear</button><button type="button" onClick={onAll} className="text-sky-300">All</button></span></div>
+      <div className="sticky top-0 flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[0.62rem] font-black uppercase tracking-[0.08em]"><span className="text-[var(--ink-faint)]">Select competitions</span><span className="flex gap-3"><button type="button" onClick={onClear} className="text-sky-300">Clear</button><button type="button" onClick={onAll} className="text-sky-300">All</button></span></div>
       <button type="button" onClick={onAll} className="flex w-full items-center justify-between border-b border-[var(--line)] px-4 py-3 text-sm font-black hover:bg-[var(--surface-raised)]"><span>All-Time</span>{allSelected && <Check className="h-4 w-4 text-sky-300" />}</button>
       {(['season', 'tournament'] as const).map((kind) => {
         const options = competitions.filter((item) => item.kind === kind);
@@ -185,6 +204,14 @@ function CompetitionSelector({ competitions, selectedIds, label, onToggle, onAll
 
 function ViewButton({ active, onClick, icon: Icon, children }: { active: boolean; onClick: () => void; icon: typeof Users; children: React.ReactNode }) {
   return <button type="button" onClick={onClick} aria-pressed={active} className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-[0.65rem] font-black uppercase tracking-[0.1em] ${active ? 'bg-[var(--orange)] text-black' : 'text-[var(--ink-soft)]'}`}><Icon className="h-4 w-4" />{children}</button>;
+}
+
+function ScopeButton({ active, disabled, onClick, children }: { active: boolean; disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" disabled={disabled} onClick={onClick} aria-pressed={active} className={`shrink-0 rounded-full px-4 py-2.5 text-[0.62rem] font-black uppercase tracking-[0.08em] transition disabled:cursor-not-allowed disabled:opacity-35 ${active ? 'bg-sky-400 text-slate-950' : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'}`}>{children}</button>;
+}
+
+function sameIds(left: string[], right: string[]) {
+  return left.length === right.length && left.every((id) => right.includes(id));
 }
 
 function aggregatePlayers(lines: CompetitionStatLine[]) {

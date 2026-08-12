@@ -17,19 +17,27 @@ const numberValue = (input: unknown) => typeof input === 'number' ? input : Numb
 
 export default async function AccoladeControlPage({ searchParams }: Props) {
   const [{ supabase }, params] = await Promise.all([requireAdminPermission('staff'), searchParams]);
-  const [accoladeResult, seasonResult, playerResult, teamResult] = await Promise.all([
+  const [accoladeResult, seasonResult, tournamentResult, playerResult, teamResult] = await Promise.all([
     supabase.from('accolades').select('*').order('awarded_on', { ascending: false, nullsFirst: false }).order('sort_order'),
     supabase.from('seasons').select('id, name, status').order('starts_on', { ascending: false }),
+    supabase.from('tournaments').select('id, name, status').order('starts_at', { ascending: false }),
     supabase.from('players').select('id, name, roblox_username, is_active').order('name'),
     supabase.from('teams').select('id, name, abbreviation, is_active').order('name'),
   ]);
   const accolades = (accoladeResult.data ?? []) as Row[];
   const seasons = (seasonResult.data ?? []) as Row[];
+  const tournaments = (tournamentResult.data ?? []) as Row[];
   const players = (playerResult.data ?? []) as Row[];
   const teams = (teamResult.data ?? []) as Row[];
   const activeSeason = seasons.find((season) => value(season.status) === 'active') ?? seasons[0];
+  const activeTournament = tournaments.find((tournament) => value(tournament.status) === 'active') ?? tournaments[0];
+  const defaultCompetition = activeSeason
+    ? `season:${value(activeSeason.id)}`
+    : activeTournament ? `tournament:${value(activeTournament.id)}` : '';
   const playerById = new Map(players.map((player) => [value(player.id), player]));
   const teamById = new Map(teams.map((team) => [value(team.id), team]));
+  const seasonById = new Map(seasons.map((season) => [value(season.id), season]));
+  const tournamentById = new Map(tournaments.map((tournament) => [value(tournament.id), tournament]));
 
   return (
     <main className="site-shell py-10 sm:py-14">
@@ -45,10 +53,10 @@ export default async function AccoladeControlPage({ searchParams }: Props) {
 
       <section className="mt-8 rounded-[1.6rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
         <SectionHead icon={Sparkles} title="Give a new achievement" description="เลือกผู้รับหนึ่งคนหรือหนึ่งทีม แล้วระบุชื่อได้อิสระ เช่น Street Test 3 หรือ Tournament Champion" />
-        {activeSeason ? (
-          <AccoladeForm seasons={seasons} players={players} teams={teams} defaultSeasonId={value(activeSeason.id)} />
+        {defaultCompetition ? (
+          <AccoladeForm seasons={seasons} tournaments={tournaments} players={players} teams={teams} defaultCompetition={defaultCompetition} />
         ) : (
-          <p className="mt-6 rounded-xl border border-dashed border-[var(--line-strong)] p-6 text-center text-sm text-[var(--ink-faint)]">Create a season before giving an achievement.</p>
+          <p className="mt-6 rounded-xl border border-dashed border-[var(--line-strong)] p-6 text-center text-sm text-[var(--ink-faint)]">Create a league season or tournament before giving an achievement.</p>
         )}
       </section>
 
@@ -61,16 +69,21 @@ export default async function AccoladeControlPage({ searchParams }: Props) {
             const player = playerById.get(playerId);
             const team = teamById.get(teamId);
             const recipientName = player ? value(player.roblox_username) || value(player.name) : value(team?.name) || 'Unknown recipient';
+            const tournamentId = value(accolade.tournament_id);
+            const competitionName = tournamentId
+              ? value(tournamentById.get(tournamentId)?.name)
+              : value(seasonById.get(value(accolade.season_id))?.name);
             return (
               <details key={value(accolade.id)} className="admin-record">
-                <summary>{value(accolade.title)} <span className="ml-2 text-xs font-medium text-[var(--ink-faint)]">{recipientName} · {value(accolade.category)}</span></summary>
+                <summary>{value(accolade.title)} <span className="ml-2 text-xs font-medium text-[var(--ink-faint)]">{recipientName} · {value(accolade.category)} · {competitionName || 'Unknown competition'}</span></summary>
                 <div className="mt-5 space-y-4">
                   <AccoladeForm
                     seasons={seasons}
+                    tournaments={tournaments}
                     players={players}
                     teams={teams}
                     accolade={accolade}
-                    defaultSeasonId={value(accolade.season_id)}
+                    defaultCompetition={tournamentId ? `tournament:${tournamentId}` : `season:${value(accolade.season_id)}`}
                   />
                   <form action={deleteAccolade}>
                     <input type="hidden" name="id" value={value(accolade.id)} />
@@ -87,7 +100,7 @@ export default async function AccoladeControlPage({ searchParams }: Props) {
   );
 }
 
-function AccoladeForm({ seasons, players, teams, defaultSeasonId, accolade }: { seasons: Row[]; players: Row[]; teams: Row[]; defaultSeasonId: string; accolade?: Row }) {
+function AccoladeForm({ seasons, tournaments, players, teams, defaultCompetition, accolade }: { seasons: Row[]; tournaments: Row[]; players: Row[]; teams: Row[]; defaultCompetition: string; accolade?: Row }) {
   const recipientValue = value(accolade?.player_id)
     ? `player:${value(accolade?.player_id)}`
     : value(accolade?.team_id) ? `team:${value(accolade?.team_id)}` : '';
@@ -107,7 +120,12 @@ function AccoladeForm({ seasons, players, teams, defaultSeasonId, accolade }: { 
       </Field>
       <Field label="Achievement name" wide><input name="title" defaultValue={value(accolade?.title)} className="admin-input" placeholder="Street Test 3 Tournament Champion" minLength={2} maxLength={120} required /></Field>
       <Field label="Type"><select name="category" defaultValue={value(accolade?.category) || 'achievement'} className="admin-input"><option value="achievement">Achievement</option><option value="medal">Medal</option><option value="championship">Championship</option><option value="award">League award</option><option value="record">Record</option></select></Field>
-      <Field label="Season"><select name="season_id" defaultValue={defaultSeasonId} className="admin-input" required>{seasons.map((season) => <option key={value(season.id)} value={value(season.id)}>{value(season.name)} · {value(season.status)}</option>)}</select></Field>
+      <Field label="Competition">
+        <select name="competition" defaultValue={defaultCompetition} className="admin-input" required>
+          {seasons.length > 0 && <optgroup label="League seasons">{seasons.map((season) => <option key={value(season.id)} value={`season:${value(season.id)}`}>{value(season.name)} · {value(season.status)}</option>)}</optgroup>}
+          {tournaments.length > 0 && <optgroup label="Tournaments">{tournaments.map((tournament) => <option key={value(tournament.id)} value={`tournament:${value(tournament.id)}`}>{value(tournament.name)} · {value(tournament.status)}</option>)}</optgroup>}
+        </select>
+      </Field>
       <Field label="Awarded date"><input name="awarded_on" type="date" defaultValue={value(accolade?.awarded_on) || new Date().toISOString().slice(0, 10)} className="admin-input" /></Field>
       <Field label="Display order"><input name="sort_order" type="number" min="0" max="9999" defaultValue={numberValue(accolade?.sort_order)} className="admin-input" /></Field>
       <Field label="Description" wide><textarea name="description" rows={3} maxLength={1200} defaultValue={value(accolade?.description)} className="admin-input py-3" placeholder="Why this achievement was awarded" /></Field>

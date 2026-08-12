@@ -20,7 +20,7 @@ export default async function StatsPage() {
         title="Numbers that tell the story."
         description="Explore player and team averages across regular seasons and tournaments. Select one or more competitions to build the leaderboard you need."
       />
-      <StatsExplorer statsData={statsData} players={data.players} teams={data.teams} />
+      <StatsExplorer statsData={statsData} />
     </>
   );
 }

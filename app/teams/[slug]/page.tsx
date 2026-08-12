@@ -179,7 +179,7 @@ export default async function TeamDetailPage({ params }: Props) {
               {teamAccolades.map((item) => (
                 <article key={item.id} className="relative isolate overflow-hidden rounded-[1.35rem] border border-[var(--line)] bg-[var(--surface)] p-5">
                   <span className="absolute -right-5 -top-5 -z-10 h-24 w-24 rounded-full opacity-20 blur-2xl" style={{ backgroundColor: team.primaryColor }} />
-                  <div className="flex items-center justify-between gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Trophy className="h-5 w-5" /></span><span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.season}</span></div>
+                  <div className="flex items-center justify-between gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><Trophy className="h-5 w-5" /></span><span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.competitionType === 'tournament' ? 'Tournament' : 'League'} · {item.season}</span></div>
                   <p className="mt-5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">{item.category}</p>
                   <h3 className="mt-2 text-lg font-black tracking-[-0.03em]">{item.title}</h3>
                   {item.description && <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{item.description}</p>}

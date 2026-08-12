@@ -257,6 +257,7 @@ function mapAccolade(row: Row): Accolade {
   const player = row.players && typeof row.players === 'object' ? (row.players as Row) : undefined;
   const team = row.teams && typeof row.teams === 'object' ? (row.teams as Row) : undefined;
   const season = row.seasons && typeof row.seasons === 'object' ? (row.seasons as Row) : undefined;
+  const tournament = row.tournaments && typeof row.tournaments === 'object' ? (row.tournaments as Row) : undefined;
   const playerName = player
     ? `${stringValue(player.first_name)} ${stringValue(player.last_name)}`.trim()
     : '';
@@ -278,9 +279,10 @@ function mapAccolade(row: Row): Accolade {
   return {
     id: stringValue(row.id, slugify(`${stringValue(row.title)}-${recipient}`)),
     season: stringValue(
-      row.season_name,
-      stringValue(row.season_label, stringValue(season?.name, 'Current Season')),
+      row.competition_name,
+      stringValue(row.season_name, stringValue(row.season_label, stringValue(tournament?.name, stringValue(season?.name, 'Current Season')))),
     ),
+    competitionType: stringValue(row.tournament_id) ? 'tournament' : 'season',
     title: stringValue(row.title, 'League Award'),
     recipient,
     playerId: stringValue(row.player_id) || null,
@@ -382,7 +384,7 @@ async function loadSiteData(): Promise<SiteData> {
         .order('published_at', { ascending: false }),
       supabase
         .from('accolades')
-        .select('id, season_id, player_id, team_id, title, category, description, awarded_on, players(first_name, last_name, slug, avatar_url), teams(name), seasons(name)')
+        .select('id, season_id, tournament_id, player_id, team_id, title, category, description, awarded_on, players(first_name, last_name, slug, avatar_url), teams(name), seasons(name), tournaments(name)')
         .eq('is_public', true)
         .order('awarded_on', { ascending: false, nullsFirst: false }),
       supabase
@@ -420,6 +422,7 @@ async function loadSiteData(): Promise<SiteData> {
     const seasons = rows(seasonsResult).map(mapSeason);
     const season = seasons.find((item) => item.isCurrent) ?? seasons[0];
     const news = rows(newsResult).map(mapNews);
+    const accolades = rows(accoladesResult).map(mapAccolade);
     const staff = rows(staffResult).map(mapStaff);
     const links = rows(linksResult).map(mapLink);
 
@@ -435,7 +438,7 @@ async function loadSiteData(): Promise<SiteData> {
         players: freeAgents,
         games: [],
         news,
-        accolades: [],
+        accolades,
         staff,
         links,
       };
@@ -493,9 +496,7 @@ async function loadSiteData(): Promise<SiteData> {
         .filter((row) => String(row.season_id) === season.id)
         .map((row) => mapGame(row, season.id)),
       news,
-      accolades: rows(accoladesResult)
-        .filter((row) => String(row.season_id) === season.id)
-        .map(mapAccolade),
+      accolades,
       staff,
       links,
     };

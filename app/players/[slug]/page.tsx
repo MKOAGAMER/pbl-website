@@ -202,7 +202,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                   <span className="absolute -right-5 -top-5 -z-10 h-24 w-24 rounded-full bg-[var(--orange)]/10 blur-2xl" />
                   <div className="flex items-center justify-between gap-3">
                     <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]">{item.type === 'championship' ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}</span>
-                    <span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.season}</span>
+                    <span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.competitionType === 'tournament' ? 'Tournament' : 'League'} · {item.season}</span>
                   </div>
                   <p className="mt-5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">{item.category}</p>
                   <h3 className="mt-2 text-lg font-black tracking-[-0.03em]">{item.title}</h3>

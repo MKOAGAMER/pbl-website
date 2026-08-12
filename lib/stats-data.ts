@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { cache } from 'react';
-import type { SiteData } from './league-types';
+import type { Player, PlayerStats, SiteData, Team } from './league-types';
 import { createAdminClient } from './supabase-admin';
 
 type Row = Record<string, unknown>;
@@ -45,7 +45,20 @@ export type StatsExplorerData = {
   competitions: StatsCompetition[];
   lines: CompetitionStatLine[];
   results: CompetitionResult[];
+  players: Player[];
+  teams: Team[];
   initialCompetitionId: string;
+};
+
+const zeroStats: PlayerStats = {
+  gamesPlayed: 0,
+  pointsPerGame: 0,
+  reboundsPerGame: 0,
+  assistsPerGame: 0,
+  stealsPerGame: 0,
+  blocksPerGame: 0,
+  fieldGoalPct: 0,
+  threePointPct: 0,
 };
 
 const text = (value: unknown) => typeof value === 'string' ? value : '';
@@ -91,18 +104,22 @@ async function loadStatsExplorerData(siteData: SiteData): Promise<StatsExplorerD
       homeScore: game.homeScore!,
       awayScore: game.awayScore!,
     })),
+    players: siteData.players,
+    teams: siteData.teams,
     initialCompetitionId: fallbackCompetitionId,
   };
   if (!supabase) return fallback;
 
   try {
-    const [seasonsResult, tournamentsResult, gamesResult, leagueStatsResult, matchesResult, importsResult] = await Promise.all([
+    const [seasonsResult, tournamentsResult, gamesResult, leagueStatsResult, matchesResult, importsResult, playersResult, teamsResult] = await Promise.all([
       supabase.from('seasons').select('id, name, status, is_public, starts_on').eq('is_public', true).order('starts_on', { ascending: false }),
       supabase.from('tournaments').select('id, name, status, is_public, starts_at').eq('is_public', true).order('starts_at', { ascending: false }),
       supabase.from('games').select('id, season_id, status, home_team_id, away_team_id, home_score, away_score').eq('status', 'final'),
       supabase.from('player_game_stats').select('game_id, player_id, team_id, did_play, points, rebounds, assists, steals, blocks, field_goals_made, field_goals_attempted, three_pointers_made, three_pointers_attempted').eq('did_play', true),
       supabase.from('tournament_matches').select('id, tournament_id, status, home_team_id, away_team_id, home_score, away_score').eq('status', 'final'),
       supabase.from('stat_imports').select('tournament_match_id, status, reviewed_rows, confirmed_at').eq('status', 'confirmed').not('tournament_match_id', 'is', null).order('confirmed_at', { ascending: false }),
+      supabase.from('players').select('id, name, first_name, last_name, slug, roblox_username, position, positions, jersey_number, team_id, avatar_url, bio, is_active').order('name'),
+      supabase.from('teams').select('id, name, slug, abbreviation, city, description, logo_url, primary_color, secondary_color, is_active').order('name'),
     ]);
 
     const seasonRows = rows(seasonsResult.data);
@@ -201,11 +218,54 @@ async function loadStatsExplorerData(siteData: SiteData): Promise<StatsExplorerD
     const currentSeason = competitions.find((item) => item.kind === 'season' && item.isCurrent)
       ?? competitions.find((item) => item.id === fallbackCompetitionId)
       ?? competitions[0];
-    return { competitions, lines, results, initialCompetitionId: currentSeason.id };
+    const players = rows(playersResult.data).map(mapStatsPlayer);
+    const teams = rows(teamsResult.data).map(mapStatsTeam);
+    return { competitions, lines, results, players, teams, initialCompetitionId: currentSeason.id };
   } catch (error) {
     console.error('[stats:data]', error instanceof Error ? error.message : error);
     return fallback;
   }
+}
+
+function mapStatsPlayer(row: Row): Player {
+  const displayName = text(row.name) || `${text(row.first_name)} ${text(row.last_name)}`.trim() || text(row.roblox_username) || 'Unknown Player';
+  const storedPositions = Array.isArray(row.positions)
+    ? row.positions.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : [];
+  const position = storedPositions[0] ?? (text(row.position) || 'UTIL');
+  return {
+    id: text(row.id),
+    slug: text(row.slug),
+    displayName,
+    robloxUsername: text(row.roblox_username) || displayName,
+    jerseyNumber: number(row.jersey_number),
+    position,
+    positions: storedPositions.length ? storedPositions.slice(0, 3) : [position],
+    teamId: text(row.team_id),
+    avatarUrl: text(row.avatar_url) || null,
+    bio: text(row.bio),
+    isActive: row.is_active === true,
+    stats: zeroStats,
+  };
+}
+
+function mapStatsTeam(row: Row): Team {
+  const name = text(row.name) || 'Unnamed Team';
+  return {
+    id: text(row.id),
+    slug: text(row.slug),
+    name,
+    shortName: name.split(/\s+/).at(-1) ?? name,
+    abbreviation: text(row.abbreviation) || name.slice(0, 3).toUpperCase(),
+    city: text(row.city) || 'PBAL',
+    conference: 'East',
+    primaryColor: text(row.primary_color) || '#ff6b22',
+    secondaryColor: text(row.secondary_color) || '#ffb067',
+    wins: 0,
+    losses: 0,
+    logoUrl: text(row.logo_url) || null,
+    description: text(row.description),
+  };
 }
 
 function hasResult(row: Row) {
