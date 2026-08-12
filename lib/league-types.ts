@@ -120,6 +120,7 @@ export interface Accolade {
   recipientAvatarUrl?: string | null;
   awardedOn?: string | null;
   category: string;
+  color: string;
   description: string;
   type: 'achievement' | 'medal' | 'championship' | 'award' | 'record';
 }

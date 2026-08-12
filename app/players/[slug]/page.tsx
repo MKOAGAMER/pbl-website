@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   Activity,
-  Award,
   ArrowLeft,
   ArrowRight,
   CalendarX2,
@@ -10,7 +9,6 @@ import {
   Gauge,
   ShieldOff,
   Target,
-  Trophy,
   UserRound,
   Users,
 } from 'lucide-react';
@@ -21,6 +19,7 @@ import { SectionHeading } from '@/app/components/ui/SectionHeading';
 import { StatCard } from '@/app/components/ui/StatCard';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
 import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
+import { MedalBadges } from '@/app/components/ui/MedalBadges';
 import { getPlayerBySlug, getSiteData } from '@/lib/league-data';
 import type { PlayerStats } from '@/lib/league-types';
 import { getPlayerSeasonHistory } from '@/lib/league-history';
@@ -112,6 +111,7 @@ export default async function PlayerDetailPage({ params }: Props) {
           <div className="mt-9 grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-center">
             <div className="relative w-fit">
               <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="xl" primaryColor={primaryColor} secondaryColor={secondaryColor} className="shadow-2xl" />
+              <MedalBadges accolades={playerAccolades} size="lg" className="absolute -bottom-4 left-1" />
               <span className="number-tabular absolute -bottom-2 -right-2 grid h-11 min-w-11 place-items-center rounded-xl border-4 border-[var(--page)] bg-[var(--surface-raised)] px-2 text-sm font-black">
                 #{player.jerseyNumber}
               </span>
@@ -186,32 +186,6 @@ export default async function PlayerDetailPage({ params }: Props) {
             </dl>
           </section>
         </div>
-
-        {playerAccolades.length > 0 && (
-          <section className="mt-14 sm:mt-16">
-            <SectionHeading
-              eyebrow="Recognition"
-              title="Medals & achievements"
-              description={`Official honors awarded to ${player.displayName}.`}
-              href="/accolades"
-              linkLabel="League archive"
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {playerAccolades.map((item) => (
-                <article key={item.id} className="relative isolate overflow-hidden rounded-[1.35rem] border border-[var(--line)] bg-[var(--surface)] p-5">
-                  <span className="absolute -right-5 -top-5 -z-10 h-24 w-24 rounded-full bg-[var(--orange)]/10 blur-2xl" />
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]">{item.type === 'championship' ? <Trophy className="h-5 w-5" /> : <Award className="h-5 w-5" />}</span>
-                    <span className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--ink-faint)]">{item.competitionType === 'tournament' ? 'Tournament' : 'League'} · {item.season}</span>
-                  </div>
-                  <p className="mt-5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--orange-soft)]">{item.category}</p>
-                  <h3 className="mt-2 text-lg font-black tracking-[-0.03em]">{item.title}</h3>
-                  {item.description && <p className="mt-3 text-sm leading-6 text-[var(--ink-soft)]">{item.description}</p>}
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
 
         <PlayerSeasonHistoryTable entries={seasonHistory} />
 

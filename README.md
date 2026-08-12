@@ -40,6 +40,8 @@ npm run dev
 12. `supabase/migrations/202608040003_content_match_discord_webhook.sql`
 13. `supabase/migrations/202608040004_tournament_match_discord_webhook.sql`
 14. `supabase/migrations/202608110001_player_trade_free_agent.sql`
+15. `supabase/migrations/202608120001_tournament_accolades.sql`
+16. `supabase/migrations/202608120002_accolade_colors.sql`
 15. `supabase/storage.sql` สำหรับ public asset buckets และระบบอัปโหลดรูปจากเครื่อง
 
 Migration ล่าสุดเพิ่มคำขอย้ายทีมของ Player และการปล่อยผู้เล่นเป็น Free Agent โดย roster จะเปลี่ยนหลัง Staff อนุมัติเท่านั้น ส่วนการอัปโหลดรูปจะใช้ Cloudinary เมื่อกำหนดค่าไว้ และ fallback ไป Supabase Storage อัตโนมัติ

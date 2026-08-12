@@ -4,33 +4,47 @@ import Link from 'next/link';
 import { ArrowRight, Search, SearchX, UserRound, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { CompetitionStatsSelect } from '@/app/components/ui/CompetitionStatsSelect';
+import { MedalBadges } from '@/app/components/ui/MedalBadges';
 import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
-import type { Player, Team } from '@/lib/league-types';
+import { aggregatePlayerCompetitionStats, competitionIdsForSelection, competitionSelectionLabel } from '@/lib/competition-stats';
+import type { Accolade, Player, Team } from '@/lib/league-types';
+import type { StatsExplorerData } from '@/lib/stats-data';
 
 type SortMode = 'name' | 'points' | 'rebounds' | 'assists';
 
 interface PlayerDirectoryProps {
   players: Player[];
   teams: Team[];
+  statsData: StatsExplorerData;
+  accolades: Accolade[];
 }
 
-export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
+export function PlayerDirectory({ players, teams, statsData, accolades }: PlayerDirectoryProps) {
   const [query, setQuery] = useState('');
   const [teamId, setTeamId] = useState('all');
   const [position, setPosition] = useState('all');
   const [sort, setSort] = useState<SortMode>('name');
+  const [competition, setCompetition] = useState(statsData.initialCompetitionId);
 
   const positions = useMemo(
     () => [...new Set(players.flatMap((player) => player.positions).filter(Boolean))].sort(),
     [players],
   );
-  const teamsById = useMemo(() => new Map(teams.map((team) => [team.id, team])), [teams]);
+  const teamsById = useMemo(() => new Map([...statsData.teams, ...teams].map((team) => [team.id, team])), [statsData.teams, teams]);
+  const selectedCompetitionIds = useMemo(() => competitionIdsForSelection(statsData.competitions, competition), [competition, statsData.competitions]);
+  const competitionStats = useMemo(() => aggregatePlayerCompetitionStats(statsData.lines, selectedCompetitionIds), [selectedCompetitionIds, statsData.lines]);
+  const competitionLabel = competitionSelectionLabel(statsData.competitions, competition);
+  const displayedPlayers = useMemo(() => players.map((player) => {
+    const entry = competitionStats.get(player.id);
+    return { ...player, teamId: selectedCompetitionIds.length === 1 ? entry?.teamId || player.teamId : player.teamId, stats: entry?.stats ?? { gamesPlayed: 0, pointsPerGame: 0, reboundsPerGame: 0, assistsPerGame: 0, stealsPerGame: 0, blocksPerGame: 0, fieldGoalPct: 0, threePointPct: 0 } };
+  }), [competitionStats, players, selectedCompetitionIds.length]);
 
   const filteredPlayers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return players
+    return displayedPlayers
       .filter((player) => teamId === 'all' || (teamId === 'free-agent' ? !player.teamId : player.teamId === teamId))
       .filter((player) => position === 'all' || player.positions.includes(position))
       .filter((player) => {
@@ -50,7 +64,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
         if (sort === 'assists') return b.stats.assistsPerGame - a.stats.assistsPerGame || a.displayName.localeCompare(b.displayName);
         return a.displayName.localeCompare(b.displayName);
       });
-  }, [players, position, query, sort, teamId, teamsById]);
+  }, [displayedPlayers, position, query, sort, teamId, teamsById]);
 
   const resetFilters = () => {
     setQuery('');
@@ -74,7 +88,8 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
           />
         </label>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <CompetitionStatsSelect competitions={statsData.competitions} value={competition} onChange={setCompetition} />
           <FilterSelect label="Team" value={teamId} onChange={setTeamId}>
             <option value="all">All teams</option>
             <option value="free-agent">Free Agents</option>
@@ -94,7 +109,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
           <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--ink-faint)]" aria-live="polite">
-            <span className="text-[var(--ink)]">{filteredPlayers.length}</span> of {players.length} players
+            <span className="text-[var(--ink)]">{filteredPlayers.length}</span> of {players.length} players · {competitionLabel}
           </p>
           {(query || teamId !== 'all' || position !== 'all') && (
             <button
@@ -131,7 +146,7 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
               <Link
                 key={player.id}
                 href={`/players/${player.slug}`}
-                className="lift group relative isolate overflow-hidden rounded-[1.55rem] border border-[var(--line)] bg-[var(--surface)] p-5"
+                className="lift group relative isolate rounded-[1.55rem] border border-[var(--line)] bg-[var(--surface)] p-5 hover:z-30"
               >
                 <span
                   className="absolute -right-10 -top-14 -z-10 h-36 w-36 rounded-full opacity-15 blur-2xl"
@@ -139,7 +154,10 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
                 />
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-4">
-                    <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
+                    <span className="relative shrink-0">
+                      <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="lg" primaryColor={primaryColor} secondaryColor={secondaryColor} />
+                      <MedalBadges accolades={accolades.filter((item) => item.playerId === player.id)} size="sm" className="absolute -bottom-2 -right-3 max-w-20 justify-end" />
+                    </span>
                     <span className="min-w-0">
                       <span className="flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.11em] text-[var(--ink-faint)]">
                         #{player.jerseyNumber} <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" /> {player.positions.join(' / ')}
@@ -162,7 +180,8 @@ export function PlayerDirectory({ players, teams }: PlayerDirectoryProps) {
                   )}
                 </div>
 
-                <div className="mt-5 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
+                <p className="mt-4 text-[0.56rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">{competitionLabel} · {player.stats.gamesPlayed} GP</p>
+                <div className="mt-2 grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
                   <PlayerMetric label="PPG" value={player.stats.pointsPerGame.toFixed(1)} />
                   <PlayerMetric label="RPG" value={player.stats.reboundsPerGame.toFixed(1)} />
                   <PlayerMetric label="APG" value={player.stats.assistsPerGame.toFixed(1)} />

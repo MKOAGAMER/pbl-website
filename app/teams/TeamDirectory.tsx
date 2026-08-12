@@ -4,28 +4,42 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, Search, SearchX, Shield } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { CompetitionStatsSelect } from '@/app/components/ui/CompetitionStatsSelect';
+import { MedalBadges } from '@/app/components/ui/MedalBadges';
 import { PlayerAvatar } from '@/app/components/ui/PlayerAvatar';
 import { TeamLogo } from '@/app/components/ui/TeamLogo';
-import type { Conference, Player, Team } from '@/lib/league-types';
+import { aggregateTeamCompetitionStats, competitionIdsForSelection, competitionSelectionLabel } from '@/lib/competition-stats';
+import type { Accolade, Conference, Player, Team } from '@/lib/league-types';
+import type { StatsExplorerData } from '@/lib/stats-data';
 import { winPercentage } from '@/lib/utils';
 
 type ConferenceFilter = 'All' | Conference;
-type SortMode = 'record' | 'name';
+type SortMode = 'record' | 'points' | 'name';
 
 interface TeamDirectoryProps {
   teams: Team[];
   players: Player[];
+  statsData: StatsExplorerData;
+  accolades: Accolade[];
 }
 
-export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
+export function TeamDirectory({ teams, players, statsData, accolades }: TeamDirectoryProps) {
   const [query, setQuery] = useState('');
   const [conference, setConference] = useState<ConferenceFilter>('All');
   const [sort, setSort] = useState<SortMode>('record');
+  const [competition, setCompetition] = useState(statsData.initialCompetitionId);
+  const selectedCompetitionIds = useMemo(() => competitionIdsForSelection(statsData.competitions, competition), [competition, statsData.competitions]);
+  const competitionStats = useMemo(() => aggregateTeamCompetitionStats(statsData.lines, statsData.results, selectedCompetitionIds), [selectedCompetitionIds, statsData.lines, statsData.results]);
+  const competitionLabel = competitionSelectionLabel(statsData.competitions, competition);
+  const displayedTeams = useMemo(() => teams.map((team) => {
+    const entry = competitionStats.get(team.id);
+    return { ...team, wins: entry?.wins ?? 0, losses: entry?.losses ?? 0, competitionStats: entry?.stats ?? { gamesPlayed: 0, pointsPerGame: 0, reboundsPerGame: 0, assistsPerGame: 0, stealsPerGame: 0, blocksPerGame: 0, fieldGoalPct: 0, threePointPct: 0 } };
+  }), [competitionStats, teams]);
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return teams
+    return displayedTeams
       .filter((team) => conference === 'All' || team.conference === conference)
       .filter((team) => {
         if (!normalizedQuery) return true;
@@ -37,11 +51,12 @@ export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
       })
       .sort((a, b) => {
         if (sort === 'name') return a.name.localeCompare(b.name);
+        if (sort === 'points') return b.competitionStats.pointsPerGame - a.competitionStats.pointsPerGame || a.name.localeCompare(b.name);
         return winPercentage(b.wins, b.losses) - winPercentage(a.wins, a.losses)
           || b.wins - a.wins
           || a.name.localeCompare(b.name);
       });
-  }, [conference, players, query, sort, teams]);
+  }, [conference, displayedTeams, players, query, sort]);
 
   const rosterByTeam = useMemo(() => {
     const rosterMap = new Map<string, Player[]>();
@@ -96,9 +111,10 @@ export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
+        <div className="mt-4 grid gap-3 border-t border-[var(--line)] pt-4 sm:grid-cols-[minmax(14rem,22rem)_1fr_auto] sm:items-end">
+          <CompetitionStatsSelect competitions={statsData.competitions} value={competition} onChange={setCompetition} />
           <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--ink-faint)]" aria-live="polite">
-            Showing <span className="text-[var(--ink)]">{filteredTeams.length}</span> of {teams.length} teams
+            Showing <span className="text-[var(--ink)]">{filteredTeams.length}</span> of {teams.length} teams · {competitionLabel}
           </p>
           <label className="flex items-center gap-2 text-xs font-bold text-[var(--ink-soft)]">
             Sort
@@ -108,6 +124,7 @@ export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
               className="h-9 rounded-full border border-[var(--line)] bg-[var(--surface-raised)] px-3 text-xs font-bold text-[var(--ink)]"
             >
               <option value="record">Best record</option>
+              <option value="points">Points per game</option>
               <option value="name">Team name</option>
             </select>
           </label>
@@ -139,21 +156,23 @@ export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
         <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filteredTeams.map((team) => {
             const totalGames = team.wins + team.losses;
-            const winPct = winPercentage(team.wins, team.losses);
             const roster = rosterByTeam.get(team.id) ?? [];
 
             return (
               <Link
                 key={team.id}
                 href={`/teams/${team.slug}`}
-                className="lift group relative isolate overflow-hidden rounded-[1.6rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6"
+                className="lift group relative isolate rounded-[1.6rem] border border-[var(--line)] bg-[var(--surface)] p-5 hover:z-30 sm:p-6"
               >
                 <span
                   className="absolute -right-12 -top-12 -z-10 h-40 w-40 rounded-full opacity-15 blur-2xl"
                   style={{ backgroundColor: team.primaryColor }}
                 />
                 <div className="flex items-start justify-between gap-4">
-                  <TeamLogo team={team} size="lg" />
+                  <span className="relative shrink-0">
+                    <TeamLogo team={team} size="lg" />
+                    <MedalBadges accolades={accolades.filter((item) => item.teamId === team.id)} size="sm" className="absolute -bottom-2 -right-3 max-w-20 justify-end" />
+                  </span>
                   <span className="rounded-full border border-[var(--line)] bg-[var(--surface-raised)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--ink-soft)]">
                     {team.conference}
                   </span>
@@ -189,9 +208,11 @@ export function TeamDirectory({ teams, players }: TeamDirectoryProps) {
                   )}
                 </div>
 
-                <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[var(--line)] pt-5">
+                <p className="mt-5 text-[0.56rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">{competitionLabel}</p>
+                <div className="mt-2 grid grid-cols-[1fr_1fr_1fr_auto] gap-3 border-t border-[var(--line)] pt-5">
                   <TeamMetric label="Record" value={`${team.wins}-${team.losses}`} />
-                  <TeamMetric label="Win pct" value={totalGames ? winPct.toFixed(3).replace(/^0/, '') : '.000'} />
+                  <TeamMetric label="PPG" value={team.competitionStats.pointsPerGame.toFixed(1)} />
+                  <TeamMetric label="GP" value={String(team.competitionStats.gamesPlayed || totalGames)} />
                   <span className="flex items-end justify-end pb-1 text-[var(--orange-soft)]">
                     <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </span>

@@ -18,6 +18,8 @@
 12. `supabase/migrations/202608040003_content_match_discord_webhook.sql`
 13. `supabase/migrations/202608040004_tournament_match_discord_webhook.sql`
 14. `supabase/migrations/202608110001_player_trade_free_agent.sql`
+15. `supabase/migrations/202608120001_tournament_accolades.sql`
+16. `supabase/migrations/202608120002_accolade_colors.sql`
 15. `supabase/storage.sql` สำหรับ bucket รูปสาธารณะและระบบอัปโหลดจากเครื่อง
 16. `supabase/seed.sql` เป็น empty seed และจะไม่สร้างข้อมูลสมมติ
 

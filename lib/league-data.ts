@@ -291,6 +291,7 @@ function mapAccolade(row: Row): Accolade {
     recipientAvatarUrl: stringValue(player?.avatar_url) || null,
     awardedOn: stringValue(row.awarded_on) || null,
     category,
+    color: stringValue(row.medal_color, '#f59e0b'),
     description: stringValue(row.description),
     type,
   };
@@ -384,7 +385,7 @@ async function loadSiteData(): Promise<SiteData> {
         .order('published_at', { ascending: false }),
       supabase
         .from('accolades')
-        .select('id, season_id, tournament_id, player_id, team_id, title, category, description, awarded_on, players(first_name, last_name, slug, avatar_url), teams(name), seasons(name), tournaments(name)')
+        .select('id, season_id, tournament_id, player_id, team_id, title, category, medal_color, description, awarded_on, players(first_name, last_name, slug, avatar_url), teams(name), seasons(name), tournaments(name)')
         .eq('is_public', true)
         .order('awarded_on', { ascending: false, nullsFirst: false }),
       supabase

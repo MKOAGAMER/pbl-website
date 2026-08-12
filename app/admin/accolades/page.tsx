@@ -128,6 +128,7 @@ function AccoladeForm({ seasons, tournaments, players, teams, defaultCompetition
       </Field>
       <Field label="Achievement name" wide><input name="title" defaultValue={value(accolade?.title)} className="admin-input" placeholder="Street Test 3 Tournament Champion" minLength={2} maxLength={120} required /></Field>
       <Field label="Type"><select name="category" defaultValue={value(accolade?.category) || 'achievement'} className="admin-input"><option value="achievement">Achievement</option><option value="medal">Medal</option><option value="championship">Championship</option><option value="award">League award</option><option value="record">Record</option></select></Field>
+      <Field label="Medal color"><span className="flex h-11 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] px-3"><input name="medal_color" type="color" defaultValue={value(accolade?.medal_color) || '#f59e0b'} className="h-7 w-10 cursor-pointer border-0 bg-transparent p-0" /><span className="text-xs font-bold text-[var(--ink-soft)]">Choose badge color</span></span></Field>
       <Field label="Competition">
         <select name="competition" defaultValue={defaultCompetition} className="admin-input" required>
           {seasons.length > 0 && <optgroup label="League seasons">{seasons.map((season) => <option key={value(season.id)} value={`season:${value(season.id)}`}>{value(season.name)} · {value(season.status)}</option>)}</optgroup>}
