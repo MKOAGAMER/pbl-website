@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Achievement Control', robots: { index: false, follow: false } };
 
 type Row = Record<string, unknown>;
-type Props = { searchParams: Promise<{ saved?: string; error?: string }> };
+type Props = { searchParams: Promise<{ saved?: string; error?: string; count?: string }> };
 const value = (input: unknown) => typeof input === 'string' ? input : '';
 const bool = (input: unknown) => input === true;
 const numberValue = (input: unknown) => typeof input === 'number' ? input : Number(input ?? 0);
@@ -48,11 +48,11 @@ export default async function AccoladeControlPage({ searchParams }: Props) {
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)]">มอบเหรียญ รางวัล แชมป์ หรือ Achievement ให้ผู้เล่นและทีม พร้อมแสดงในหน้าโปรไฟล์และคลังเกียรติยศ</p>
       </header>
 
-      {params.saved && <Notice good>บันทึก Achievement เรียบร้อยแล้ว</Notice>}
+      {params.saved && <Notice good>{numberValue(params.count) > 1 ? `มอบรางวัลให้ ${numberValue(params.count)} ผู้รับเรียบร้อยแล้ว` : 'บันทึก Achievement เรียบร้อยแล้ว'}</Notice>}
       {params.error && <Notice>บันทึกไม่สำเร็จ กรุณาตรวจผู้รับ ชื่อรางวัล และฤดูกาลอีกครั้ง</Notice>}
 
       <section className="mt-8 rounded-[1.6rem] border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
-        <SectionHead icon={Sparkles} title="Give a new achievement" description="เลือกผู้รับหนึ่งคนหรือหนึ่งทีม แล้วระบุชื่อได้อิสระ เช่น Street Test 3 หรือ Tournament Champion" />
+        <SectionHead icon={Sparkles} title="Give a new achievement" description="เลือกผู้รับได้หลายคนหรือหลายทีม แล้วมอบ Medal หรือ Achievement เดียวกันพร้อมกันได้" />
         {defaultCompetition ? (
           <AccoladeForm seasons={seasons} tournaments={tournaments} players={players} teams={teams} defaultCompetition={defaultCompetition} />
         ) : (
@@ -107,16 +107,24 @@ function AccoladeForm({ seasons, tournaments, players, teams, defaultCompetition
   return (
     <form action={saveAccolade} className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       <input type="hidden" name="id" value={value(accolade?.id)} />
-      <Field label="Recipient" wide>
-        <select name="recipient" defaultValue={recipientValue} className="admin-input" required>
-          <option value="" disabled>Select player or team</option>
-          <optgroup label="Players">
-            {players.map((player) => <option key={value(player.id)} value={`player:${value(player.id)}`}>{value(player.roblox_username) || value(player.name)}{bool(player.is_active) ? '' : ' · inactive'}</option>)}
-          </optgroup>
-          <optgroup label="Teams">
-            {teams.map((team) => <option key={value(team.id)} value={`team:${value(team.id)}`}>{value(team.abbreviation)} · {value(team.name)}{bool(team.is_active) ? '' : ' · archived'}</option>)}
-          </optgroup>
-        </select>
+      <Field label={accolade ? 'Recipient' : 'Recipients'} wide>
+        {accolade ? (
+          <select name="recipients" defaultValue={recipientValue} className="admin-input" required>
+            <option value="" disabled>Select player or team</option>
+            <optgroup label="Players">
+              {players.map((player) => <option key={value(player.id)} value={`player:${value(player.id)}`}>{value(player.roblox_username) || value(player.name)}{bool(player.is_active) ? '' : ' · inactive'}</option>)}
+            </optgroup>
+            <optgroup label="Teams">
+              {teams.map((team) => <option key={value(team.id)} value={`team:${value(team.id)}`}>{value(team.abbreviation)} · {value(team.name)}{bool(team.is_active) ? '' : ' · archived'}</option>)}
+            </optgroup>
+          </select>
+        ) : (
+          <div className="grid max-h-80 gap-5 overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--page)] p-4 md:grid-cols-2">
+            <RecipientChoices title="Players" rows={players} type="player" />
+            <RecipientChoices title="Teams" rows={teams} type="team" />
+          </div>
+        )}
+        {!accolade && <span className="mt-2 block text-xs text-[var(--ink-faint)]">Select every recipient who should receive this medal. A separate archive entry will be created for each recipient.</span>}
       </Field>
       <Field label="Achievement name" wide><input name="title" defaultValue={value(accolade?.title)} className="admin-input" placeholder="Street Test 3 Tournament Champion" minLength={2} maxLength={120} required /></Field>
       <Field label="Type"><select name="category" defaultValue={value(accolade?.category) || 'achievement'} className="admin-input"><option value="achievement">Achievement</option><option value="medal">Medal</option><option value="championship">Championship</option><option value="award">League award</option><option value="record">Record</option></select></Field>
@@ -133,6 +141,15 @@ function AccoladeForm({ seasons, tournaments, players, teams, defaultCompetition
       <div className="md:col-span-2 xl:col-span-3"><SubmitButton>{accolade ? 'Save achievement' : 'Give achievement'}</SubmitButton></div>
     </form>
   );
+}
+
+function RecipientChoices({ title, rows, type }: { title: string; rows: Row[]; type: 'player' | 'team' }) {
+  return <fieldset className="min-w-0"><legend className="mb-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--orange-soft)]">{title}</legend><div className="space-y-1">{rows.map((row) => {
+    const name = type === 'player'
+      ? value(row.roblox_username) || value(row.name)
+      : `${value(row.abbreviation)} · ${value(row.name)}`;
+    return <label key={value(row.id)} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition hover:bg-[var(--surface-raised)]"><input name="recipients" type="checkbox" value={`${type}:${value(row.id)}`} className="h-4 w-4 shrink-0 accent-[var(--orange)]" /><span className="min-w-0 truncate font-bold">{name}</span>{!bool(row.is_active) && <span className="ml-auto shrink-0 text-[0.58rem] font-black uppercase text-[var(--ink-faint)]">Inactive</span>}</label>;
+  })}{!rows.length && <p className="px-3 py-2 text-sm text-[var(--ink-faint)]">No {title.toLowerCase()} available.</p>}</div></fieldset>;
 }
 
 function Field({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) { return <label className={wide ? 'md:col-span-2 xl:col-span-3' : ''}><span className="mb-2 block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--ink-faint)]">{label}</span>{children}</label>; }
