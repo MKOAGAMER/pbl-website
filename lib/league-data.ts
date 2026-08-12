@@ -428,15 +428,21 @@ async function loadSiteData(): Promise<SiteData> {
     const links = rows(linksResult).map(mapLink);
 
     if (!season) {
-      const freeAgents = rows(playersResult)
+      // Tournament-only installations may intentionally have no league season.
+      // Keep active clubs and player assignments visible instead of falling back
+      // to an empty setup state; tournament pages provide the competition data.
+      const activeTeams = rows(teamsResult)
+        .filter((row) => booleanValue(row.is_active, true))
+        .map((row) => mapTeam(row));
+      const players = rows(playersResult)
         .filter((row) => booleanValue(row.is_active, true))
         .map((row) => mapPlayer(row));
       return {
         source: 'supabase',
         season: pendingSeason,
         seasons: [pendingSeason],
-        teams: [],
-        players: freeAgents,
+        teams: activeTeams,
+        players,
         games: [],
         news,
         accolades,
