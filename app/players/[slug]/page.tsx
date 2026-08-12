@@ -24,6 +24,8 @@ import { getPlayerBySlug, getSiteData } from '@/lib/league-data';
 import type { PlayerStats } from '@/lib/league-types';
 import { getPlayerSeasonHistory } from '@/lib/league-history';
 import { PlayerSeasonHistoryTable } from '@/app/components/ui/SeasonHistory';
+import { PlayerCompetitionStats } from '@/app/players/PlayerCompetitionStats';
+import { getStatsExplorerData } from '@/lib/stats-data';
 
 type Props = { params: Promise<{ slug: string }> };
 type RankedStat = keyof Pick<PlayerStats, 'pointsPerGame' | 'reboundsPerGame' | 'assistsPerGame' | 'stealsPerGame' | 'blocksPerGame'>;
@@ -50,6 +52,8 @@ export default async function PlayerDetailPage({ params }: Props) {
   const [player, data] = await Promise.all([getPlayerBySlug(slug), getSiteData()]);
 
   if (!player) notFound();
+
+  const statsData = await getStatsExplorerData(data);
 
   const seasonHistory = await getPlayerSeasonHistory(player, data.season);
 
@@ -111,13 +115,12 @@ export default async function PlayerDetailPage({ params }: Props) {
           <div className="mt-9 grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-center">
             <div className="relative w-fit">
               <PlayerAvatar src={player.avatarUrl} name={player.displayName} size="xl" primaryColor={primaryColor} secondaryColor={secondaryColor} className="shadow-2xl" />
-              <MedalBadges accolades={playerAccolades} size="lg" className="absolute -bottom-4 left-1" />
               <span className="number-tabular absolute -bottom-2 -right-2 grid h-11 min-w-11 place-items-center rounded-xl border-4 border-[var(--page)] bg-[var(--surface-raised)] px-2 text-sm font-black">
                 #{player.jerseyNumber}
               </span>
             </div>
 
-            <div>
+            <div className="relative">
               <div className="flex flex-wrap items-center gap-2 text-[0.65rem] font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">
                 <span>{player.positions.join(' / ')}</span>
                 <span className="h-1 w-1 rounded-full bg-[var(--line-strong)]" />
@@ -127,6 +130,7 @@ export default async function PlayerDetailPage({ params }: Props) {
               <p className="mt-4 flex items-center gap-2 text-sm font-bold text-[var(--ink-soft)]">
                 <UserRound className="h-4 w-4 text-[var(--ink-faint)]" /> @{player.robloxUsername}
               </p>
+              <MedalBadges accolades={playerAccolades} size="md" className="absolute -right-1 top-0 max-w-48 justify-end sm:-right-4" />
               {team && (
                 <Link href={`/teams/${team.slug}`} className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.11em] text-[var(--orange-soft)]">
                   <TeamLogo team={team} size="sm" className="!h-7 !w-7 !rounded-lg !text-[0.45rem]" />
@@ -145,6 +149,8 @@ export default async function PlayerDetailPage({ params }: Props) {
       </header>
 
       <div className="site-shell py-12 sm:py-16">
+        <PlayerCompetitionStats playerId={player.id} statsData={statsData} />
+        <div className="mt-14 sm:mt-16" />
         <section>
           <SectionHeading
             eyebrow={data.season.name}
