@@ -392,3 +392,112 @@ export async function deleteGame(formData: FormData) {
   refreshLeague();
   redirect('/admin/league?saved=game-deleted');
 }
+
+function teamCommandUrl(teamId: string, query: string) {
+  return `/admin/teams/${teamId}?${query}`;
+}
+
+/** Team Command keeps all membership changes in one audited server-side workflow. */
+export async function updateTeamCommand(formData: FormData) {
+  const { supabase } = await requireAdminPermission('staff');
+  const parsed = teamFields.extend({ teamId: uuid, seasonId: uuid, isActive: z.boolean() }).safeParse({
+    teamId: formData.get('team_id'), seasonId: formData.get('season_id'), name: formData.get('name'), abbreviation: formData.get('abbreviation'),
+    city: formData.get('city'), conference: formData.get('conference'), primary: formData.get('primary_color'), secondary: formData.get('secondary_color'),
+    logoUrl: formData.get('logo_url'), description: formData.get('description'), websiteUrl: formData.get('website_url'), homeVenue: formData.get('home_venue'),
+    isActive: formData.get('is_active') === 'on',
+  });
+  if (!parsed.success) redirect('/admin/teams?error=invalid-team');
+
+  const now = new Date().toISOString();
+  const [teamResult, membershipResult] = await Promise.all([
+    supabase.from('teams').update({
+      name: parsed.data.name, abbreviation: parsed.data.abbreviation.toUpperCase(), city: parsed.data.city || null,
+      description: parsed.data.description || null, logo_url: parsed.data.logoUrl || null,
+      primary_color: parsed.data.primary, secondary_color: parsed.data.secondary, website_url: parsed.data.websiteUrl || null,
+      home_venue: parsed.data.homeVenue || null, is_active: parsed.data.isActive, updated_at: now,
+    }).eq('id', parsed.data.teamId),
+    supabase.from('season_teams').update({
+      conference: parsed.data.conference, is_active: parsed.data.isActive, updated_at: now,
+    }).eq('season_id', parsed.data.seasonId).eq('team_id', parsed.data.teamId),
+  ]);
+  if (teamResult.error || membershipResult.error) {
+    console.error('[team-command:update-team]', teamResult.error?.message || membershipResult.error?.message);
+    redirect(teamCommandUrl(parsed.data.teamId, 'error=team-save'));
+  }
+  refreshLeague();
+  revalidatePath(`/admin/teams/${parsed.data.teamId}`);
+  redirect(teamCommandUrl(parsed.data.teamId, 'saved=team'));
+}
+
+export async function assignTeamMember(formData: FormData) {
+  const { supabase } = await requireAdminPermission('staff');
+  const parsed = z.object({
+    teamId: uuid, seasonId: uuid, playerId: uuid, destinationTeamId: optionalId,
+    jersey: z.coerce.number().int().min(0).max(99), position, isCaptain: z.boolean(),
+  }).safeParse({
+    teamId: formData.get('team_id'), seasonId: formData.get('season_id'), playerId: formData.get('player_id'),
+    destinationTeamId: formData.get('destination_team_id'), jersey: formData.get('jersey_number'),
+    position: formData.get('position'), isCaptain: formData.get('is_captain') === 'on',
+  });
+  if (!parsed.success) redirect('/admin/teams?error=invalid-roster');
+
+  if (!parsed.data.destinationTeamId) {
+    const [{ error: rosterError }, { error: playerError }] = await Promise.all([
+      supabase.from('rosters').update({ status: 'inactive', is_captain: false, left_on: new Date().toISOString().slice(0, 10) })
+        .eq('season_id', parsed.data.seasonId).eq('player_id', parsed.data.playerId),
+      supabase.from('players').update({ team_id: null }).eq('id', parsed.data.playerId),
+    ]);
+    if (rosterError || playerError) redirect(teamCommandUrl(parsed.data.teamId, 'error=roster-save'));
+  } else {
+    const { data: membership, error: membershipError } = await supabase.from('season_teams').select('id')
+      .eq('season_id', parsed.data.seasonId).eq('team_id', parsed.data.destinationTeamId).eq('is_active', true).maybeSingle();
+    if (membershipError || !membership) redirect(teamCommandUrl(parsed.data.teamId, 'error=invalid-destination'));
+    const [{ error: rosterError }, { error: playerError }] = await Promise.all([
+      supabase.from('rosters').upsert({
+        season_id: parsed.data.seasonId, player_id: parsed.data.playerId, team_id: parsed.data.destinationTeamId,
+        jersey_number: parsed.data.jersey, position: parsed.data.position, is_captain: parsed.data.isCaptain,
+        status: 'active', joined_on: new Date().toISOString().slice(0, 10), left_on: null,
+      }, { onConflict: 'season_id,player_id' }),
+      supabase.from('players').update({ team_id: parsed.data.destinationTeamId, position: parsed.data.position }).eq('id', parsed.data.playerId),
+    ]);
+    if (rosterError || playerError) {
+      console.error('[team-command:assign-member]', rosterError?.message || playerError?.message);
+      redirect(teamCommandUrl(parsed.data.teamId, 'error=roster-save'));
+    }
+  }
+  refreshLeague();
+  revalidatePath(`/admin/teams/${parsed.data.teamId}`);
+  redirect(teamCommandUrl(parsed.data.teamId, 'saved=roster'));
+}
+
+export async function removeTeamCommand(formData: FormData) {
+  const { supabase } = await requireAdminPermission('staff');
+  const parsed = uuid.safeParse(formData.get('team_id'));
+  if (!parsed.success) redirect('/admin/teams?error=invalid-team');
+  const teamId = parsed.data;
+  const [{ data: game }, { data: trade }, { data: tournamentTeam }] = await Promise.all([
+    supabase.from('games').select('id').or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`).limit(1).maybeSingle(),
+    supabase.from('trades').select('id').or(`from_team_id.eq.${teamId},to_team_id.eq.${teamId}`).limit(1).maybeSingle(),
+    supabase.from('tournament_teams').select('id').eq('team_id', teamId).limit(1).maybeSingle(),
+  ]);
+  const hasHistory = Boolean(game || trade || tournamentTeam);
+  if (hasHistory) {
+    const today = new Date().toISOString().slice(0, 10);
+    const results = await Promise.all([
+      supabase.from('teams').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', teamId),
+      supabase.from('season_teams').update({ is_active: false }).eq('team_id', teamId),
+      supabase.from('players').update({ team_id: null }).eq('team_id', teamId),
+      supabase.from('rosters').update({ status: 'inactive', is_captain: false, left_on: today }).eq('team_id', teamId).eq('status', 'active'),
+    ]);
+    if (results.some((result) => result.error)) redirect(teamCommandUrl(teamId, 'error=team-remove'));
+    refreshLeague();
+    redirect('/admin/teams?saved=team-archived');
+  }
+  const { error } = await supabase.from('teams').delete().eq('id', teamId);
+  if (error) {
+    console.error('[team-command:remove-team]', error.message);
+    redirect(teamCommandUrl(teamId, 'error=team-remove'));
+  }
+  refreshLeague();
+  redirect('/admin/teams?saved=team-deleted');
+}

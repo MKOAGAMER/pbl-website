@@ -49,31 +49,31 @@ export function Navbar() {
   const leagueActive = leagueLinks.some((link) => isActive(link.href));
 
   return (
-    <header className="sticky top-0 z-50 isolate border-b border-white/10 bg-[#090a0d]/90 shadow-[0_12px_36px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-      <div className="site-shell flex min-h-[4.5rem] items-center gap-3 py-2">
+    <header className="sticky top-0 z-50 isolate border-b border-[var(--line)] bg-[color:color-mix(in_srgb,var(--page)_94%,transparent)] shadow-[0_8px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+      <div className="site-shell flex min-h-16 items-center gap-3 py-2">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)} aria-label="PBAL home">
-          <span className="race-mark grid h-10 w-10 place-items-center text-xs font-black italic tracking-[-0.08em] text-black">PBAL</span>
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b82f6] text-[0.58rem] font-black tracking-[-0.08em] text-white shadow-[0_8px_20px_rgba(59,130,246,.26)]">PBAL</span>
           <span className="hidden leading-none 2xl:block">
-            <span className="block text-[0.55rem] font-black uppercase tracking-[0.22em] text-[var(--orange-soft)]">Practical Basketball</span>
-            <span className="mt-1 block text-sm font-black uppercase italic">Asia League</span>
+            <span className="block text-[0.55rem] font-bold uppercase tracking-[0.18em] text-[#60a5fa]">Practical Basketball</span>
+            <span className="mt-1 block text-sm font-black">Asia League</span>
           </span>
         </Link>
 
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex" aria-label="Main navigation">
           {primaryLinks.map((link) => (
-            <Link key={link.href} href={link.href} className={`race-nav whitespace-nowrap ${isActive(link.href) ? 'race-nav-active' : ''}`}>
+            <Link key={link.href} href={link.href} className={`eba-nav whitespace-nowrap ${isActive(link.href) ? 'eba-nav-active' : ''}`}>
               {t(link.key)}
             </Link>
           ))}
 
           <details className="group relative">
-            <summary className={`race-nav flex cursor-pointer list-none items-center gap-1 whitespace-nowrap ${competitionActive ? 'race-nav-active' : ''}`}>
+            <summary className={`eba-nav flex cursor-pointer list-none items-center gap-1 whitespace-nowrap ${competitionActive ? 'eba-nav-active' : ''}`}>
               Competition <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="absolute left-1/2 top-full z-50 mt-3 grid w-[26rem] -translate-x-1/2 grid-cols-2 gap-1 rounded-2xl border border-[var(--line)] bg-[#0b0c10] p-2.5 shadow-2xl">
+            <div className="absolute left-1/2 top-full z-50 mt-3 grid w-[26rem] -translate-x-1/2 grid-cols-2 gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-2xl">
               {competitionLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`rounded-xl px-3.5 py-3 transition ${isActive(link.href) ? 'bg-[var(--orange)] text-black' : 'hover:bg-[var(--surface)]'}`}>
-                  <span className="block text-xs font-black uppercase italic">{t(link.key)}</span>
+                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 transition ${isActive(link.href) ? 'bg-[#3b82f6] text-white' : 'hover:bg-[var(--surface-soft)]'}`}>
+                  <span className="block text-xs font-bold">{t(link.key)}</span>
                   <span className={`mt-1 block text-[0.65rem] ${isActive(link.href) ? 'text-black/65' : 'text-[var(--ink-faint)]'}`}>{link.description}</span>
                 </Link>
               ))}
@@ -81,12 +81,12 @@ export function Navbar() {
           </details>
 
           <details className="group relative">
-            <summary className={`race-nav flex cursor-pointer list-none items-center gap-1 whitespace-nowrap ${leagueActive ? 'race-nav-active' : ''}`}>
+            <summary className={`eba-nav flex cursor-pointer list-none items-center gap-1 whitespace-nowrap ${leagueActive ? 'eba-nav-active' : ''}`}>
               League <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="absolute right-0 top-full z-50 mt-3 grid w-56 gap-1 rounded-2xl border border-[var(--line)] bg-[#0b0c10] p-2.5 shadow-2xl">
+            <div className="absolute right-0 top-full z-50 mt-3 grid w-56 gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-2xl">
               {leagueLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`rounded-xl px-3.5 py-3 text-xs font-black uppercase italic transition ${isActive(link.href) ? 'bg-[var(--orange)] text-black' : 'text-[var(--ink-soft)] hover:bg-[var(--surface)] hover:text-[var(--ink)]'}`}>
+                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 text-xs font-bold transition ${isActive(link.href) ? 'bg-[#3b82f6] text-white' : 'text-[var(--ink-soft)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]'}`}>
                   {t(link.key)}
                 </Link>
               ))}
@@ -95,19 +95,19 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-full border border-[var(--line)] text-[var(--ink-soft)] transition hover:border-[var(--orange)] hover:text-[var(--orange-soft)] sm:grid" aria-label={t('search')}>
+          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-lg border border-[var(--line)] text-[var(--ink-soft)] transition hover:border-[#3b82f6] hover:text-[#60a5fa] sm:grid" aria-label={t('search')}>
             <Search className="h-4 w-4" />
           </Link>
           <LanguageSwitcher />
           <AuthButton />
-          <button type="button" className="grid h-10 w-10 place-items-center rounded-full border border-[var(--line)] xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? t('closeMenu') : t('openMenu')}>
+          <button type="button" className="grid h-10 w-10 place-items-center rounded-lg border border-[var(--line)] xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? t('closeMenu') : t('openMenu')}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div id="mobile-navigation" className="max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-t border-[var(--line)] bg-[#0a0b0e] xl:hidden">
+        <div id="mobile-navigation" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-[var(--line)] bg-[var(--surface-raised)] xl:hidden">
           <nav className="site-shell py-5" aria-label="Mobile navigation">
             <MobileGroup label="Main">
               {primaryLinks.map((link) => <MobileLink key={link.href} href={link.href} active={isActive(link.href)} onClick={() => setOpen(false)}>{t(link.key)}</MobileLink>)}
