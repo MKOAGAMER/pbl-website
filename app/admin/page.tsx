@@ -87,9 +87,9 @@ export default async function AdminPage({ searchParams }: Props) {
       </Link>
 
       {permission !== 'editor' && <section className="mb-14"><p className="mb-4 text-xs font-black uppercase tracking-[0.13em] text-[var(--ink-faint)]">League & competition</p><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <Link href="/admin/teams" className="group flex items-center gap-4 rounded-2xl border border-[#3b82f6]/30 bg-[#3b82f6]/[.07] p-5 transition hover:border-[#3b82f6]">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#3b82f6]/15 text-[#60a5fa]"><UsersRound className="h-5 w-5" /></span>
-          <span><span className="block font-black group-hover:text-[#60a5fa]">Team Command</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Roster, captains, transfers and team removal</span></span>
+        <Link href="/admin/teams" className="group flex items-center gap-4 rounded-2xl border border-[var(--orange)]/30 bg-[var(--orange)]/[.07] p-5 transition hover:border-[var(--orange)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><UsersRound className="h-5 w-5" /></span>
+          <span><span className="block font-black group-hover:text-[var(--orange-soft)]">Team Command</span><span className="mt-1 block text-xs text-[var(--ink-faint)]">Roster, captains, transfers and team removal</span></span>
         </Link>
         <Link href="/admin/league" className="group flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 transition hover:border-[var(--orange)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--orange)]/15 text-[var(--orange-soft)]"><UsersRound className="h-5 w-5" /></span>

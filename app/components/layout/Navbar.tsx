@@ -52,14 +52,14 @@ export function Navbar() {
     <header className="sticky top-0 z-50 isolate border-b border-[var(--line)] bg-[color:color-mix(in_srgb,var(--page)_94%,transparent)] shadow-[0_8px_28px_rgba(0,0,0,0.18)] backdrop-blur-xl">
       <div className="site-shell flex min-h-16 items-center gap-3 py-2">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)} aria-label="PBAL home">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b82f6] text-[0.58rem] font-black tracking-[-0.08em] text-white shadow-[0_8px_20px_rgba(59,130,246,.26)]">PBAL</span>
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--orange)] text-[0.58rem] font-black tracking-[-0.08em] text-black shadow-[0_8px_20px_color-mix(in_srgb,var(--orange)_28%,transparent)]">PBAL</span>
           <span className="hidden leading-none 2xl:block">
-            <span className="block text-[0.55rem] font-bold uppercase tracking-[0.18em] text-[#60a5fa]">Practical Basketball</span>
+            <span className="block text-[0.55rem] font-bold uppercase tracking-[0.18em] text-[var(--orange-soft)]">Practical Basketball</span>
             <span className="mt-1 block text-sm font-black">Asia League</span>
           </span>
         </Link>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex" aria-label="Main navigation">
+        <nav className="ml-4 hidden min-w-0 flex-1 items-center justify-start gap-0.5 xl:flex" aria-label="Main navigation">
           {primaryLinks.map((link) => (
             <Link key={link.href} href={link.href} className={`eba-nav whitespace-nowrap ${isActive(link.href) ? 'eba-nav-active' : ''}`}>
               {t(link.key)}
@@ -72,7 +72,7 @@ export function Navbar() {
             </summary>
             <div className="absolute left-1/2 top-full z-50 mt-3 grid w-[26rem] -translate-x-1/2 grid-cols-2 gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-2xl">
               {competitionLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 transition ${isActive(link.href) ? 'bg-[#3b82f6] text-white' : 'hover:bg-[var(--surface-soft)]'}`}>
+                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 transition ${isActive(link.href) ? 'bg-[var(--orange)] text-black' : 'hover:bg-[var(--surface-soft)]'}`}>
                   <span className="block text-xs font-bold">{t(link.key)}</span>
                   <span className={`mt-1 block text-[0.65rem] ${isActive(link.href) ? 'text-black/65' : 'text-[var(--ink-faint)]'}`}>{link.description}</span>
                 </Link>
@@ -86,7 +86,7 @@ export function Navbar() {
             </summary>
             <div className="absolute right-0 top-full z-50 mt-3 grid w-56 gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-2xl">
               {leagueLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 text-xs font-bold transition ${isActive(link.href) ? 'bg-[#3b82f6] text-white' : 'text-[var(--ink-soft)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]'}`}>
+                <Link key={link.href} href={link.href} className={`rounded-lg px-3.5 py-3 text-xs font-bold transition ${isActive(link.href) ? 'bg-[var(--orange)] text-black' : 'text-[var(--ink-soft)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]'}`}>
                   {t(link.key)}
                 </Link>
               ))}
@@ -95,7 +95,7 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-lg border border-[var(--line)] text-[var(--ink-soft)] transition hover:border-[#3b82f6] hover:text-[#60a5fa] sm:grid" aria-label={t('search')}>
+          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-lg border border-[var(--line)] text-[var(--ink-soft)] transition hover:border-[var(--orange)] hover:text-[var(--orange-soft)] sm:grid" aria-label={t('search')}>
             <Search className="h-4 w-4" />
           </Link>
           <LanguageSwitcher />

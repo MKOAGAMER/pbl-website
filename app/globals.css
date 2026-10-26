@@ -169,7 +169,7 @@ a {
 
 .eba-nav:hover,
 .eba-nav-active {
-  border-color: #3b82f6;
+  border-color: var(--orange);
   color: var(--ink);
 }
 
